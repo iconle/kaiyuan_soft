@@ -1,0 +1,98 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+*.iws
+*.ipr
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-settings
+
+# OS
+.DS_Store
+Thumbs.db
+.env.local
+.env.*.local
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+target/
+build/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+dist/
+
+# Frontend build
+/frontend/dist/
+/frontend/build/
+
+# Logs
+logs/
+*.log
+lerna-debug.log*
+
+# Dependency directories
+node_modules/
+
+# optional npm cache directory
+.npm
+
+# optional eslint cache
+.eslintcache
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+local.properties
+
+# Misc
+*.bak
+*.tmp
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Deployment
+.deploymentignore
+
+# Config files (local)
+application-local.properties
+application-local.yml
+application-dev.yml
+application-prod.yml
+
+# Secrets
+.env
+.env.local
+.env.*.local
+secrets/

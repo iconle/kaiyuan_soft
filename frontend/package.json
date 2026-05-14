@@ -1,0 +1,27 @@
+{
+  "name": "achievement-calc-platform-ui",
+  "version": "1.0.0",
+  "description": "Vue 3 Frontend for Graduation Requirement Achievement Calculation Platform",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "vue": "^3.3.11",
+    "axios": "^1.6.7",
+    "element-plus": "^2.5.0",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.1",
+    "vite": "^5.0.10",
+    "sass": "^1.69.5",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.19.2"
+  }
+}

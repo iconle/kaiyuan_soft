@@ -4,7 +4,7 @@
   <el-container v-else class="app-container">
     <el-header>
       <div class="header-content">
-        <h1>毕业要求达成度统一计算平台</h1>
+        <h1>毕业要求达成度统一计算平台!</h1>
         <div class="header-right">
           <el-dropdown>
             <span class="el-dropdown-link">

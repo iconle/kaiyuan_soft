@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python *)",
+      "Bash(C:\\\\Program Files\\\\draw.io\\\\draw.io.exe *)",
+      "Bash(\"C:\\\\Program Files\\\\draw.io\\\\draw.io.exe\" \"F:/idea_workspace/course-oss/docs/design/数据库ER图.drawio\" --version)",
+      "Bash(echo \"---EXIT:$?\")"
+    ]
+  }
+}

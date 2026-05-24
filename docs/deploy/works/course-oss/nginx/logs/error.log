@@ -1,0 +1,2 @@
+2026/05/24 13:00:59 [error] 24#24: *1 directory index of "/usr/share/nginx/html/frontend/" is forbidden, client: 172.18.0.1, server: 47.96.66.16, request: "GET / HTTP/1.1", host: "localhost:5173"
+2026/05/24 13:07:18 [error] 25#25: *1 directory index of "/usr/share/nginx/html/frontend/" is forbidden, client: 172.18.0.1, server: 47.96.66.16, request: "GET / HTTP/1.1", host: "localhost:5173"

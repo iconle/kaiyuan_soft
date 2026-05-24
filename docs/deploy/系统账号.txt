@@ -1,0 +1,7 @@
+系统管理员：admin
+教务管理员：academic01
+专业负责人：director01
+主讲教师：teacher_wang
+主讲教师：teacher_zhao
+
+统一密码：123456

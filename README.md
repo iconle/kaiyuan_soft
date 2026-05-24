@@ -93,9 +93,7 @@ course-oss/
 ### 数据库初始化
 
 ```bash
-mysql -u root -p < docs/database/init.sql
-# 导入完整测试数据
-mysql -u root -p < docs/database/obe_platform.sql
+mysql -u root -p < sql/obe_platform.sql
 ```
 
 ### 本地开发

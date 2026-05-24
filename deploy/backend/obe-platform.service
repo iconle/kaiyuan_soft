@@ -1,0 +1,16 @@
+[Unit]
+Description=OBE Platform Backend Service
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/works/course-oss/backend
+ExecStart=/usr/bin/java -jar /works/course-oss/backend/obe-platform-1.0.0.jar --spring.profiles.active=prod
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/works/course-oss/logs/backend/app.log
+StandardError=append:/works/course-oss/logs/backend/error.log
+
+[Install]
+WantedBy=multi-user.target

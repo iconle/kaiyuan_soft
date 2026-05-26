@@ -120,4 +120,5 @@ cd frontend && npm install && npm run dev
 
 ## 许可证
 
+MIT License
 本项目仅供学习与教学研究使用。

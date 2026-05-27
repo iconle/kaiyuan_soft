@@ -106,8 +106,8 @@ cd backend && mvn spring-boot:run
 cd frontend && npm install && npm run dev
 ```
 
-访问 `http://localhost:5173`，默认管理员账号 `admin` / `admin123`。
-
+访问 `http://localhost:5173`，默认管理员账号 `admin` / `123456`。
+线上版本:http://10.65.199.3:5173 账号在deploy/ 目录下
 ## 文档导航
 
 | 文档 | 说明 |

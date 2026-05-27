@@ -1,0 +1,197 @@
+<template>
+  <div class="page-container">
+    <div class="page-header">
+      <h3>成绩导入与管理</h3>
+      <el-select v-model="selectedAssessmentId" placeholder="选择考核点" style="width:260px" @change="loadAll">
+        <el-option v-for="ap in assessments" :key="ap.id" :label="`${ap.name} → ${assessmentObjLabel(ap)}`" :value="ap.id" />
+      </el-select>
+      <el-button type="primary" @click="downloadTemplate" :disabled="!selectedAssessmentId">下载模板</el-button>
+      <StatusTag v-if="status" :status="status" />
+    </div>
+
+    <el-alert v-if="status === 'LOCKED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
+      成绩单已锁定，无法修改。如需勘误请联系教务管理员解锁。
+    </el-alert>
+    <el-alert v-else-if="!loading && assessments.length > 0 && selectedAssessmentId && questions.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
+      该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
+    </el-alert>
+
+    <div v-if="selectedAssessmentId">
+      <div class="section-title">考核点: {{ currentAssessment?.name || '' }}
+        <span style="font-size:13px;color:#909399;margin-left:8px">满分: {{ currentAssessment?.maxScore || '-' }}</span>
+      </div>
+
+      <el-table :data="scoreRows" border stripe size="small" v-loading="loading" v-if="questions.length > 0">
+        <el-table-column prop="studentNo" label="学号" width="120" fixed />
+        <el-table-column prop="studentName" label="姓名" width="100" fixed />
+        <el-table-column v-for="q in questions" :key="q.id" :label="q.name" min-width="110">
+          <template #header>
+            <div>{{ q.name }}</div>
+            <div style="font-size:11px;color:#909399">满分:{{ q.maxScore }}→{{ questionObjLabel(q) }}</div>
+          </template>
+          <template #default="{ row }">
+            <el-input-number v-if="status !== 'LOCKED'" :model-value="getQScore(row.studentId, q.id)"
+              @update:model-value="val => setQScore(row.studentId, q.id, val)" :min="0" :max="q.maxScore"
+              :precision="1" size="small" controls-position="right" style="width:100%" />
+            <span v-else>{{ getQScore(row.studentId, q.id) ?? '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="总成绩" width="90">
+          <template #default="{ row }">
+            <strong>{{ calcTotal(row.studentId) }}</strong>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- No questions: show assessment-level score input -->
+      <el-table :data="scoreRows" border stripe size="small" v-loading="loading" v-else-if="scoreRows.length > 0">
+        <el-table-column prop="studentNo" label="学号" width="120" />
+        <el-table-column prop="studentName" label="姓名" width="100" />
+        <el-table-column :label="currentAssessment?.name || '成绩'" min-width="150">
+          <template #header><div>{{ currentAssessment?.name || '成绩' }}</div><div style="font-size:11px;color:#909399">满分:{{ currentAssessment?.maxScore || '-' }}</div></template>
+          <template #default="{ row }">
+            <el-input-number v-if="status !== 'LOCKED'" :model-value="getAScore(row.studentId)"
+              @update:model-value="val => setAScore(row.studentId, val)" :min="0" :max="currentAssessment?.maxScore"
+              :precision="1" size="small" controls-position="right" style="width:100%" />
+            <span v-else>{{ getAScore(row.studentId) ?? '-' }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div style="margin-top:12px" v-if="hasEdits && status !== 'LOCKED'">
+        <el-button type="warning" @click="saveAll">保存修改 ({{ editCount }})</el-button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { getScores, getScoreStatus, downloadScoreTemplate, listAssessments } from '../../api/teacher'
+import StatusTag from '../../components/StatusTag.vue'
+import request from '../../utils/request'
+
+const route = useRoute()
+const classId = ref(route.params.classId)
+const loading = ref(false)
+const status = ref('')
+const assessments = ref([])
+const allObjectives = ref([])
+const selectedAssessmentId = ref(null)
+const questions = ref([])
+const scoreRows = ref([])
+const edits = ref({})
+
+onMounted(async () => { if (classId.value) await loadAll() })
+
+async function loadAll() {
+  loading.value = true
+  try {
+    const [scoreRes, statusRes, assessRes, objRes] = await Promise.all([
+      getScores(classId.value), getScoreStatus(classId.value),
+      listAssessments(classId.value),
+      request.get(`/api/classes/${classId.value}/objectives`)
+    ])
+    assessments.value = assessRes.data || []
+    allObjectives.value = objRes.data || []
+    scoreRows.value = scoreRes.data?.rows || []
+    status.value = statusRes.data?.status || scoreRes.data?.status || ''
+    if (assessments.value.length > 0 && !selectedAssessmentId.value) selectedAssessmentId.value = assessments.value[0].id
+    if (selectedAssessmentId.value) await loadQuestions()
+  } finally { loading.value = false }
+}
+
+async function loadQuestions() {
+  if (!selectedAssessmentId.value) return
+  try {
+    const res = await request.get(`/api/assessments/${selectedAssessmentId.value}/questions`)
+    questions.value = res.data || []
+    const sRes = await getScores(classId.value)
+    scoreRows.value = sRes.data?.rows || []
+    edits.value = {}
+  } catch { questions.value = [] }
+}
+
+const currentAssessment = computed(() => assessments.value.find(a => (a.id || a.assessmentId) === selectedAssessmentId.value))
+
+function assessmentObjLabel(ap) {
+  const ids = ap.objectiveIds || (ap.objectiveId ? [ap.objectiveId] : [])
+  return ids.map(id => allObjectives.value.find(o => o.id === id)?.objNo || id).join(',')
+}
+
+function questionObjLabel(q) {
+  return (q.objectiveIds || []).map(id => allObjectives.value.find(o => o.id === id)?.objNo || id).join(',')
+}
+
+function getQScore(studentId, questionId) {
+  const k = `q_${studentId}_${questionId}`
+  if (k in edits.value) return edits.value[k]
+  const row = scoreRows.value.find(r => r.studentId === studentId)
+  const cell = row?.cells?.find(c => c.assessmentId === selectedAssessmentId.value)
+  return cell?.questionScores?.[questionId] ?? null
+}
+
+function getAScore(studentId) {
+  const k = `a_${studentId}_${selectedAssessmentId.value}`
+  if (k in edits.value) return edits.value[k]
+  const row = scoreRows.value.find(r => r.studentId === studentId)
+  const cell = row?.cells?.find(c => c.assessmentId === selectedAssessmentId.value)
+  return cell?.score ?? null
+}
+
+function setQScore(studentId, questionId, val) {
+  const k = `q_${studentId}_${questionId}`
+  edits.value = { ...edits.value, [k]: val ?? 0 }
+}
+
+function setAScore(studentId, val) {
+  const k = `a_${studentId}_${selectedAssessmentId.value}`
+  edits.value = { ...edits.value, [k]: val ?? 0 }
+}
+
+function calcTotal(studentId) {
+  if (questions.value.length === 0) return getAScore(studentId) ?? '-'
+  let sum = 0
+  for (const q of questions.value) {
+    const s = getQScore(studentId, q.id)
+    if (s != null) sum += Number(s)
+  }
+  return sum || '-'
+}
+
+const editCount = computed(() => Object.keys(edits.value).length)
+const hasEdits = computed(() => editCount.value > 0)
+
+async function saveAll() {
+  let saved = 0
+  for (const [key, score] of Object.entries(edits.value)) {
+    if (key.startsWith('q_')) {
+      const [, studentId, questionId] = key.split('_')
+      try {
+        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
+        saved++
+      } catch { /* skip */ }
+    } else if (key.startsWith('a_')) {
+      const [, studentId, assessId] = key.split('_')
+      try {
+        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
+        saved++
+      } catch { /* skip */ }
+    }
+  }
+  if (saved > 0) { ElMessage.success(`已保存 ${saved} 条`); edits.value = {}; loadQuestions() }
+}
+
+async function downloadTemplate() {
+  try { const blob = await downloadScoreTemplate(classId.value); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '成绩模板.xlsx'; a.click(); URL.revokeObjectURL(url) } catch { /* handled */ }
+}
+</script>
+
+<style scoped>
+.page-container { padding: 20px; }
+.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.page-header h3 { margin: 0; font-size: 18px; }
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #303133; }
+</style>

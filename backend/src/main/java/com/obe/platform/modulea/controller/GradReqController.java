@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/grad-req")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('DIRECTOR')")
+@PreAuthorize("hasRole('DIRECTOR') or hasRole('ACADEMIC')")
 public class GradReqController {
 
     private final GradReqService gradReqService;

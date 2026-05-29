@@ -13,7 +13,7 @@
           <el-menu-item index="/admin/score-unlock"><el-icon><Unlock /></el-icon>成绩解锁</el-menu-item>
         </el-sub-menu>
         <!-- 教务管理员 -->
-        <el-sub-menu v-if="isAcademic || isDirector" index="academic">
+        <el-sub-menu v-if="isAcademic" index="academic">
           <template #title><el-icon><School /></el-icon><span>教务管理</span></template>
           <el-menu-item v-if="isAcademic" index="/academic/courses"><el-icon><Notebook /></el-icon>课程体系</el-menu-item>
           <el-menu-item v-if="isAcademic" index="/admin/students"><el-icon><UserFilled /></el-icon>学生管理</el-menu-item>

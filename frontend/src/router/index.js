@@ -163,6 +163,7 @@ router.beforeEach((to, from, next) => {
 
   // 角色不匹配时，跳到该角色首页，并标记无权限提示
   if (to.meta.roles && !to.meta.roles.includes(roleCode)) {
+    console.warn('权限检查失败:', { path: to.path, roleCode, requiredRoles: to.meta.roles })
     sessionStorage.setItem('permDenied', to.path)
     const home = getHomePath(roleCode)
     return next(home || '/login')

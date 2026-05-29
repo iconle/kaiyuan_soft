@@ -1,0 +1,81 @@
+/* ============================================================
+   tokens/primitives.css — Ins风马卡龙色板
+   ============================================================ */
+:root {
+  /* === 品牌色 (Macaron Lavender) === */
+  --brand-50:  #f6f4fa;
+  --brand-100: #ece8f5;
+  --brand-200: #d9d1eb;
+  --brand-300: #c2b5de;
+  --brand-400: #ad9cd2;
+  --brand-500: #9B8EC4;
+  --brand-600: #8b7db8;
+  --brand-700: #7b6da8;
+  --brand-800: #6a5d94;
+  --brand-900: #5a4e7c;
+
+  /* === 强调色 (Macaron Peach) === */
+  --peach-50:  #fef8f6;
+  --peach-100: #fdf0ec;
+  --peach-200: #fadfd6;
+  --peach-300: #f6c9ba;
+  --peach-400: #f3b8a4;
+  --peach-500: #F0B5A4;
+  --peach-600: #e09e8d;
+  --peach-700: #c88878;
+
+  /* === Macaron Mint === */
+  --mint-50:  #f5faf8;
+  --mint-100: #eaf5f0;
+  --mint-200: #d2ebe0;
+  --mint-300: #b5dfcd;
+  --mint-400: #9dd4bd;
+  --mint-500: #A8D8C8;
+  --mint-600: #8ec4af;
+  --mint-700: #74a995;
+
+  /* === Macaron Sky === */
+  --sky-50:  #f5f8fb;
+  --sky-100: #eaf0f7;
+  --sky-200: #d3dfef;
+  --sky-300: #b8cce3;
+  --sky-400: #a0bcd9;
+  --sky-500: #A8C4E0;
+  --sky-600: #8eafcc;
+  --sky-700: #7495b0;
+
+  /* === 中性色 (Warm White → Soft Gray) === */
+  --gray-0:   #fafafa;
+  --gray-50:  #f7f7f7;
+  --gray-100: #f2f2f2;
+  --gray-150: #ededed;
+  --gray-200: #e8e8e8;
+  --gray-300: #d0d0d0;
+  --gray-400: #a0a0a0;
+  --gray-500: #707070;
+  --gray-600: #585858;
+  --gray-700: #484848;
+  --gray-800: #383838;
+  --gray-900: #2a2a2a;
+
+  /* === 功能色 (低饱和) === */
+  --green-50:  #f4faf7;
+  --green-100: #e5f4ec;
+  --green-500: #7BC8A4;
+  --green-600: #5eb88a;
+
+  --amber-50:  #fefaf5;
+  --amber-100: #fdf3e5;
+  --amber-500: #F0C78E;
+  --amber-600: #e0b070;
+
+  --red-50:  #fef6f5;
+  --red-100: #fde8e5;
+  --red-500: #E8A0A0;
+  --red-600: #d88888;
+
+  --blue-50:  #f5f8fb;
+  --blue-100: #e8eff7;
+  --blue-500: #A8C4E0;
+  --blue-600: #8eafcc;
+}

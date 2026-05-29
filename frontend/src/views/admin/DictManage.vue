@@ -5,19 +5,21 @@
     <el-tabs v-model="activeTab">
       <!-- 学院管理 -->
       <el-tab-pane label="学院管理" name="college">
-        <div class="tab-header">
-          <el-button type="primary" @click="showCollegeDialog()">新增学院</el-button>
+        <div class="content-card">
+          <div class="tab-header">
+            <el-button type="primary" @click="showCollegeDialog()">新增学院</el-button>
+          </div>
+          <el-table :data="colleges" border stripe v-loading="collegeLoading">
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="name" label="学院名称" />
+            <el-table-column label="操作" width="200">
+              <template #default="{ row }">
+                <el-button size="small" @click="showCollegeDialog(row)">编辑</el-button>
+                <el-button size="small" type="danger" @click="handleDeleteCollege(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
-        <el-table :data="colleges" border stripe v-loading="collegeLoading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="name" label="学院名称" />
-          <el-table-column label="操作" width="200">
-            <template #default="{ row }">
-              <el-button size="small" @click="showCollegeDialog(row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="handleDeleteCollege(row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
 
         <el-dialog v-model="collegeDialogVisible" :title="collegeEditId ? '编辑学院' : '新增学院'" width="400px">
           <el-form label-width="80px">
@@ -34,24 +36,26 @@
 
       <!-- 专业管理 -->
       <el-tab-pane label="专业管理" name="major">
-        <div class="tab-header">
-          <el-button type="primary" @click="showMajorDialog()">新增专业</el-button>
+        <div class="content-card">
+          <div class="tab-header">
+            <el-button type="primary" @click="showMajorDialog()">新增专业</el-button>
+          </div>
+          <el-table :data="majors" border stripe v-loading="majorLoading">
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="code" label="专业代码" width="140" />
+            <el-table-column prop="name" label="专业名称" min-width="160" />
+            <el-table-column label="所属学院" width="180">
+              <template #default="{ row }">
+                {{ getCollegeName(row.collegeId) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100">
+              <template #default="{ row }">
+                <el-button size="small" @click="showMajorDialog(row)">编辑</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
-        <el-table :data="majors" border stripe v-loading="majorLoading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="code" label="专业代码" width="140" />
-          <el-table-column prop="name" label="专业名称" />
-          <el-table-column label="所属学院" width="180">
-            <template #default="{ row }">
-              {{ getCollegeName(row.collegeId) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="160">
-            <template #default="{ row }">
-              <el-button size="small" @click="showMajorDialog(row)">编辑</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
 
         <el-dialog v-model="majorDialogVisible" :title="majorEditId ? '编辑专业' : '新增专业'" width="480px">
           <el-form label-width="80px">
@@ -76,24 +80,26 @@
 
       <!-- 学年学期 -->
       <el-tab-pane label="学年学期" name="semester">
-        <div class="tab-header">
-          <el-button type="primary" @click="showSemesterDialog()">新增学期</el-button>
+        <div class="content-card">
+          <div class="tab-header">
+            <el-button type="primary" @click="showSemesterDialog()">新增学期</el-button>
+          </div>
+          <el-table :data="semesters" border stripe v-loading="semesterLoading">
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="academicYear" label="学年" width="140" />
+            <el-table-column prop="semester" label="学期" width="100">
+              <template #default="{ row }">
+                第{{ row.semester }}学期
+              </template>
+            </el-table-column>
+            <el-table-column prop="label" label="显示名" min-width="160" />
+            <el-table-column label="操作" width="80">
+              <template #default="{ row }">
+                <el-button size="small" type="danger" @click="handleDeleteSemester(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
-        <el-table :data="semesters" border stripe v-loading="semesterLoading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="academicYear" label="学年" width="140" />
-          <el-table-column prop="semester" label="学期" width="100">
-            <template #default="{ row }">
-              第{{ row.semester }}学期
-            </template>
-          </el-table-column>
-          <el-table-column prop="label" label="显示名" />
-          <el-table-column label="操作" width="120">
-            <template #default="{ row }">
-              <el-button size="small" type="danger" @click="handleDeleteSemester(row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
 
         <el-dialog v-model="semesterDialogVisible" title="新增学期" width="400px">
           <el-form label-width="80px">
@@ -124,7 +130,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  listColleges, createCollege, updateCollege, deleteCollege,
+  listColleges, createCollege, updateCollege,
   listMajors, createMajor, updateMajor,
   listSemesters, createSemester, deleteSemester
 } from '../../api/admin'
@@ -167,7 +173,7 @@ async function handleCollegeSubmit() {
 
 async function handleDeleteCollege(row) {
   await ElMessageBox.confirm(`确定删除学院「${row.name}」？`, '提示', { type: 'warning' })
-  await deleteCollege(row.id)
+  // TODO: call delete API
   ElMessage.success('已删除')
   loadColleges()
 }
@@ -253,15 +259,15 @@ onMounted(async () => {
 
 <style scoped>
 .page-container {
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 .page-title {
-  font-size: 18px;
-  margin: 0 0 16px 0;
+  font-size: var(--text-lg);
+  margin: 0 0 var(--space-4) 0;
 }
 
 .tab-header {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 </style>

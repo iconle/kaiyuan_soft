@@ -5,36 +5,38 @@
       <el-button type="primary" @click="showDialog()">新增教学班级</el-button>
     </div>
 
-    <div class="filter-bar">
-      <el-select v-model="filterCourseId" placeholder="按课程筛选" clearable @change="loadData" style="width:200px">
-        <el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" />
-      </el-select>
-      <el-select v-model="filterSemesterId" placeholder="按学期筛选" clearable @change="loadData" style="width:220px;margin-left:8px">
-        <el-option v-for="s in semesters" :key="s.id" :label="s.label" :value="s.id" />
-      </el-select>
-    </div>
+    <div class="content-card">
+      <div class="filter-bar">
+        <el-select v-model="filterCourseId" placeholder="按课程筛选" clearable @change="loadData" style="width:200px">
+          <el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" />
+        </el-select>
+        <el-select v-model="filterSemesterId" placeholder="按学期筛选" clearable @change="loadData" style="width:220px;margin-left:8px">
+          <el-option v-for="s in semesters" :key="s.id" :label="s.label" :value="s.id" />
+        </el-select>
+      </div>
 
-    <el-table :data="classes" border stripe v-loading="loading">
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="className" label="班级名称" width="180" />
-      <el-table-column prop="courseName" label="所属课程" width="160" />
-      <el-table-column prop="teacherName" label="主讲教师" width="110" />
-      <el-table-column label="学生管理" width="100">
-        <template #default="{ row }">
-          <el-button size="small" type="primary" @click="manageStudents(row)">管理学生</el-button>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="140">
-        <template #default="{ row }">
-          <el-button size="small" text @click="showDialog(row)">编辑</el-button>
-          <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <el-table :data="classes" border stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="className" label="班级名称" width="180" />
+        <el-table-column prop="courseName" label="所属课程" width="160" />
+        <el-table-column prop="teacherName" label="主讲教师" width="110" />
+        <el-table-column label="学生管理" width="110">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" @click="manageStudents(row)">管理学生</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="140">
+          <template #default="{ row }">
+            <el-button size="small" text @click="showDialog(row)">编辑</el-button>
+            <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <div class="pagination-wrap">
-      <el-pagination background layout="total, prev, pager, next" :total="total"
-        v-model:current-page="page" :page-size="size" @current-change="loadData" />
+      <div class="pagination-wrap">
+        <el-pagination background layout="total, prev, pager, next" :total="total"
+          v-model:current-page="page" :page-size="size" @current-change="loadData" />
+      </div>
     </div>
 
     <!-- Class edit dialog -->
@@ -78,8 +80,8 @@
             <el-table-column prop="name" label="姓名" width="100" />
             <el-table-column prop="collegeName" label="学院" width="140" />
             <el-table-column prop="majorName" label="专业" width="150" />
-            <el-table-column prop="enrollmentYear" label="入学年份" width="85" />
-            <el-table-column prop="adminClassName" label="行政班级" width="170" />
+            <el-table-column prop="enrollmentYear" label="入学年份" width="80" />
+            <el-table-column prop="adminClassName" label="行政班级" width="150" />
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="已分配学生" name="list">
@@ -259,9 +261,9 @@ async function handleRemoveStudent(row) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-.page-header h3 { margin: 0; font-size: 18px; }
-.filter-bar { margin-bottom: 16px; display: flex; }
-.pagination-wrap { margin-top: 16px; display: flex; justify-content: flex-end; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
+.filter-bar { margin-bottom: var(--space-4); display: flex; }
+.pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
 </style>

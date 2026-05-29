@@ -3,29 +3,31 @@
     <div class="page-header">
       <h3>考核点细分与映射</h3>
       <el-button type="primary" @click="showDialog()">新增考核点</el-button>
-      <span v-if="weightSum !== null" :style="{color: weightSum === 100 ? '#67c23a' : '#f56c6c', fontSize: '14px', fontWeight:'bold'}">
+      <span v-if="weightSum !== null" :style="{color: weightSum === 100 ? 'var(--el-color-success)' : 'var(--el-color-danger)', fontSize: '14px', fontWeight:'bold'}">
         总权重: {{ weightSum }}% {{ weightSum === 100 ? '✓' : '✗ 必须等于100%' }}
       </span>
     </div>
 
-    <el-table :data="assessments" border stripe v-loading="loading">
-      <el-table-column prop="sortOrder" label="序号" width="60" />
-      <el-table-column prop="name" label="考核点名称" width="160" />
-      <el-table-column prop="maxScore" label="满分" width="70" />
-      <el-table-column prop="weightPercent" label="权重(%)" width="90" />
-      <el-table-column label="绑定目标" min-width="180">
-        <template #default="{ row }">
-          <el-tag v-for="oid in row.objectiveIds" :key="oid" size="small" style="margin-right:4px">{{ getObjNo(oid) }}</el-tag>
-          <span v-if="!row.objectiveIds || row.objectiveIds.length === 0" style="color:#909399">未绑定</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="160">
-        <template #default="{ row }">
-          <el-button size="small" text @click="showDialog(row)">编辑</el-button>
-          <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="content-card">
+      <el-table :data="assessments" border stripe v-loading="loading">
+        <el-table-column prop="sortOrder" label="序号" width="60" />
+        <el-table-column prop="name" label="考核点名称" width="160" />
+        <el-table-column prop="maxScore" label="满分" width="70" />
+        <el-table-column prop="weightPercent" label="权重(%)" width="90" />
+        <el-table-column label="绑定目标" min-width="180">
+          <template #default="{ row }">
+            <el-tag v-for="oid in row.objectiveIds" :key="oid" size="small" style="margin-right:4px">{{ getObjNo(oid) }}</el-tag>
+            <span v-if="!row.objectiveIds || row.objectiveIds.length === 0" style="color:var(--text-secondary)">未绑定</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160">
+          <template #default="{ row }">
+            <el-button size="small" text @click="showDialog(row)">编辑</el-button>
+            <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑考核点' : '新增考核点'" width="520px">
       <el-form :model="form" label-width="100px">
@@ -33,7 +35,7 @@
         <el-form-item label="满分分值" required><el-input-number v-model="form.maxScore" :min="1" :step="10" style="width:100%" /></el-form-item>
         <el-form-item label="权重(%)" required>
           <el-input-number v-model="form.weightPercent" :min="0" :max="100" :precision="2" style="width:100%" placeholder="占总成绩的百分比" />
-          <span style="font-size:12px;color:#909399">所有考核点权重之和必须等于100%</span>
+          <span style="font-size:12px;color:var(--text-secondary)">所有考核点权重之和必须等于100%</span>
         </el-form-item>
         <el-form-item label="绑定课程目标" required>
           <el-select v-model="form.objectiveIds" multiple style="width:100%" placeholder="可多选课程目标">
@@ -123,7 +125,7 @@ async function handleDelete(row) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 </style>

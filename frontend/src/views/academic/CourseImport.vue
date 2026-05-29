@@ -11,25 +11,27 @@
       <el-button type="primary" @click="showCourseDialog()">新增课程</el-button>
     </div>
 
-    <el-table :data="courses" border stripe v-loading="loading">
-      <el-table-column prop="code" label="课程代码" width="110" />
-      <el-table-column prop="name" label="课程名称" width="170" />
-      <el-table-column prop="credit" label="学分" width="70" />
-      <el-table-column prop="hoursTheory" label="理论学时" width="85" />
-      <el-table-column prop="hoursExperiment" label="实验学时" width="85" />
-      <el-table-column prop="category" label="类别" width="75" />
-      <el-table-column label="操作" width="230">
-        <template #default="{ row }">
-          <el-button size="small" @click="showCourseDialog(row)">编辑</el-button>
-          <el-button size="small" @click="showClasses(row)">教学班级</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="content-card">
+      <el-table :data="courses" border stripe v-loading="loading">
+        <el-table-column prop="code" label="课程代码" width="110" />
+        <el-table-column prop="name" label="课程名称" min-width="160" />
+        <el-table-column prop="credit" label="学分" width="70" />
+        <el-table-column prop="hoursTheory" label="理论学时" width="85" />
+        <el-table-column prop="hoursExperiment" label="实验学时" width="85" />
+        <el-table-column prop="category" label="类别" width="75" />
+        <el-table-column label="操作" width="230">
+          <template #default="{ row }">
+            <el-button size="small" @click="showCourseDialog(row)">编辑</el-button>
+            <el-button size="small" @click="showClasses(row)">教学班级</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <el-pagination class="pagination" background layout="total, prev, pager, next"
-                   :total="total" :page-size="search.size" v-model:current-page="search.page"
-                   @current-change="loadCourses" />
+      <el-pagination class="pagination" background layout="total, prev, pager, next"
+                     :total="total" :page-size="search.size" v-model:current-page="search.page"
+                     @current-change="loadCourses" />
+    </div>
 
     <!-- Course edit dialog -->
     <el-dialog v-model="courseDialogVisible" :title="editingCourse ? '编辑课程' : '新增课程'" width="480px">
@@ -148,8 +150,8 @@ async function viewClassStudents(cls) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: 18px; }
-.pagination { margin-top: 16px; justify-content: flex-end; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4); flex-wrap: wrap; }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
+.pagination { margin-top: var(--space-4); justify-content: flex-end; }
 </style>

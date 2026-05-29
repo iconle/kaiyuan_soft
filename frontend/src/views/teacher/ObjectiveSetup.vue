@@ -5,17 +5,19 @@
       <el-button type="primary" @click="showDialog()">新增目标</el-button>
     </div>
 
-    <el-table :data="objectives" border stripe v-loading="loading">
-      <el-table-column prop="objNo" label="编号" width="80" />
-      <el-table-column prop="dimension" label="维度" width="80" />
-      <el-table-column prop="description" label="目标描述" />
-      <el-table-column label="操作" width="160">
-        <template #default="{ row }">
-          <el-button size="small" text @click="showDialog(row)">编辑</el-button>
-          <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="content-card">
+      <el-table :data="objectives" border stripe v-loading="loading">
+        <el-table-column prop="objNo" label="编号" width="80" />
+        <el-table-column prop="dimension" label="维度" width="80" />
+        <el-table-column prop="description" label="目标描述" />
+        <el-table-column label="操作" width="160">
+          <template #default="{ row }">
+            <el-button size="small" text @click="showDialog(row)">编辑</el-button>
+            <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑目标' : '新增目标'" width="520px">
       <el-form :model="form" label-width="80px">
@@ -93,7 +95,7 @@ async function handleDelete(row) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 </style>

@@ -17,10 +17,10 @@
 
     <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px">
       <el-card header="计算状态" style="flex:1; min-width:300px">
-        <div style="font-size:36px; text-align:center; color:#409eff">
+        <div style="font-size:36px; text-align:center; color:var(--action-primary)">
           {{ dashboard.lockedCount }} / {{ dashboard.totalCount }}
         </div>
-        <div style="text-align:center; color:#909399; margin-top:8px">已锁定课程 / 总课程数</div>
+        <div style="text-align:center; color:var(--text-secondary); margin-top:8px">已锁定课程 / 总课程数</div>
       </el-card>
       <el-card header="操作" style="flex:1; min-width:300px">
         <el-button type="primary" size="large" :disabled="!dashboard.allReady"
@@ -36,7 +36,7 @@
         <el-table-column prop="indicatorNo" label="指标点" width="120" />
         <el-table-column prop="achievement" label="达成度 G_k" />
       </el-table>
-      <div style="margin-top:12px; color:#909399; font-size:13px">
+      <div style="margin-top:12px; color:var(--text-secondary); font-size:13px">
         计算时间：{{ calcTime }}
       </div>
       <div style="margin-top:12px">
@@ -188,7 +188,7 @@ async function downloadExcel() {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 </style>

@@ -2,8 +2,7 @@
   <el-container class="layout-container">
     <el-aside width="220px" class="layout-aside">
       <div class="logo">OBE 平台</div>
-      <el-menu :default-active="route.path" router background-color="#304156"
-               text-color="#bfcbd9" active-text-color="#409eff">
+      <el-menu :default-active="route.path" router>
         <!-- 系统管理员 -->
         <el-sub-menu v-if="isAdmin" index="admin">
           <template #title><el-icon><Setting /></el-icon><span>系统管理</span></template>
@@ -33,13 +32,13 @@
         <!-- 主讲教师 -->
         <el-sub-menu v-if="isTeacher" index="teacher">
           <template #title><el-icon><EditPen /></el-icon><span>课程大纲</span></template>
-          <div style="padding:4px 16px" @click.stop>
-            <div style="font-size:11px;color:#909399;margin-bottom:2px">教学学期</div>
-            <el-select v-model="teacherFilterSemester" placeholder="全部学期" size="small" clearable style="width:100%;margin-bottom:6px" @click.stop>
+          <div class="teacher-sidebar-selects" @click.stop>
+            <div class="teacher-select-label">教学学期</div>
+            <el-select v-model="teacherFilterSemester" placeholder="全部学期" size="small" clearable class="teacher-select" @click.stop>
               <el-option v-for="s in teacherSemesters" :key="s.id" :label="s.label" :value="s.id" />
             </el-select>
-            <div style="font-size:11px;color:#909399;margin-bottom:2px">教学班级</div>
-            <el-select v-model="activeClassId" placeholder="选择教学班级" size="small" style="width:100%"
+            <div class="teacher-select-label">教学班级</div>
+            <el-select v-model="activeClassId" placeholder="选择教学班级" size="small" class="teacher-select"
               @change="switchTeacherClass" @click.stop>
               <el-option v-for="c in filteredTeacherClasses" :key="c.id"
                 :label="`${c.courseName || '课程'} - ${c.className || '班级'+c.id}`" :value="String(c.id)" />
@@ -142,47 +141,73 @@ function handleLogout() {
 }
 
 .layout-aside {
-  background: #304156;
+  width: 240px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid var(--gray-150);
   overflow-y: auto;
 }
 
 .logo {
   height: 56px;
-  line-height: 56px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  background: #263445;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--brand-700);
+  background: linear-gradient(135deg, var(--brand-50) 0%, rgba(246, 244, 250, 0.6) 100%);
+  border-bottom: 1px solid var(--brand-100);
+  letter-spacing: 0.5px;
 }
 
 .layout-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-bottom: 1px solid #e6e6e6;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 0 var(--space-8);
+  background: #ffffff;
+  border-bottom: 1px solid var(--gray-150);
+  box-shadow: var(--shadow-xs);
 }
 
 .header-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #303133;
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .user-info {
-  font-size: 14px;
-  color: #606266;
+  font-size: var(--text-base);
+  color: var(--text-regular);
 }
 
 .layout-main {
-  background: #f0f2f5;
+  flex: 1;
+  min-width: 0;
+  background: var(--surface-page);
+  overflow-y: auto;
+}
+
+.teacher-sidebar-selects {
+  padding: var(--space-1) var(--space-4);
+}
+
+.teacher-select-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.teacher-select {
+  width: 100%;
+  margin-bottom: var(--space-2);
 }
 </style>

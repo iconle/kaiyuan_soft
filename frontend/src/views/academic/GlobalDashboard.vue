@@ -15,11 +15,11 @@
     </el-alert>
 
     <el-card header="课程计算状态总览">
-      <div v-if="dashboard.totalCount === 0 && !loading" style="text-align:center;padding:40px;color:#909399">
+      <div v-if="dashboard.totalCount === 0 && !loading" style="text-align:center;padding:40px;color:var(--text-secondary)">
         暂无该专业的课程数据，请先在教务管理中导入课程体系并创建教学班级
       </div>
       <template v-else>
-      <div style="margin-bottom:12px; color:#606266">
+      <div style="margin-bottom:12px; color:var(--text-regular)">
         已锁定: <strong>{{ dashboard.lockedCount }}</strong> / {{ dashboard.totalCount }}
       </div>
       <el-table :data="dashboard.courseStatuses || []" border stripe v-loading="loading" max-height="400"
@@ -40,7 +40,7 @@
     <!-- 达成度详情弹窗 -->
     <el-dialog v-model="detailVisible" :title="`达成度详情 - ${detailClass?.courseName || ''} ${detailClass?.className || ''}`" width="720px">
       <div v-if="detailLoading" style="text-align:center;padding:20px">加载中...</div>
-      <div v-else-if="!detailHasData" style="text-align:center;padding:20px;color:#909399">该课程尚未执行课程级计算，无达成度数据</div>
+      <div v-else-if="!detailHasData" style="text-align:center;padding:20px;color:var(--text-secondary)">该课程尚未执行课程级计算，无达成度数据</div>
       <div v-else style="display:flex;gap:20px;flex-wrap:wrap">
         <el-card header="课程目标达成度（第一级）" style="flex:1;min-width:300px">
           <el-table :data="detailObjData" border stripe size="small">
@@ -126,7 +126,7 @@ async function loadData() {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 </style>

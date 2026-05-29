@@ -44,6 +44,13 @@ public class DictController {
         return Result.ok();
     }
 
+    @DeleteMapping("/colleges/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Void> deleteCollege(@PathVariable Long id) {
+        dictService.deleteCollege(id);
+        return Result.ok();
+    }
+
     // ========== 专业 ==========
 
     @GetMapping("/majors")

@@ -5,46 +5,48 @@
       <el-button type="primary" @click="showCreateDialog">新增用户</el-button>
     </div>
 
-    <div class="search-bar">
-      <el-input v-model="search.keyword" placeholder="搜索用户名/姓名" clearable
-                style="width: 200px" @clear="loadUsers" @keyup.enter="loadUsers" />
-      <el-select v-model="search.roleId" placeholder="角色筛选" clearable
-                 style="width: 160px; margin-left: 12px" @change="loadUsers">
-        <el-option v-for="r in roles" :key="r.id" :label="r.roleName" :value="r.id" />
-      </el-select>
-      <el-button type="primary" @click="loadUsers" style="margin-left: 12px">查询</el-button>
+    <div class="content-card">
+      <div class="search-bar">
+        <el-input v-model="search.keyword" placeholder="搜索用户名/姓名" clearable
+                  style="width: 200px" @clear="loadUsers" @keyup.enter="loadUsers" />
+        <el-select v-model="search.roleId" placeholder="角色筛选" clearable
+                   style="width: 160px; margin-left: 12px" @change="loadUsers">
+          <el-option v-for="r in roles" :key="r.id" :label="r.roleName" :value="r.id" />
+        </el-select>
+        <el-button type="primary" @click="loadUsers" style="margin-left: 12px">查询</el-button>
+      </div>
+
+      <el-table :data="users" border stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="username" label="用户名" width="140" />
+        <el-table-column prop="realName" label="姓名" width="120" />
+        <el-table-column label="角色" width="120">
+          <template #default="{ row }">
+            <el-tag>{{ getRoleName(row.roleId) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" min-width="160" />
+        <el-table-column label="操作" fixed="right" width="240">
+          <template #default="{ row }">
+            <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
+            <el-button size="small" @click="handleResetPwd(row)">重置密码</el-button>
+            <el-button size="small" type="danger" @click="handleDisable(row)"
+                       :disabled="row.status === 0">禁用</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination class="pagination" background layout="total, prev, pager, next"
+                     :total="total" :page-size="search.size" v-model:current-page="search.page"
+                     @current-change="loadUsers" />
     </div>
-
-    <el-table :data="users" border stripe v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="用户名" width="140" />
-      <el-table-column prop="realName" label="姓名" width="120" />
-      <el-table-column label="角色" width="120">
-        <template #default="{ row }">
-          <el-tag>{{ getRoleName(row.roleId) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-            {{ row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="创建时间" width="180" />
-      <el-table-column label="操作" fixed="right" width="240">
-        <template #default="{ row }">
-          <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
-          <el-button size="small" @click="handleResetPwd(row)">重置密码</el-button>
-          <el-button size="small" type="danger" @click="handleDisable(row)"
-                     :disabled="row.status === 0">禁用</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <el-pagination class="pagination" background layout="total, prev, pager, next"
-                   :total="total" :page-size="search.size" v-model:current-page="search.page"
-                   @current-change="loadUsers" />
 
     <!-- 新增/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'" width="480px">
@@ -178,29 +180,29 @@ async function handleResetPwd(row) {
 
 <style scoped>
 .page-container {
-  padding: 20px;
+  padding: var(--space-5);
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .page-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--text-lg);
 }
 
 .search-bar {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: var(--space-4);
   justify-content: flex-end;
 }
 </style>

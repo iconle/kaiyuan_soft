@@ -12,9 +12,10 @@
     </div>
 
     <el-empty v-if="!currentMajorId" description="请先选择专业" />
-    <div v-else v-loading="loading">
+    <div v-else v-loading="loading" class="content-card">
       <div class="matrix-wrapper" v-if="indicators.length > 0">
         <el-table :data="matrixRows" border size="small" :cell-class-name="cellClassName"
+                  :style="{ minWidth: (140 + indicators.length * 130) + 'px' }"
                   @cell-mouse-enter="highlightRC" @cell-mouse-leave="clearHighlight">
           <el-table-column prop="courseName" label="课程" width="140" />
           <el-table-column v-for="ind in indicators" :key="ind.id" :label="`${ind.indicatorNo}`"
@@ -177,16 +178,15 @@ function clearHighlight() {}
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 .matrix-wrapper { overflow-x: auto; max-width: 100%; }
-.matrix-wrapper :deep(.el-table) { min-width: 3390px; }
-.indicator-header { font-size: 12px; text-align: center; }
-.sum-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #ebeef5; min-width: 3390px; }
-.sum-label { width: 140px; font-weight: 600; font-size: 13px; text-align: center; flex-shrink: 0; }
-.sum-cell { width: 130px; text-align: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
-.sum-cell.valid { color: #67c23a; }
-.sum-cell.invalid { color: #f56c6c; }
-.hint { color: #909399; font-size: 13px; }
+.indicator-header { font-size: var(--text-xs); text-align: center; }
+.sum-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-default); white-space: nowrap; }
+.sum-label { width: 140px; font-weight: var(--font-semibold); font-size: 13px; text-align: center; flex-shrink: 0; }
+.sum-cell { width: 130px; text-align: center; font-size: 13px; font-weight: var(--font-medium); flex-shrink: 0; }
+.sum-cell.valid { color: var(--el-color-success); }
+.sum-cell.invalid { color: var(--el-color-danger); }
+.hint { color: var(--text-secondary); font-size: 13px; }
 </style>

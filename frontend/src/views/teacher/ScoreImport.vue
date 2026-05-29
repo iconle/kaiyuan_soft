@@ -16,18 +16,19 @@
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
 
-    <div v-if="selectedAssessmentId">
+    <div v-if="selectedAssessmentId" class="content-card">
       <div class="section-title">考核点: {{ currentAssessment?.name || '' }}
-        <span style="font-size:13px;color:#909399;margin-left:8px">满分: {{ currentAssessment?.maxScore || '-' }}</span>
+        <span style="font-size:13px;color:var(--text-secondary);margin-left:8px">满分: {{ currentAssessment?.maxScore || '-' }}</span>
       </div>
 
+      <div style="overflow-x: auto; max-width: 100%;">
       <el-table :data="scoreRows" border stripe size="small" v-loading="loading" v-if="questions.length > 0">
         <el-table-column prop="studentNo" label="学号" width="120" fixed />
         <el-table-column prop="studentName" label="姓名" width="100" fixed />
         <el-table-column v-for="q in questions" :key="q.id" :label="q.name" min-width="110">
           <template #header>
             <div>{{ q.name }}</div>
-            <div style="font-size:11px;color:#909399">满分:{{ q.maxScore }}→{{ questionObjLabel(q) }}</div>
+            <div style="font-size:11px;color:var(--text-secondary)">满分:{{ q.maxScore }}→{{ questionObjLabel(q) }}</div>
           </template>
           <template #default="{ row }">
             <el-input-number v-if="status !== 'LOCKED'" :model-value="getQScore(row.studentId, q.id)"
@@ -48,7 +49,7 @@
         <el-table-column prop="studentNo" label="学号" width="120" />
         <el-table-column prop="studentName" label="姓名" width="100" />
         <el-table-column :label="currentAssessment?.name || '成绩'" min-width="150">
-          <template #header><div>{{ currentAssessment?.name || '成绩' }}</div><div style="font-size:11px;color:#909399">满分:{{ currentAssessment?.maxScore || '-' }}</div></template>
+          <template #header><div>{{ currentAssessment?.name || '成绩' }}</div><div style="font-size:11px;color:var(--text-secondary)">满分:{{ currentAssessment?.maxScore || '-' }}</div></template>
           <template #default="{ row }">
             <el-input-number v-if="status !== 'LOCKED'" :model-value="getAScore(row.studentId)"
               @update:model-value="val => setAScore(row.studentId, val)" :min="0" :max="currentAssessment?.maxScore"
@@ -57,6 +58,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <div style="margin-top:12px" v-if="hasEdits && status !== 'LOCKED'">
         <el-button type="warning" @click="saveAll">保存修改 ({{ editCount }})</el-button>
@@ -190,8 +192,8 @@ async function downloadTemplate() {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: 18px; }
-.section-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #303133; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
+.section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
 </style>

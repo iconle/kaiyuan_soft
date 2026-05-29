@@ -35,11 +35,11 @@
             <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="70">
+        <el-table-column label="操作" width="90">
           <template #default="{ row }">
             <el-button v-if="row.status === 'PENDING'" size="small" type="danger"
               @click="handleCancelRequest(row)">撤销</el-button>
-            <span v-else style="color:#909399">-</span>
+            <span v-else style="color:var(--text-secondary)">-</span>
           </template>
         </el-table-column>
       </el-table>
@@ -217,7 +217,7 @@ function downloadBlob(blob, filename) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 </style>

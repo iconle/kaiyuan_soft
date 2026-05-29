@@ -1,0 +1,47 @@
+/* ============================================================
+   tokens/spacing.css — Ins风圆角、阴影、布局
+   ============================================================ */
+:root {
+  /* === 8px 网格 === */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+
+  /* === 大圆角 === */
+  --radius-none:  0;
+  --radius-xs:    8px;
+  --radius-sm:    12px;
+  --radius-base:  16px;
+  --radius-md:    20px;
+  --radius-lg:    24px;
+  --radius-xl:    32px;
+  --radius-full:  9999px;
+
+  /* === 柔雾阴影 === */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04),
+               0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.05),
+               0 2px 6px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.06),
+               0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.08),
+               0 8px 24px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 0 4px rgba(155, 142, 196, 0.15);
+
+  /* === 布局 === */
+  --sidebar-width:       240px;
+  --sidebar-collapsed:   64px;
+  --header-height:       56px;
+  --page-padding-x:      32px;
+  --page-padding-y:      28px;
+}

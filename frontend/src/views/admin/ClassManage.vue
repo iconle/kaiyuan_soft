@@ -5,30 +5,32 @@
       <el-button type="primary" @click="showDialog()">新增班级</el-button>
     </div>
 
-    <div class="filter-bar">
-      <el-select v-model="filterMajorId" placeholder="按专业筛选" clearable @change="loadData" style="width:240px">
-        <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
-      </el-select>
-    </div>
+    <div class="content-card">
+      <div class="filter-bar">
+        <el-select v-model="filterMajorId" placeholder="按专业筛选" clearable @change="loadData" style="width:240px">
+          <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
+        </el-select>
+      </div>
 
-    <el-table :data="classes" border stripe v-loading="loading">
-      <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="className" label="班级名称" width="240" />
-      <el-table-column prop="majorName" label="所属专业" width="200" />
-      <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
-      <el-table-column prop="studentCount" label="学生人数" width="100" />
-      <el-table-column label="操作" width="280">
-        <template #default="{ row }">
-          <el-button size="small" type="primary" @click="showStudents(row)">管理学生</el-button>
-          <el-button size="small" @click="showDialog(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+      <el-table :data="classes" border stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="className" label="班级名称" min-width="180" />
+        <el-table-column prop="majorName" label="所属专业" min-width="160" />
+        <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
+        <el-table-column prop="studentCount" label="学生人数" width="100" />
+        <el-table-column label="操作" width="230">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" @click="showStudents(row)">管理学生</el-button>
+            <el-button size="small" @click="showDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <div class="pagination-wrap">
-      <el-pagination background layout="total, prev, pager, next" :total="total"
-        v-model:current-page="page" :page-size="size" @current-change="loadData" />
+      <div class="pagination-wrap">
+        <el-pagination background layout="total, prev, pager, next" :total="total"
+          v-model:current-page="page" :page-size="size" @current-change="loadData" />
+      </div>
     </div>
 
     <!-- Class dialog -->
@@ -60,9 +62,9 @@
         </el-select>
         <el-button type="primary" @click="handleAddStudent" :disabled="!addStudentId">添加</el-button>
       </div>
-      <el-table :data="classStudents" border stripe size="small" max-height="360">
+      <el-table :data="classStudents" border stripe size="small" max-height="360" style="width:100%">
         <el-table-column prop="studentNo" label="学号" width="120" />
-        <el-table-column prop="name" label="姓名" width="120" />
+        <el-table-column prop="name" label="姓名" min-width="100" />
         <el-table-column label="操作" width="80">
           <template #default="{ row }">
             <el-button size="small" text type="danger" @click="handleRemoveStudent(row)">移除</el-button>
@@ -180,9 +182,9 @@ async function handleRemoveStudent(row) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-.page-header h3 { margin: 0; font-size: 18px; }
-.filter-bar { margin-bottom: 16px; }
-.pagination-wrap { margin-top: 16px; display: flex; justify-content: flex-end; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
+.filter-bar { margin-bottom: var(--space-4); }
+.pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
 </style>

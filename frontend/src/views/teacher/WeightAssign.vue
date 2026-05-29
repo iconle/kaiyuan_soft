@@ -5,14 +5,17 @@
       <el-button type="primary" @click="handleSave" :disabled="!allValid">保存权重</el-button>
     </div>
 
-    <el-alert v-if="!allValid" type="warning" :closable="false" style="margin-bottom: 16px"
-              title="存在指标点权重合计不为 1.00，请调整后再保存" />
+    <div class="content-card">
+      <el-alert v-if="!allValid" type="warning" :closable="false" style="margin-bottom: 16px"
+                title="存在指标点权重合计不为 1.00，请调整后再保存" />
 
-    <div v-if="supportedIndicators.length === 0" class="empty-hint">
-      <el-empty description="本课程尚未在宏观支撑矩阵中配置支撑关系，请先由专业负责人配置宏观矩阵" />
-    </div>
+      <div v-if="supportedIndicators.length === 0" class="empty-hint">
+        <el-empty description="本课程尚未在宏观支撑矩阵中配置支撑关系，请先由专业负责人配置宏观矩阵" />
+      </div>
 
-    <el-table v-else :data="weightMatrix" border size="small" v-loading="loading">
+      <div v-else class="weight-matrix-scroll">
+      <el-table :data="weightMatrix" border size="small" v-loading="loading"
+        :style="{ minWidth: (120 + supportedIndicators.length * 160) + 'px' }">
       <el-table-column prop="objNo" label="课程目标" width="120" fixed />
       <el-table-column v-for="ind in supportedIndicators" :key="ind.id" :label="ind.indicatorNo" width="160" align="center">
         <template #header>
@@ -27,6 +30,8 @@
         </template>
       </el-table-column>
     </el-table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -103,11 +108,12 @@ async function handleSave() {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.page-header h3 { margin: 0; font-size: 18px; }
-.col-sum { font-size: 11px; font-weight: 600; }
-.col-sum.valid { color: #67c23a; }
-.col-sum.invalid { color: #f56c6c; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
+.col-sum { font-size: var(--text-xs); font-weight: var(--font-semibold); }
+.col-sum.valid { color: var(--el-color-success); }
+.col-sum.invalid { color: var(--el-color-danger); }
 .empty-hint { margin-top: 40px; }
+.weight-matrix-scroll { overflow-x: auto; max-width: 100%; }
 </style>

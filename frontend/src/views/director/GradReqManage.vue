@@ -10,7 +10,7 @@
     </div>
 
     <el-empty v-if="!currentMajorId" description="请先选择专业" />
-    <div v-else>
+    <div v-else class="content-card">
       <el-collapse v-model="expandedReqs" v-loading="loading">
         <el-collapse-item v-for="req in requirements" :key="req.id" :name="req.id">
           <template #title>
@@ -167,11 +167,11 @@ async function handleDeleteIndicator(id) {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-.page-header h3 { margin: 0; font-size: 18px; }
+.page-container { padding: var(--space-5); }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
+.page-header h3 { margin: 0; font-size: var(--text-lg); }
 .req-title { display: flex; align-items: center; gap: 8px; }
-.req-name { font-weight: 500; }
+.req-name { font-weight: var(--font-medium); }
 .indicator-section { padding: 0 12px; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 500; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: var(--font-medium); }
 </style>

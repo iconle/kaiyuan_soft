@@ -4,30 +4,32 @@
       <h3>学生名单管理</h3>
     </div>
 
-    <div class="search-bar">
-      <el-input v-model="keyword" placeholder="搜索学号/姓名" clearable style="width: 200px"
-                @keyup.enter="loadStudents" @clear="loadStudents" />
-      <el-select v-model="filterMajorId" placeholder="专业筛选" clearable style="width: 180px; margin-left: 12px"
-                 @change="loadStudents">
-        <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
-      </el-select>
-      <el-button type="primary" @click="loadStudents" style="margin-left: 12px">查询</el-button>
+    <div class="content-card">
+      <div class="search-bar">
+        <el-input v-model="keyword" placeholder="搜索学号/姓名" clearable style="width: 200px"
+                  @keyup.enter="loadStudents" @clear="loadStudents" />
+        <el-select v-model="filterMajorId" placeholder="专业筛选" clearable style="width: 180px; margin-left: 12px"
+                   @change="loadStudents">
+          <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
+        </el-select>
+        <el-button type="primary" @click="loadStudents" style="margin-left: 12px">查询</el-button>
+      </div>
+
+      <el-table :data="students" border stripe v-loading="loading">
+        <el-table-column prop="studentNo" label="学号" width="140" />
+        <el-table-column prop="name" label="姓名" width="120" />
+        <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
+        <el-table-column label="专业" width="160">
+          <template #default="{ row }">
+            {{ getMajorName(row.majorId) }}
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination class="pagination" background layout="total, prev, pager, next"
+                     :total="total" :page-size="search.size" v-model:current-page="search.page"
+                     @current-change="loadStudents" />
     </div>
-
-    <el-table :data="students" border stripe v-loading="loading">
-      <el-table-column prop="studentNo" label="学号" width="140" />
-      <el-table-column prop="name" label="姓名" width="120" />
-      <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
-      <el-table-column label="专业" width="160">
-        <template #default="{ row }">
-          {{ getMajorName(row.majorId) }}
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <el-pagination class="pagination" background layout="total, prev, pager, next"
-                   :total="total" :page-size="search.size" v-model:current-page="search.page"
-                   @current-change="loadStudents" />
 
     <!-- 批量导入 -->
     <div class="import-section">
@@ -106,12 +108,12 @@ async function handleImport() {
 </script>
 
 <style scoped>
-.page-container { padding: 20px; }
-.page-header h3 { margin: 0 0 16px 0; font-size: 18px; }
-.search-bar { display: flex; align-items: center; margin-bottom: 16px; }
-.pagination { margin-top: 16px; justify-content: flex-end; }
-.import-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #ebeef5; }
+.page-container { padding: var(--space-5); }
+.page-header h3 { margin: 0 0 var(--space-4) 0; font-size: var(--text-lg); }
+.search-bar { display: flex; align-items: center; margin-bottom: var(--space-4); }
+.pagination { margin-top: var(--space-4); justify-content: flex-end; }
+.import-section { margin-top: 24px; padding-top: var(--space-5); border-top: 1px solid var(--border-default); }
 .import-section h4 { margin: 0 0 8px 0; }
-.import-hint { color: #909399; font-size: 13px; margin: 0 0 8px 0; }
-.import-result { margin-left: 12px; color: #67c23a; font-size: 13px; }
+.import-hint { color: var(--text-secondary); font-size: 13px; margin: 0 0 8px 0; }
+.import-result { margin-left: 12px; color: var(--el-color-success); font-size: 13px; }
 </style>

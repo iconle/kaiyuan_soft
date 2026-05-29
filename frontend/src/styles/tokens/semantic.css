@@ -1,0 +1,49 @@
+/* ============================================================
+   tokens/semantic.css — Ins风语义令牌
+   ============================================================ */
+:root {
+  /* === 表面色 === */
+  --surface-global:        var(--gray-0);
+  --surface-page:          var(--gray-0);
+  --surface-card:          #ffffff;
+  --surface-sidebar:       #ffffff;
+  --surface-sidebar-hover: var(--brand-50);
+  --surface-sidebar-active: var(--brand-50);
+  --surface-elevated:      #ffffff;
+
+  /* === 文字色 === */
+  --text-primary:        var(--gray-900);
+  --text-regular:        var(--gray-700);
+  --text-secondary:      var(--gray-500);
+  --text-placeholder:    var(--gray-400);
+  --text-inverse:        #ffffff;
+  --text-sidebar:        var(--gray-700);
+  --text-sidebar-active: var(--brand-700);
+
+  /* === 边框色 === */
+  --border-default:      var(--gray-200);
+  --border-light:        var(--gray-150);
+  --border-focus:        var(--brand-400);
+
+  /* === 交互色 === */
+  --action-primary:           var(--brand-500);
+  --action-primary-hover:     var(--brand-600);
+  --action-primary-active:    var(--brand-700);
+  --action-primary-disabled:  var(--brand-200);
+  --action-accent:            var(--peach-500);
+  --action-accent-hover:      var(--peach-600);
+
+  /* === 状态色 === */
+  --status-success:           var(--green-500);
+  --status-success-bg:        var(--green-50);
+  --status-success-border:    var(--green-100);
+  --status-warning:           var(--amber-500);
+  --status-warning-bg:        var(--amber-50);
+  --status-warning-border:    var(--amber-100);
+  --status-danger:            var(--red-500);
+  --status-danger-bg:         var(--red-50);
+  --status-danger-border:     var(--red-100);
+  --status-info:              var(--blue-500);
+  --status-info-bg:           var(--blue-50);
+  --status-info-border:       var(--blue-100);
+}

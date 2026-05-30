@@ -2,8 +2,11 @@ name: Deploy to Server
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [main, zql_69]  # 添加当前分支
+  pull_request:
+    branches: [main]           # 添加 PR 触发
+  workflow_dispatch:           # 手动触发
+  
 
 env:
   REGISTRY: ghcr.io

@@ -105,7 +105,10 @@ public class UserService {
         userMapper.updateById(user);
     }
 
-    public void disableUser(Long id) {
+    public void disableUser(Long id, Long currentUserId) {
+        if (id != null && id.equals(currentUserId)) {
+            throw new BizException("不能禁用当前登录用户");
+        }
         SysUser user = userMapper.selectById(id);
         if (user == null) {
             throw new BizException("用户不存在");

@@ -10,6 +10,7 @@ import com.obe.platform.modulea.mapper.SysRoleMapper;
 import com.obe.platform.modulea.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,7 +57,8 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> disable(@PathVariable Long id) {
-        userService.disableUser(id);
+        Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        userService.disableUser(id, currentUserId);
         return Result.ok();
     }
 

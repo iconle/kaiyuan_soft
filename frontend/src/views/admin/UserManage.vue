@@ -38,7 +38,8 @@
             <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
             <el-button size="small" @click="handleResetPwd(row)">重置密码</el-button>
             <el-button size="small" type="danger" @click="handleDisable(row)"
-                       :disabled="row.status === 0">禁用</el-button>
+                       :disabled="row.status === 0 || isCurrentUser(row)"
+                       :title="isCurrentUser(row) ? '不能禁用当前登录用户' : ''">禁用</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -80,11 +81,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listUsers, createUser, updateUser, disableUser, resetPassword, listRoles } from '../../api/admin'
 import { listColleges } from '../../api/admin'
+import { useUserStore } from '../../stores/user'
 
+const userStore = useUserStore()
 const loading = ref(false)
 const users = ref([])
 const roles = ref([])
@@ -100,6 +103,8 @@ const search = reactive({ page: 1, size: 10, keyword: '', roleId: null })
 const form = reactive({
   username: '', password: '', realName: '', roleId: null, collegeId: null
 })
+
+const currentUserId = computed(() => userStore.userId)
 
 const formRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -137,6 +142,10 @@ function getRoleName(roleId) {
   return roles.value.find(r => r.id === roleId)?.roleName || '-'
 }
 
+function isCurrentUser(row) {
+  return currentUserId.value != null && String(row.id) === String(currentUserId.value)
+}
+
 function showCreateDialog() {
   isEdit.value = false
   editingId.value = null
@@ -165,6 +174,10 @@ async function handleSubmit() {
 }
 
 async function handleDisable(row) {
+  if (isCurrentUser(row)) {
+    ElMessage.warning('不能禁用当前登录用户')
+    return
+  }
   await ElMessageBox.confirm(`确定禁用用户 ${row.realName}？`, '提示', { type: 'warning' })
   await disableUser(row.id)
   ElMessage.success('已禁用')

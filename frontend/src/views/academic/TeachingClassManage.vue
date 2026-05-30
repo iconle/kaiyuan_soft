@@ -15,17 +15,17 @@
         </el-select>
       </div>
 
-      <el-table :data="classes" border stripe v-loading="loading">
+      <el-table class="wide-class-table" :data="classes" border stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="60" />
-        <el-table-column prop="className" label="班级名称" width="180" />
-        <el-table-column prop="courseName" label="所属课程" width="160" />
-        <el-table-column prop="teacherName" label="主讲教师" width="110" />
-        <el-table-column label="学生管理" width="110">
+        <el-table-column prop="className" label="班级名称" min-width="260" class-name="nowrap-column" />
+        <el-table-column prop="courseName" label="所属课程" min-width="260" class-name="nowrap-column" />
+        <el-table-column prop="teacherName" label="主讲教师" min-width="130" class-name="nowrap-column" />
+        <el-table-column label="学生管理" min-width="120" align="center">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="manageStudents(row)">管理学生</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text @click="showDialog(row)">编辑</el-button>
             <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
@@ -266,4 +266,6 @@ async function handleRemoveStudent(row) {
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .filter-bar { margin-bottom: var(--space-4); display: flex; }
 .pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
+.wide-class-table { width: 100%; }
+:deep(.nowrap-column .cell) { white-space: nowrap; }
 </style>

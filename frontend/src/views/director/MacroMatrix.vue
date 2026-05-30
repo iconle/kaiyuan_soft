@@ -14,12 +14,13 @@
     <el-empty v-if="!currentMajorId" description="请先选择专业" />
     <div v-else v-loading="loading" class="content-card">
       <div class="matrix-wrapper" v-if="indicators.length > 0">
-        <el-table :data="matrixRows" border size="small" :cell-class-name="cellClassName"
-                  :style="{ minWidth: (140 + indicators.length * 130) + 'px' }"
+        <el-table class="matrix-table" :data="matrixRows" border size="small" :cell-class-name="cellClassName"
+                  show-summary :summary-method="getSummaries"
+                  :style="{ minWidth: `max(100%, ${180 + indicators.length * 150}px)` }"
                   @cell-mouse-enter="highlightRC" @cell-mouse-leave="clearHighlight">
-          <el-table-column prop="courseName" label="课程" width="140" />
+          <el-table-column prop="courseName" label="课程" min-width="180" class-name="nowrap-column" />
           <el-table-column v-for="ind in indicators" :key="ind.id" :label="`${ind.indicatorNo}`"
-                           width="130" align="center">
+                           min-width="150" align="center">
             <template #header>
               <div class="indicator-header">{{ ind.indicatorNo }}</div>
             </template>
@@ -32,16 +33,6 @@
             </template>
           </el-table-column>
         </el-table>
-
-        <!-- 列合计行 -->
-        <div class="sum-row">
-          <span class="sum-label">列合计</span>
-          <span v-for="ind in indicators" :key="ind.id" class="sum-cell"
-                :class="{ valid: columnSums[ind.id]?.valid, invalid: !columnSums[ind.id]?.valid }">
-            {{ columnSums[ind.id]?.sum?.toFixed(2) || '-' }}
-          </span>
-        </div>
-
       </div>
       <el-empty v-else description="请先配置毕业要求和指标点" />
     </div>
@@ -119,6 +110,14 @@ const allColumnsValid = computed(() => {
   return indicators.value.every(ind => columnSums.value[ind.id]?.valid)
 })
 
+function getSummaries({ columns }) {
+  return columns.map((column, index) => {
+    if (index === 0) return '列合计'
+    const ind = indicators.value[index - 1]
+    return ind ? (columnSums.value[ind.id]?.sum?.toFixed(2) || '-') : '-'
+  })
+}
+
 onMounted(async () => {
   const [majorRes, courseRes] = await Promise.all([listMajors({ page: 1, size: 100 }), listCourses({ page: 1, size: 200 })])
   majors.value = majorRes.data.records
@@ -182,11 +181,16 @@ function clearHighlight() {}
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .matrix-wrapper { overflow-x: auto; max-width: 100%; }
+.matrix-table { width: 100%; }
 .indicator-header { font-size: var(--text-xs); text-align: center; }
-.sum-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-default); white-space: nowrap; }
-.sum-label { width: 140px; font-weight: var(--font-semibold); font-size: 13px; text-align: center; flex-shrink: 0; }
-.sum-cell { width: 130px; text-align: center; font-size: 13px; font-weight: var(--font-medium); flex-shrink: 0; }
-.sum-cell.valid { color: var(--el-color-success); }
-.sum-cell.invalid { color: var(--el-color-danger); }
 .hint { color: var(--text-secondary); font-size: 13px; }
+:deep(.nowrap-column .cell) { white-space: nowrap; }
+:deep(.el-table__footer-wrapper td) {
+  color: var(--el-color-success);
+  font-weight: var(--font-medium);
+  text-align: center;
+}
+:deep(.el-table__footer-wrapper td:first-child) {
+  color: var(--text-primary);
+}
 </style>

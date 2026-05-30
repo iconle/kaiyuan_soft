@@ -1,1 +1,0 @@
-import e from"./request-BZO9GosG.js";function r(s){return e.get("/api/courses",{params:s})}function u(s){return e.delete(`/api/courses/${s}`)}function n(s){return e.get(`/api/courses/${s}/classes`)}function i(s){return e.get("/api/students",{params:s})}export{r as a,i as b,u as d,n as l};

@@ -19,7 +19,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="lockedAt" label="锁定时间" width="180" />
+            <el-table-column prop="lockedAt" label="锁定时间" width="220" class-name="time-column" />
             <el-table-column label="操作" width="140">
               <template #default="{ row }">
                 <el-button v-if="row.status === 'LOCKED' && isAdmin" size="small" type="danger" @click="handleDirectUnlock(row)">
@@ -52,7 +52,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createdAt" label="申请时间" width="180" />
+            <el-table-column prop="createdAt" label="申请时间" width="220" class-name="time-column" />
             <el-table-column label="操作" width="180">
               <template #default="{ row }">
                 <!-- Academic: review PENDING requests -->
@@ -182,4 +182,5 @@ async function handleReject(row) {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+:deep(.time-column .cell) { white-space: nowrap; }
 </style>

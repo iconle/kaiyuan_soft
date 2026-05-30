@@ -26,8 +26,8 @@
         <el-table-column prop="id" label="ID" width="55" />
         <el-table-column prop="studentNo" label="学号" width="130" />
         <el-table-column prop="name" label="姓名" width="110" />
-        <el-table-column prop="collegeName" label="学院" width="140" />
-        <el-table-column prop="majorName" label="专业" width="160" />
+        <el-table-column prop="collegeName" label="学院" width="220" class-name="nowrap-column" />
+        <el-table-column prop="majorName" label="专业" width="240" class-name="nowrap-column" />
         <el-table-column prop="enrollmentYear" label="入学年份" width="85" />
         <el-table-column prop="adminClassName" label="行政班级" min-width="160" />
         <el-table-column label="操作" width="140">
@@ -188,4 +188,8 @@ async function handleDelete(row) {
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .filter-bar { margin-bottom: var(--space-4); display: flex; align-items: center; flex-wrap: wrap; gap: 8px 0; }
 .pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
+
+:deep(.nowrap-column .cell) {
+  white-space: nowrap;
+}
 </style>

@@ -19,7 +19,7 @@
       <el-table :data="users" border stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="140" />
-        <el-table-column prop="realName" label="姓名" width="120" />
+        <el-table-column prop="realName" label="姓名" width="160" class-name="name-column" />
         <el-table-column label="角色" width="120">
           <template #default="{ row }">
             <el-tag>{{ getRoleName(row.roleId) }}</el-tag>
@@ -204,5 +204,11 @@ async function handleResetPwd(row) {
 .pagination {
   margin-top: var(--space-4);
   justify-content: flex-end;
+}
+
+:deep(.name-column .cell) {
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 </style>

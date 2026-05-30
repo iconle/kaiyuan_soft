@@ -14,15 +14,13 @@
       </div>
 
       <div v-else class="weight-matrix-scroll">
-      <el-table :data="weightMatrix" border size="small" v-loading="loading"
-        :style="{ minWidth: (120 + supportedIndicators.length * 160) + 'px' }">
-      <el-table-column prop="objNo" label="课程目标" width="120" fixed />
-      <el-table-column v-for="ind in supportedIndicators" :key="ind.id" :label="ind.indicatorNo" width="160" align="center">
+      <el-table class="weight-matrix-table" :data="weightMatrix" border size="small" v-loading="loading"
+        show-summary :summary-method="getSummaries"
+        :style="{ minWidth: `max(100%, ${160 + supportedIndicators.length * 180}px)` }">
+      <el-table-column prop="objNo" label="课程目标" min-width="160" fixed />
+      <el-table-column v-for="ind in supportedIndicators" :key="ind.id" :label="ind.indicatorNo" min-width="180" align="center">
         <template #header>
           <div>{{ ind.indicatorNo }}</div>
-          <div class="col-sum" :class="{ valid: colSums[ind.id]?.valid, invalid: !colSums[ind.id]?.valid }">
-            合计: {{ colSums[ind.id]?.sum?.toFixed(2) || '0.00' }}
-          </div>
         </template>
         <template #default="{ row }">
           <el-input-number v-model="row.weights[ind.id]" :min="0" :max="1" :step="0.1" :precision="4"
@@ -63,6 +61,14 @@ const allValid = computed(() => {
   if (supportedIndicators.value.length === 0) return false
   return Object.values(colSums.value).every(s => s.valid)
 })
+
+function getSummaries({ columns }) {
+  return columns.map((column, index) => {
+    if (index === 0) return '列合计'
+    const ind = supportedIndicators.value[index - 1]
+    return ind ? (colSums.value[ind.id]?.sum?.toFixed(2) || '0.00') : '-'
+  })
+}
 
 onMounted(() => { if (classId.value) loadData() })
 
@@ -116,4 +122,13 @@ async function handleSave() {
 .col-sum.invalid { color: var(--el-color-danger); }
 .empty-hint { margin-top: 40px; }
 .weight-matrix-scroll { overflow-x: auto; max-width: 100%; }
+.weight-matrix-table { width: 100%; }
+:deep(.el-table__footer-wrapper td) {
+  color: var(--el-color-success);
+  font-weight: var(--font-medium);
+  text-align: center;
+}
+:deep(.el-table__footer-wrapper td:first-child) {
+  color: var(--text-primary);
+}
 </style>

@@ -1,0 +1,125 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BACKEND: ${{ github.repository }}-backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      # ----- 后端：Maven 打包 -----
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Maven 打包
+        run: |
+          cd backend
+          mvn clean package -DskipTests
+
+      - name: 准备后端部署文件
+        run: |
+          mkdir -p ./deploy/backend
+          cp backend/target/*.jar ./deploy/backend/app.jar
+          cp backend/Dockerfile ./deploy/backend/ 2>/dev/null || echo "Dockerfile not found, will create"
+
+      - name: 创建后端 Dockerfile（如果没有）
+        run: |
+          mkdir -p ./deploy/backend
+          cat > ./deploy/backend/Dockerfile << 'EOF'
+          FROM openjdk:17.0.2
+          ENV TZ=Asia/Shanghai
+          RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+          COPY app.jar /app.jar
+          ENTRYPOINT ["java", "-jar", "/app.jar"]
+          EOF
+
+      # ----- 前端：npm 构建 -----
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: npm 构建前端
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: 准备前端部署文件
+        run: |
+          mkdir -p ./deploy/frontend
+          cp -r frontend/dist/* ./deploy/frontend/
+
+      # ----- 准备 docker-compose 和 nginx 配置 -----
+      - name: 准备 docker-compose 文件
+        run: |
+          cp docker-compose.yml ./deploy/ 2>/dev/null || echo "docker-compose.yml not found"
+
+      - name: 准备 nginx 配置
+        run: |
+          mkdir -p ./deploy/nginx
+          cp nginx/nginx.conf ./deploy/nginx/ 2>/dev/null || echo "nginx.conf will be created on server"
+
+      # ----- 构建并推送 Docker 镜像 -----
+      - name: 登录到 GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: 构建并推送后端镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: ./deploy/backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:${{ github.sha }}
+
+      # ----- 部署到服务器 -----
+      - name: 上传部署文件到服务器
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./deploy/*"
+          target: "/works/course-oss/"
+          strip_components: 1
+
+      - name: SSH 远程部署
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 切换到 root 用户执行 Docker 命令
+            sudo su - << 'EOF'
+            cd /works/course-oss
+            
+            # 拉取最新镜像
+            docker compose pull
+            
+            # 重新创建并启动容器
+            docker compose up -d --remove-orphans
+            
+            # 清理旧镜像
+            docker image prune -f
+            
+            # 查看状态
+            docker compose ps
+            EOF

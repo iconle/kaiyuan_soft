@@ -1,4 +1,22 @@
+# 依赖
 node_modules/
-frontend/node_modules/
-backend/target/
-*.lst
+
+# 锁定文件
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 构建产物
+dist/
+dist-ssr/
+*.local
+
+# 日志
+logs
+*.log
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+*.swo

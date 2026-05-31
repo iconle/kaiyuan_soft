@@ -53,13 +53,9 @@ public class UnlockRequestService {
         return req;
     }
 
-    /** List requests filtered by role: ADMIN sees APPROVED+, ACADEMIC sees all */
+    /** List requests for ACADEMIC review — shows all requests */
     public List<ScoreUnlockRequest> listRequestsForRole(String roleCode) {
         var wrapper = new LambdaQueryWrapper<ScoreUnlockRequest>();
-        if ("ADMIN".equals(roleCode)) {
-            // Admin should not see PENDING requests (those are for academic review)
-            wrapper.ne(ScoreUnlockRequest::getStatus, "PENDING");
-        }
         wrapper.orderByDesc(ScoreUnlockRequest::getCreatedAt);
         List<ScoreUnlockRequest> list = requestMapper.selectList(wrapper);
         for (ScoreUnlockRequest r : list) {
@@ -100,7 +96,7 @@ public class UnlockRequestService {
         requestMapper.deleteById(requestId);
     }
 
-    /** Academic: agree that correction is needed (first-level review) → passes to admin */
+    /** Academic: agree that correction is needed */
     @Transactional
     public void approveRequest(Long requestId, Long reviewerId) {
         ScoreUnlockRequest req = requestMapper.selectById(requestId);
@@ -113,12 +109,12 @@ public class UnlockRequestService {
         requestMapper.updateById(req);
     }
 
-    /** Admin: final approval — actually unlock the sheet */
+    /** Academic: final approval — actually unlock the sheet */
     @Transactional
-    public void unlockApprovedRequest(Long requestId, Long adminId) {
+    public void unlockApprovedRequest(Long requestId, Long reviewerId) {
         ScoreUnlockRequest req = requestMapper.selectById(requestId);
         if (req == null) throw new BizException("勘误申请不存在");
-        if (!"APPROVED".equals(req.getStatus())) throw new BizException("该申请尚未通过教务审核");
+        if (!"APPROVED".equals(req.getStatus())) throw new BizException("该申请尚未通过审核");
 
         ScoreSheet sheet = scoreSheetMapper.selectById(req.getSheetId());
         if (sheet == null) throw new BizException("成绩单不存在");
@@ -128,7 +124,7 @@ public class UnlockRequestService {
 
         try {
             req.setStatus("UNLOCKED");
-            req.setReviewerId(adminId);
+            req.setReviewerId(reviewerId);
             req.setReviewedAt(LocalDateTime.now());
             requestMapper.updateById(req);
         } catch (Exception e) {
@@ -136,15 +132,11 @@ public class UnlockRequestService {
         }
     }
 
-    /** Academic/Admin: reject request at any stage */
+    /** Academic: reject request at any stage */
     @Transactional
     public void rejectRequest(Long requestId, Long reviewerId, String roleCode) {
         ScoreUnlockRequest req = requestMapper.selectById(requestId);
         if (req == null) throw new BizException("勘误申请不存在");
-        if ("PENDING".equals(req.getStatus()) && "ADMIN".equals(roleCode)) {
-            // Admin can only reject APPROVED requests, not PENDING ones
-            throw new BizException("该申请尚未经教务管理员审核，请等待教务审批");
-        }
         if (!"PENDING".equals(req.getStatus()) && !"APPROVED".equals(req.getStatus())) {
             throw new BizException("该申请已处理");
         }

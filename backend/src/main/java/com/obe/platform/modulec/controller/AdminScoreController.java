@@ -37,16 +37,16 @@ public class AdminScoreController {
         return (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    /** Emergency direct unlock — bypasses work order flow (ADMIN only) */
+    /** Emergency direct unlock — bypasses work order flow (ACADEMIC only) */
     @PostMapping("/scores/{sheetId}/unlock")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Void> directUnlock(@PathVariable Long sheetId) {
         courseCalcService.unlockSheet(sheetId);
         return Result.ok();
     }
 
     @GetMapping("/scores")
-    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<List<Map<String, Object>>> listSheets() {
         List<ScoreSheet> sheets = scoreSheetMapper.selectList(
                 new LambdaQueryWrapper<ScoreSheet>().orderByDesc(ScoreSheet::getId));
@@ -66,7 +66,7 @@ public class AdminScoreController {
     }
 
     @GetMapping("/unlock-requests")
-    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<List<ScoreUnlockRequest>> listRequests() {
         return Result.ok(unlockRequestService.listRequestsForRole(currentRoleCode()));
     }
@@ -79,17 +79,17 @@ public class AdminScoreController {
         return Result.ok();
     }
 
-    /** Admin: final review — unlock the sheet */
+    /** Academic: final review — unlock the sheet */
     @PostMapping("/unlock-requests/{id}/unlock")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Void> unlockApprovedRequest(@PathVariable Long id) {
         unlockRequestService.unlockApprovedRequest(id, currentUserId());
         return Result.ok();
     }
 
-    /** Academic/Admin: reject request */
+    /** Academic: reject request */
     @PostMapping("/unlock-requests/{id}/reject")
-    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Void> rejectRequest(@PathVariable Long id) {
         unlockRequestService.rejectRequest(id, currentUserId(), currentRoleCode());
         return Result.ok();

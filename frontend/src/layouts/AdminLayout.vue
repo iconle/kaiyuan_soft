@@ -7,20 +7,18 @@
         <el-sub-menu v-if="isAdmin" index="admin">
           <template #title><el-icon><Setting /></el-icon><span>系统管理</span></template>
           <el-menu-item index="/admin/users"><el-icon><User /></el-icon>用户管理</el-menu-item>
-          <el-menu-item index="/admin/students"><el-icon><UserFilled /></el-icon>学生管理</el-menu-item>
-          <el-menu-item index="/admin/classes"><el-icon><OfficeBuilding /></el-icon>班级管理</el-menu-item>
           <el-menu-item index="/admin/dict"><el-icon><Collection /></el-icon>数据字典</el-menu-item>
-          <el-menu-item index="/admin/score-unlock"><el-icon><Unlock /></el-icon>成绩解锁</el-menu-item>
         </el-sub-menu>
         <!-- 教务管理员 -->
         <el-sub-menu v-if="isAcademic" index="academic">
           <template #title><el-icon><School /></el-icon><span>教务管理</span></template>
-          <el-menu-item v-if="isAcademic" index="/academic/courses"><el-icon><Notebook /></el-icon>课程体系</el-menu-item>
-          <el-menu-item v-if="isAcademic" index="/admin/students"><el-icon><UserFilled /></el-icon>学生管理</el-menu-item>
-          <el-menu-item v-if="isAcademic" index="/academic/teaching-classes"><el-icon><Tickets /></el-icon>教学班级</el-menu-item>
+          <el-menu-item index="/academic/courses"><el-icon><Notebook /></el-icon>课程体系</el-menu-item>
+          <el-menu-item index="/academic/students"><el-icon><UserFilled /></el-icon>学生管理</el-menu-item>
+          <el-menu-item index="/academic/teaching-classes"><el-icon><Tickets /></el-icon>教学班级</el-menu-item>
+          <el-menu-item index="/academic/classes"><el-icon><OfficeBuilding /></el-icon>班级管理</el-menu-item>
+          <el-menu-item index="/academic/score-unlock"><el-icon><Unlock /></el-icon>成绩解锁</el-menu-item>
           <el-menu-item index="/academic/dashboard"><el-icon><DataBoard /></el-icon>宏观看板</el-menu-item>
-          <el-menu-item v-if="isAcademic" index="/director/global-compute"><el-icon><TrendCharts /></el-icon>专业级计算</el-menu-item>
-          <el-menu-item v-if="isAcademic" index="/admin/score-unlock"><el-icon><Unlock /></el-icon>成绩解锁</el-menu-item>
+          <el-menu-item index="/director/global-compute"><el-icon><TrendCharts /></el-icon>专业级计算</el-menu-item>
         </el-sub-menu>
         <!-- 专业负责人 -->
         <el-sub-menu v-if="isDirector" index="director">

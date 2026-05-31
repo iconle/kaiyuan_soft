@@ -110,20 +110,20 @@ public class DictController {
     }
 
     @PostMapping("/admin-classes")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
     public Result<SysAdminClass> createAdminClass(@RequestBody SysAdminClass ac) {
         return Result.ok(dictService.createAdminClass(ac));
     }
 
     @PutMapping("/admin-classes/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
     public Result<Void> updateAdminClass(@PathVariable Long id, @RequestBody SysAdminClass ac) {
         dictService.updateAdminClass(id, ac);
         return Result.ok();
     }
 
     @DeleteMapping("/admin-classes/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
     public Result<Void> deleteAdminClass(@PathVariable Long id) {
         dictService.deleteAdminClass(id);
         return Result.ok();
@@ -136,14 +136,14 @@ public class DictController {
     }
 
     @PostMapping("/admin-classes/{classId}/students/{studentId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
     public Result<Void> addAdminClassStudent(@PathVariable Long classId, @PathVariable Long studentId) {
         dictService.addAdminClassStudent(classId, studentId);
         return Result.ok();
     }
 
     @DeleteMapping("/admin-classes/{classId}/students/{studentId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
     public Result<Void> removeAdminClassStudent(@PathVariable Long classId, @PathVariable Long studentId) {
         dictService.removeAdminClassStudent(classId, studentId);
         return Result.ok();

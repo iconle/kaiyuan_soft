@@ -19,28 +19,10 @@ const routes = [
         meta: { roles: ['ADMIN'] }
       },
       {
-        path: 'admin/students',
-        name: 'StudentManage',
-        component: () => import('../views/admin/StudentManage.vue'),
-        meta: { roles: ['ADMIN', 'ACADEMIC'] }
-      },
-      {
         path: 'admin/dict',
         name: 'DictManage',
         component: () => import('../views/admin/DictManage.vue'),
         meta: { roles: ['ADMIN'] }
-      },
-      {
-        path: 'admin/classes',
-        name: 'ClassManage',
-        component: () => import('../views/admin/ClassManage.vue'),
-        meta: { roles: ['ADMIN'] }
-      },
-      {
-        path: 'admin/score-unlock',
-        name: 'ScoreUnlock',
-        component: () => import('../views/admin/ScoreUnlock.vue'),
-        meta: { roles: ['ADMIN', 'ACADEMIC'] }
       },
       // 教务管理员
       {
@@ -50,9 +32,27 @@ const routes = [
         meta: { roles: ['ACADEMIC'] }
       },
       {
+        path: 'academic/students',
+        name: 'AcademicStudentManage',
+        component: () => import('../views/admin/StudentManage.vue'),
+        meta: { roles: ['ACADEMIC'] }
+      },
+      {
         path: 'academic/teaching-classes',
         name: 'TeachingClassManage',
         component: () => import('../views/academic/TeachingClassManage.vue'),
+        meta: { roles: ['ACADEMIC'] }
+      },
+      {
+        path: 'academic/classes',
+        name: 'AcademicClassManage',
+        component: () => import('../views/admin/ClassManage.vue'),
+        meta: { roles: ['ACADEMIC'] }
+      },
+      {
+        path: 'academic/score-unlock',
+        name: 'AcademicScoreUnlock',
+        component: () => import('../views/admin/ScoreUnlock.vue'),
         meta: { roles: ['ACADEMIC'] }
       },
       {

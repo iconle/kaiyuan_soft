@@ -36,13 +36,13 @@ public class StudentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Student> create(@RequestBody Student student) {
         return Result.ok(studentService.createStudent(student));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Void> update(@PathVariable Long id, @RequestBody Student student) {
         student.setId(id);
         studentService.updateStudent(student);
@@ -50,7 +50,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Void> delete(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return Result.ok();

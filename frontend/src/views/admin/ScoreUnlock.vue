@@ -22,10 +22,9 @@
             <el-table-column prop="lockedAt" label="锁定时间" width="220" class-name="time-column" />
             <el-table-column label="操作" width="140">
               <template #default="{ row }">
-                <el-button v-if="row.status === 'LOCKED' && isAdmin" size="small" type="danger" @click="handleDirectUnlock(row)">
+                <el-button v-if="row.status === 'LOCKED'" size="small" type="danger" @click="handleDirectUnlock(row)">
                   紧急解锁
                 </el-button>
-                <span v-else-if="row.status === 'LOCKED'" style="color:var(--text-secondary);font-size:12px">需管理员操作</span>
                 <span v-else style="color:var(--text-secondary)">-</span>
               </template>
             </el-table-column>
@@ -55,21 +54,17 @@
             <el-table-column prop="createdAt" label="申请时间" width="220" class-name="time-column" />
             <el-table-column label="操作" width="180">
               <template #default="{ row }">
-                <!-- Academic: review PENDING requests -->
-                <template v-if="isAcademic && row.status === 'PENDING'">
+                <!-- PENDING: review requests -->
+                <template v-if="row.status === 'PENDING'">
                   <el-button size="small" type="success" @click="handleApprove(row)">同意</el-button>
                   <el-button size="small" type="danger" @click="handleReject(row)">拒绝</el-button>
                 </template>
-                <!-- Admin: final decision on APPROVED requests -->
-                <template v-else-if="isAdmin && row.status === 'APPROVED'">
+                <!-- APPROVED: final unlock -->
+                <template v-else-if="row.status === 'APPROVED'">
                   <el-button size="small" type="success" @click="handleUnlock(row)">解锁</el-button>
                   <el-button size="small" type="danger" @click="handleReject(row)">拒绝</el-button>
                 </template>
-                <!-- PENDING visible to admin but not actionable -->
-                <template v-else-if="isAdmin && row.status === 'PENDING'">
-                  <el-tag size="small" type="info">等待教务审核</el-tag>
-                </template>
-                <!-- UNLOCKED: admin has unlocked -->
+                <!-- UNLOCKED -->
                 <template v-else-if="row.status === 'UNLOCKED'">
                   <el-tag size="small" type="success">已解锁</el-tag>
                 </template>
@@ -89,13 +84,6 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 import { unlockScoreSheet } from '../../api/admin'
-import { useUserStore } from '../../stores/user'
-
-const userStore = useUserStore()
-const roleCode = computed(() => userStore.roleCode || localStorage.getItem('roleCode') || '')
-const isAdmin = computed(() => roleCode.value === 'ADMIN')
-const isAcademic = computed(() => roleCode.value === 'ACADEMIC')
-
 const activeTab = ref('sheets')
 const loadingSheets = ref(false)
 const loadingRequests = ref(false)
@@ -142,12 +130,12 @@ async function handleDirectUnlock(row) {
 
 async function handleApprove(row) {
   await ElMessageBox.confirm(
-    `同意「${row.requesterName}」的勘误申请？同意后将转交管理员最终审批解锁。`,
-    '教务审核', { type: 'warning' }
+    `同意「${row.requesterName}」的勘误申请？同意后可进行解锁操作。`,
+    '审核确认', { type: 'warning' }
   )
   try {
     await request.post(`/api/admin/unlock-requests/${row.id}/approve`)
-    ElMessage.success('已同意，已转交管理员审批')
+    ElMessage.success('已同意，可进行解锁操作')
     loadRequests()
   } catch { ElMessage.error('操作失败') }
 }
@@ -155,7 +143,7 @@ async function handleApprove(row) {
 async function handleUnlock(row) {
   await ElMessageBox.confirm(
     `确认解锁「${row.requesterName}」的勘误申请？解锁后教师可重新修改成绩。`,
-    '管理员解锁', { type: 'warning' }
+    '解锁确认', { type: 'warning' }
   )
   try {
     await request.post(`/api/admin/unlock-requests/${row.id}/unlock`)

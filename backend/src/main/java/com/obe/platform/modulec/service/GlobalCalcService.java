@@ -85,7 +85,8 @@ public class GlobalCalcService {
                 }
                 courseStatuses.add(new DashboardData.CourseStatus(
                         course.getId(), course.getName(), tc.getId(),
-                        tc.getClassName(), status, teacherName, semesterName));
+                        tc.getClassName(), status, teacherName, semesterName,
+                        sheet != null ? sheet.getLockedAt() : null));
             }
         }
 
@@ -237,7 +238,8 @@ public class GlobalCalcService {
     public record DashboardData(boolean allReady, int lockedCount, int totalCount,
                                  List<Long> incompleteClassIds, List<CourseStatus> courseStatuses) {
         public record CourseStatus(Long courseId, String courseName, Long classId,
-                                    String className, String status, String teacherName, String semesterName) {}
+                                    String className, String status, String teacherName,
+                                    String semesterName, LocalDateTime lockedAt) {}
     }
 
     public record MajorCalcResult(Map<Long, BigDecimal> achievements, LocalDateTime calcTime) {}

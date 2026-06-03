@@ -14,12 +14,28 @@
     <div class="content-card">
       <el-table :data="courses" border stripe v-loading="loading">
         <el-table-column prop="code" label="课程代码" width="110" />
-        <el-table-column prop="name" label="课程名称" min-width="160" />
+        <el-table-column
+          prop="name"
+          label="课程名称"
+          min-width="240"
+          show-overflow-tooltip
+        />
         <el-table-column prop="credit" label="学分" width="70" />
         <el-table-column prop="hoursTheory" label="理论学时" width="85" />
         <el-table-column prop="hoursExperiment" label="实验学时" width="85" />
-        <el-table-column prop="category" label="类别" width="75" />
-        <el-table-column label="操作" width="230">
+        <el-table-column
+          prop="category"
+          label="类别"
+          width="110"
+          align="center"
+          class-name="course-category-column"
+        />
+        <el-table-column
+          label="操作"
+          width="240"
+          align="center"
+          class-name="course-action-column"
+        >
           <template #default="{ row }">
             <el-button size="small" @click="showCourseDialog(row)">编辑</el-button>
             <el-button size="small" @click="showClasses(row)">教学班级</el-button>
@@ -150,8 +166,63 @@ async function viewClassStudents(cls) {
 </script>
 
 <style scoped>
-.page-container { padding: var(--space-5); }
-.page-header { display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-4); flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: var(--text-lg); }
-.pagination { margin-top: var(--space-4); justify-content: flex-end; }
+.page-container {
+  padding: var(--space-6);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.page-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-left: 14px;
+  position: relative;
+}
+
+.page-header h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 4px;
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--brand-400), var(--peach-400));
+}
+
+:deep(.course-category-column .cell) {
+  white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.course-action-column .cell) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+:deep(.el-table .cell) {
+  line-height: 1.5;
+}
+
+:deep(.el-table tbody td) {
+  padding: 12px 10px !important;
+}
+
+.pagination {
+  margin-top: var(--space-4);
+  justify-content: flex-end;
+}
 </style>

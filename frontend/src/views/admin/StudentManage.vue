@@ -30,10 +30,31 @@
         <el-table-column prop="majorName" label="专业" width="240" class-name="nowrap-column" />
         <el-table-column prop="enrollmentYear" label="入学年份" width="85" />
         <el-table-column prop="adminClassName" label="行政班级" min-width="160" />
-        <el-table-column label="操作" width="140">
+        <el-table-column
+          label="操作"
+          width="170"
+          align="center"
+          class-name="operation-column"
+        >
           <template #default="{ row }">
-            <el-button size="small" text @click="showDialog(row)">编辑</el-button>
-            <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="operation-actions">
+              <el-button
+                size="small"
+                class="action-btn edit-btn"
+                @click="showDialog(row)"
+              >
+                编辑
+              </el-button>
+
+              <el-button
+                size="small"
+                type="danger"
+                class="action-btn delete-btn"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -191,5 +212,53 @@ async function handleDelete(row) {
 
 :deep(.nowrap-column .cell) {
   white-space: nowrap;
+}
+:deep(.operation-column .cell) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.action-btn {
+  height: 25px;
+  padding: 0 18px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+:deep(.action-btn.el-button) {
+  margin-left: 0;
+}
+
+.edit-btn {
+  color: #7e57c2;
+  border-color: #d8c9f3;
+  background-color: #f6f0ff;
+}
+
+.edit-btn:hover {
+  color: #6f42c1;
+  border-color: #b79dea;
+  background-color: #efe6ff;
+}
+.delete-btn {
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.delete-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
 }
 </style>

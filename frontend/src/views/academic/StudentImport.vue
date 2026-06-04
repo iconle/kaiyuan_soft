@@ -5,14 +5,42 @@
     </div>
 
     <div class="content-card">
-      <div class="search-bar">
-        <el-input v-model="keyword" placeholder="搜索学号/姓名" clearable style="width: 200px"
-                  @keyup.enter="loadStudents" @clear="loadStudents" />
-        <el-select v-model="filterMajorId" placeholder="专业筛选" clearable style="width: 180px; margin-left: 12px"
-                   @change="loadStudents">
-          <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
-        </el-select>
-        <el-button type="primary" @click="loadStudents" style="margin-left: 12px">查询</el-button>
+      <div class="filter-panel">
+        <div class="filter-row">
+          <el-select
+            v-model="filterMajorId"
+            placeholder="按专业筛选"
+            clearable
+            class="filter-control"
+            @change="loadStudents"
+          >
+            <el-option
+              v-for="m in majors"
+              :key="m.id"
+              :label="m.name"
+              :value="m.id"
+            />
+          </el-select>
+
+          <div class="filter-break"></div>
+
+          <el-input
+            v-model="keyword"
+            placeholder="搜索学号/姓名"
+            clearable
+            class="filter-control search-input"
+            @keyup.enter="loadStudents"
+            @clear="loadStudents"
+          />
+
+          <el-button
+            type="primary"
+            class="search-button"
+            @click="loadStudents"
+          >
+            查询
+          </el-button>
+        </div>
       </div>
 
       <el-table :data="students" border stripe v-loading="loading">
@@ -110,7 +138,86 @@ async function handleImport() {
 <style scoped>
 .page-container { padding: var(--space-5); }
 .page-header h3 { margin: 0 0 var(--space-4) 0; font-size: var(--text-lg); }
-.search-bar { display: flex; align-items: center; margin-bottom: var(--space-4); }
+.content-card {
+  padding: 20px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
+}
+
+.filter-panel {
+  margin-bottom: var(--space-4);
+  padding: 18px 20px;
+  border: 1px solid #eef1f6;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 16px;
+}
+
+.filter-control {
+  width: 240px;
+}
+
+.search-input {
+  width: 240px;
+}
+
+.filter-break {
+  flex-basis: 100%;
+  height: 0;
+}
+
+.search-button {
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-weight: 500;
+}
+
+/* 美化 Element Plus 输入框和下拉框内部样式 */
+:deep(.filter-control .el-input__wrapper),
+:deep(.filter-control .el-select__wrapper) {
+  min-height: 42px;
+  border-radius: 14px;
+  padding: 0 14px;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px #e5e7eb inset;
+  transition: all 0.2s ease;
+}
+
+:deep(.filter-control .el-input__wrapper:hover),
+:deep(.filter-control .el-select__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--el-color-primary-light-5) inset;
+}
+
+:deep(.filter-control .el-input__wrapper.is-focus),
+:deep(.filter-control .el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+}
+
+:deep(.filter-control .el-input__inner) {
+  font-size: 14px;
+  color: #303133;
+}
+
+:deep(.filter-control .el-input__inner::placeholder) {
+  color: #a8abb2;
+}
+
+/* 窄屏时自动铺满 */
+@media (max-width: 768px) {
+  .filter-control,
+  .search-input,
+  .search-button {
+    width: 100%;
+  }
+}
 .pagination { margin-top: var(--space-4); justify-content: flex-end; }
 .import-section { margin-top: 24px; padding-top: var(--space-5); border-top: 1px solid var(--border-default); }
 .import-section h4 { margin: 0 0 8px 0; }

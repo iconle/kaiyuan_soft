@@ -37,8 +37,20 @@
           class-name="course-action-column"
         >
           <template #default="{ row }">
-            <el-button size="small" @click="showCourseDialog(row)">编辑</el-button>
-            <el-button size="small" @click="showClasses(row)">教学班级</el-button>
+            <el-button
+              size="small"
+              class="edit-course-btn"
+              @click="showCourseDialog(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              size="small"
+              class="class-manage-btn"
+              @click="showClasses(row)"
+            >
+              教学班级
+            </el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -62,14 +74,36 @@
       </el-form>
       <template #footer><el-button @click="courseDialogVisible = false">取消</el-button><el-button type="primary" @click="handleCourseSubmit">确定</el-button></template>
     </el-dialog>
-
     <!-- Class viewer dialog (read-only) -->
-    <el-dialog v-model="classDialogVisible" :title="`教学班级 - ${currentCourse?.name || ''}`" width="700px">
-      <el-table :data="classList" border size="small">
-        <el-table-column prop="className" label="班级名称" width="180" />
-        <el-table-column prop="teacherName" label="主讲教师" width="120" />
-        <el-table-column label="学生" width="100">
-          <template #default="{ row }"><el-button size="small" text type="primary" @click="viewClassStudents(row)">查看学生</el-button></template>
+    <el-dialog
+      v-model="classDialogVisible"
+      class="teaching-class-dialog"
+      :title="`教学班级 - ${currentCourse?.name || ''}`"
+      width="620px"
+    >
+      <div class="class-dialog-tip">
+        当前课程已关联的教学班级如下，可点击“查看学生”查看班级学生名单。
+      </div>
+
+      <el-table
+        :data="classList"
+        class="class-list-table"
+        border
+        size="default"
+        empty-text="暂无教学班级"
+      >
+        <el-table-column prop="className" label="班级名称" min-width="220" />
+        <el-table-column prop="teacherName" label="主讲教师" min-width="150" align="center" />
+        <el-table-column label="学生" width="130" align="center">
+          <template #default="{ row }">
+            <el-button
+              size="small"
+              class="student-view-btn"
+              @click="viewClassStudents(row)"
+            >
+              查看学生
+            </el-button>
+          </template>
         </el-table-column>
       </el-table>
     </el-dialog>
@@ -224,5 +258,112 @@ async function viewClassStudents(cls) {
 .pagination {
   margin-top: var(--space-4);
   justify-content: flex-end;
+}
+.class-manage-btn {
+  color: #d97706b1 !important;
+  background: rgba(245, 158, 11, 0.10) !important;
+  border-color: rgba(245, 158, 11, 0.28) !important;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.class-manage-btn:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #fbbf24, #f0ac35cc) !important;
+  border-color: #ecc47f !important;
+  box-shadow: 0 6px 14px rgba(245, 158, 11, 0.24);
+}
+.edit-course-btn {
+  color: #806bbf !important;
+  background: rgba(128, 107, 191, 0.10) !important;
+  border-color: rgba(128, 107, 191, 0.24) !important;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.edit-course-btn:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  border-color: #806bbf !important;
+  box-shadow: 0 6px 14px rgba(128, 107, 191, 0.24);
+}
+:deep(.teaching-class-dialog) {
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px rgba(31, 41, 55, 0.16),
+    0 10px 28px rgba(128, 107, 191, 0.14);
+}
+
+:deep(.teaching-class-dialog .el-dialog__header) {
+  margin: 0;
+  padding: 24px 28px 14px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(158, 137, 205, 0.12), transparent 32%),
+    linear-gradient(135deg, #ffffff 0%, #faf8ff 100%);
+}
+
+:deep(.teaching-class-dialog .el-dialog__title) {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2f2f3a;
+}
+
+:deep(.teaching-class-dialog .el-dialog__headerbtn) {
+  top: 22px;
+  right: 24px;
+}
+
+:deep(.teaching-class-dialog .el-dialog__close) {
+  color: #9e89cd;
+  font-size: 20px;
+}
+
+:deep(.teaching-class-dialog .el-dialog__body) {
+  padding: 8px 28px 28px;
+}
+
+.class-dialog-tip {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  color: #806bbf;
+  font-size: 13px;
+  background: rgba(128, 107, 191, 0.08);
+  border: 1px solid rgba(128, 107, 191, 0.14);
+}
+
+.class-list-table {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.class-list-table .el-table__header th) {
+  background: #f7f6fa;
+  color: #5f5f6b;
+  font-weight: 700;
+}
+
+:deep(.class-list-table .el-table__body td) {
+  height: 54px;
+}
+
+:deep(.class-list-table .el-table__body tr:hover > td) {
+  background: rgba(158, 137, 205, 0.08) !important;
+}
+
+.student-view-btn {
+  color: #806bbf !important;
+  background: rgba(128, 107, 191, 0.10) !important;
+  border-color: rgba(128, 107, 191, 0.24) !important;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.student-view-btn:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  border-color: #806bbf !important;
+  box-shadow: 0 6px 14px rgba(128, 107, 191, 0.24);
 }
 </style>

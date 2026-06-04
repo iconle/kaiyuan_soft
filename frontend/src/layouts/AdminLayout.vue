@@ -1,7 +1,11 @@
 <template>
   <el-container class="layout-container">
-    <el-aside width="220px" class="layout-aside">
-      <div class="logo">OBE 平台</div>
+    <el-aside width="260px" class="layout-aside">
+      <div class="logo">
+        <div class="logo-frame">
+          <img class="logo-img" src="../assets/zjnu.png" alt="平台标识" />
+        </div>
+      </div>
       <el-menu :default-active="route.path" router>
         <!-- 系统管理员 -->
         <el-sub-menu v-if="isAdmin" index="admin">
@@ -54,10 +58,21 @@
 
     <el-container>
       <el-header class="layout-header">
-        <span class="header-title">面向专业认证的毕业要求达成度统一计算平台</span>
+        <div class="header-left">
+          <span class="system-badge">OBE</span>
+          <span class="header-title">面向专业认证的毕业要求达成度统一计算平台</span>
+        </div>
+
         <div class="header-right">
-          <span class="user-info">{{ userStore.realName }} ({{ userStore.roleName }})</span>
-          <el-button text @click="handleLogout">退出登录</el-button>
+          <div class="user-card">
+            <span class="user-avatar">{{ userStore.realName?.slice(0, 1) || '用' }}</span>
+            <span class="user-info">{{ userStore.realName }}（{{ userStore.roleName }}）</span>
+          </div>
+
+          <el-button class="logout-btn" text @click="handleLogout">
+            <span class="logout-dot"></span>
+            <span>退出登录</span>
+          </el-button>
         </div>
       </el-header>
       <el-main class="layout-main">
@@ -139,52 +154,155 @@ function handleLogout() {
 }
 
 .layout-aside {
-  width: 240px;
-  flex-shrink: 0;
+  width: 260px !important;
+  flex: 0 0 260px;
   background: #ffffff;
   border-right: 1px solid var(--gray-150);
   overflow-y: auto;
 }
 
 .logo {
-  height: 56px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  color: var(--brand-700);
   background: linear-gradient(135deg, var(--brand-50) 0%, rgba(246, 244, 250, 0.6) 100%);
   border-bottom: 1px solid var(--brand-100);
-  letter-spacing: 0.5px;
+}
+
+.logo-frame {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(158, 137, 205, 0.18);
+  box-shadow: 0 8px 18px rgba(128, 107, 191, 0.18);
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .layout-header {
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-8);
-  background: #ffffff;
-  border-bottom: 1px solid var(--gray-150);
-  box-shadow: var(--shadow-xs);
+  padding: 0 32px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 255, 0.96));
+  border-bottom: 1px solid rgba(158, 137, 205, 0.14);
+  box-shadow: 0 6px 18px rgba(31, 41, 55, 0.04);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.system-badge {
+  height: 28px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #9e89cd, #7f67bd);
+  box-shadow: 0 8px 18px rgba(128, 107, 191, 0.22);
 }
 
 .header-title {
-  font-size: var(--text-base);
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: transparent;
+  background: linear-gradient(90deg, #1e3a8a 0%, #6f55b5 50%, #8c61e8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 14px;
+}
+
+.user-card {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px 0 8px;
+  border-radius: 999px;
+  background: rgba(158, 137, 205, 0.10);
+  border: 1px solid rgba(158, 137, 205, 0.18);
+  color: #5f4a9c;
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #9e89cd, #806bbf);
 }
 
 .user-info {
-  font-size: var(--text-base);
-  color: var(--text-regular);
+  font-size: 14px;
+  font-weight: 600;
+  color: #5f4a9c;
+}
+
+.logout-btn {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6c5784;
+  background: rgba(247, 240, 240, 0.41);
+  border: 1px solid rgba(130, 96, 202, 0.64);
+  box-shadow: 0 6px 16px rgba(31, 41, 55, 0.04);
+  transition: all 0.2s ease;
+}
+
+.logout-btn :deep(span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.logout-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f29ca3;
+  box-shadow: 0 0 0 4px rgba(242, 156, 163, 0.16);
+}
+
+.logout-btn:hover {
+  color: #d94f5c;
+  background: rgba(229, 107, 111, 0.10);
+  border-color: rgba(229, 107, 111, 0.32);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(229, 107, 111, 0.12);
 }
 
 .layout-main {

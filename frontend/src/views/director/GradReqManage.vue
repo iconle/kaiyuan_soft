@@ -1,42 +1,143 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h3>毕业要求管理</h3>
-      <el-select v-model="currentMajorId" placeholder="选择专业" style="width: 220px"
-                 @change="loadData">
-        <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
-      </el-select>
-      <el-button type="primary" @click="showReqDialog()" :disabled="!currentMajorId">新增毕业要求</el-button>
+      <div class="header-left">
+        <h3>毕业要求管理</h3>
+
+        <el-select
+          v-model="currentMajorId"
+          placeholder="选择专业"
+          class="major-select"
+          @change="loadData"
+        >
+          <el-option
+            v-for="m in majors"
+            :key="m.id"
+            :label="m.name"
+            :value="m.id"
+          />
+        </el-select>
+
+        <el-button
+          type="primary"
+          class="primary-pill-btn"
+          @click="showReqDialog()"
+          :disabled="!currentMajorId"
+        >
+          新增毕业要求
+        </el-button>
+      </div>
     </div>
 
     <el-empty v-if="!currentMajorId" description="请先选择专业" />
-    <div v-else class="content-card">
-      <el-collapse v-model="expandedReqs" v-loading="loading">
-        <el-collapse-item v-for="req in requirements" :key="req.id" :name="req.id">
+
+
+
+    <div v-else class="content-card grad-req-card">
+      <el-collapse
+        v-model="expandedReqs"
+        v-loading="loading"
+        class="grad-req-collapse"
+      >
+        <el-collapse-item
+          v-for="req in requirements"
+          :key="req.id"
+          :name="req.id"
+          class="grad-req-item"
+        >
           <template #title>
             <div class="req-title">
-              <el-tag type="info" size="small">要求{{ req.reqNo }}</el-tag>
-              <span class="req-name">{{ req.title }}</span>
-              <el-button size="small" text @click.stop="showReqDialog(req)">编辑</el-button>
-              <el-button size="small" text type="danger" @click.stop="handleDeleteReq(req)">删除</el-button>
+              <div class="req-main">
+                <el-tag type="info" size="small" class="req-tag">
+                  要求{{ req.reqNo }}
+                </el-tag>
+                <span class="req-name">{{ req.title }}</span>
+              </div>
+
+              <div class="req-actions">
+                <el-button
+                  size="small"
+                  class="req-action-btn req-edit-btn"
+                  @click.stop="showReqDialog(req)"
+                >
+                  编辑
+                </el-button>
+
+                <el-button
+                  size="small"
+                  type="danger"
+                  class="req-action-btn req-delete-btn"
+                  @click.stop="handleDeleteReq(req)"
+                >
+                  删除
+                </el-button>
+              </div>
             </div>
           </template>
+
+
           <div class="indicator-section">
             <div class="section-header">
               <span>指标点列表</span>
-              <el-button size="small" type="primary" @click="showIndicatorDialog(req.id)">新增指标点</el-button>
+              <el-button
+                size="small"
+                type="primary"
+                class="add-indicator-btn"
+                @click="showIndicatorDialog(req.id)"
+              >
+                新增指标点
+              </el-button>
             </div>
-            <el-table :data="req.indicators || []" border size="small">
-              <el-table-column prop="indicatorNo" label="编号" width="80" />
-              <el-table-column prop="content" label="描述" />
-              <el-table-column label="操作" width="140">
+
+            <el-table
+              :data="req.indicators || []"
+              border
+              size="small"
+              class="indicator-table"
+            >
+              <el-table-column
+                prop="indicatorNo"
+                label="编号"
+                width="100"
+                align="center"
+              />
+
+              <el-table-column
+                prop="content"
+                label="描述"
+                min-width="300"
+              />
+
+              <el-table-column
+                label="操作"
+                width="180"
+                align="center"
+                class-name="operation-column"
+              >
                 <template #default="{ row }">
-                  <el-button size="small" text @click="showIndicatorDialog(req.id, row)">编辑</el-button>
-                  <el-button size="small" text type="danger" @click="handleDeleteIndicator(row.id)">删除</el-button>
+                  <div class="operation-actions">
+                    <el-button
+                      size="small"
+                      class="indicator-action-btn indicator-edit-btn"
+                      @click="showIndicatorDialog(req.id, row)"
+                    >
+                      编辑
+                    </el-button>
+
+                    <el-button
+                      size="small"
+                      type="danger"
+                      class="indicator-action-btn indicator-delete-btn"
+                      @click="handleDeleteIndicator(row.id)"
+                    >
+                      删除
+                    </el-button>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
           </div>
+
         </el-collapse-item>
       </el-collapse>
     </div>
@@ -167,11 +268,247 @@ async function handleDeleteIndicator(id) {
 </script>
 
 <style scoped>
-.page-container { padding: var(--space-5); }
-.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
-.page-header h3 { margin: 0; font-size: var(--text-lg); }
-.req-title { display: flex; align-items: center; gap: 8px; }
-.req-name { font-weight: var(--font-medium); }
-.indicator-section { padding: 0 12px; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: var(--font-medium); }
+.page-container {
+  padding: var(--space-5);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.page-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.major-select {
+  width: 240px;
+}
+
+:deep(.major-select .el-select__wrapper) {
+  min-height: 38px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px #e6e1f0 inset;
+}
+
+.primary-pill-btn,
+.add-indicator-btn {
+  border-radius: 999px;
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(126, 87, 194, 0.18);
+}
+
+.grad-req-card {
+  padding: 20px 24px;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.grad-req-collapse {
+  border-top: none;
+  border-bottom: none;
+}
+
+:deep(.grad-req-collapse .el-collapse-item__wrap) {
+  border-bottom: none;
+}
+
+:deep(.grad-req-collapse .el-collapse-item__header) {
+  min-height: 66px;
+  border-bottom: none;
+  background: transparent;
+}
+
+.grad-req-item {
+  padding: 2px 0 18px;
+  border-bottom: 1px solid #f4f1fa;
+}
+
+.grad-req-item:last-child {
+  border-bottom: none;
+}
+
+.req-title {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px 0 14px;
+  margin-right: 8px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #f6f0ff 0%, #ffffff 62%, #fff7f8 100%);
+  border: 1px solid #eee6fb;
+  box-shadow: 0 6px 16px rgba(126, 87, 194, 0.08);
+  transition: all 0.18s ease;
+}
+.req-title:hover {
+  background: linear-gradient(90deg, #efe6ff 0%, #ffffff 60%, #fff0f2 100%);
+  border-color: #dfd2f6;
+  box-shadow: 0 8px 20px rgba(126, 87, 194, 0.12);
+}
+.req-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.req-tag {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #5aa9f5;
+  background: linear-gradient(180deg, #eef8ff 0%, #e3f2ff 100%);
+  border-color: #d3ebff;
+  font-weight: 700;
+}
+
+.req-name {
+  font-weight: 700;
+  color: #3f3370;
+}
+.req-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 18px;
+  white-space: nowrap;
+}
+
+.indicator-section {
+  padding: 14px 16px 4px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.indicator-table {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:deep(.indicator-table .el-table__header th) {
+  height: 44px;
+  background-color: #f7f7fa;
+  color: #606266;
+  font-weight: 700;
+}
+
+:deep(.indicator-table .el-table__row td) {
+  height: 52px;
+}
+
+:deep(.indicator-table .el-table__row:hover td) {
+  background-color: #fbf8ff;
+}
+
+:deep(.operation-column .cell) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+/* 毕业要求行按钮：用于折叠标题栏，突出一级对象操作 */
+.req-action-btn {
+  height: 30px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+:deep(.req-action-btn.el-button) {
+  margin-left: 0;
+}
+
+.req-edit-btn {
+  color: #8b5bd6;
+  border-color: #d9c4ff;
+  background: rgba(246, 240, 255, 0.72);
+}
+
+.req-edit-btn:hover {
+  color: #6f42c1;
+  border-color: #c6a7ff;
+  background: #efe6ff;
+}
+
+.req-delete-btn {
+  color: #fff;
+  border-color: #ef9099;
+  background: #ef9099;
+}
+
+.req-delete-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background: #e78087;
+}
+
+/* 指标点列表按钮：用于子表格，颜色和尺寸与毕业要求行区分 */
+.indicator-action-btn {
+  height: 30px;
+  min-width: 72px;
+  padding: 0 16px;
+  border-radius: 15px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:deep(.indicator-action-btn.el-button) {
+  margin-left: 0;
+}
+
+.indicator-edit-btn {
+  color: #5f83d6;
+  border-color: #cddafd;
+  background: #f2f5ff;
+}
+
+.indicator-edit-btn:hover {
+  color: #456fd0;
+  border-color: #b8c8fb;
+  background: #eaf0ff;
+}
+
+.indicator-delete-btn {
+  color: #e77c84;
+  border-color: #f5c5ca;
+  background: #fff4f5;
+}
+
+.indicator-delete-btn:hover {
+  color: #fff;
+  border-color: #ee8f97;
+  background: #ee8f97;
+}
 </style>

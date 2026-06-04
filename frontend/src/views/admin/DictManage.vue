@@ -12,12 +12,38 @@
           <el-table :data="colleges" border stripe v-loading="collegeLoading">
             <el-table-column prop="id" label="ID" width="80" />
             <el-table-column prop="name" label="学院名称" />
-            <el-table-column label="操作" width="200">
+
+
+
+            <el-table-column
+              label="操作"
+              width="180"
+              align="center"
+              class-name="dict-operation-column"
+            >
               <template #default="{ row }">
-                <el-button size="small" @click="showCollegeDialog(row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="handleDeleteCollege(row)">删除</el-button>
+                <div class="dict-operation-actions">
+                  <el-button
+                    size="small"
+                    class="dict-action-btn dict-edit-btn"
+                    @click="showCollegeDialog(row)"
+                  >
+                    编辑
+                  </el-button>
+
+                  <el-button
+                    size="small"
+                    type="danger"
+                    class="dict-action-btn dict-delete-btn"
+                    @click="handleDeleteCollege(row)"
+                  >
+                    删除
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
+
+
           </el-table>
         </div>
 
@@ -44,16 +70,39 @@
             <el-table-column prop="id" label="ID" width="80" />
             <el-table-column prop="code" label="专业代码" width="140" />
             <el-table-column prop="name" label="专业名称" min-width="160" />
-            <el-table-column label="所属学院" width="180">
+
+            <el-table-column
+              label="所属学院"
+              width="280"
+              align="center"
+              class-name="major-college-column"
+            >
               <template #default="{ row }">
-                {{ getCollegeName(row.collegeId) }}
+                <span class="college-name-text">
+                  {{ getCollegeName(row.collegeId) }}
+                </span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="100">
+
+            <el-table-column
+              label="操作"
+              width="140"
+              align="center"
+              class-name="dict-operation-column"
+            >
               <template #default="{ row }">
-                <el-button size="small" @click="showMajorDialog(row)">编辑</el-button>
+                <div class="dict-operation-actions">
+                  <el-button
+                    size="small"
+                    class="dict-action-btn dict-edit-btn"
+                    @click="showMajorDialog(row)"
+                  >
+                    编辑
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
+
           </el-table>
         </div>
 
@@ -84,21 +133,46 @@
           <div class="tab-header">
             <el-button type="primary" @click="showSemesterDialog()">新增学期</el-button>
           </div>
-          <el-table :data="semesters" border stripe v-loading="semesterLoading">
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="academicYear" label="学年" width="140" />
-            <el-table-column prop="semester" label="学期" width="100">
+
+
+          <el-table
+            :data="semesters"
+            border
+            stripe
+            v-loading="semesterLoading"
+            class="semester-table"
+          >
+            <el-table-column prop="id" label="ID" width="80" align="center" />
+            <el-table-column prop="academicYear" label="学年" width="150" align="center" />
+            <el-table-column prop="semester" label="学期" width="120" align="center">
               <template #default="{ row }">
                 第{{ row.semester }}学期
               </template>
             </el-table-column>
-            <el-table-column prop="label" label="显示名" min-width="160" />
-            <el-table-column label="操作" width="80">
+            <el-table-column prop="label" label="显示名" min-width="260" />
+            <el-table-column
+              label="操作"
+              width="120"
+              align="center"
+              class-name="semester-operation-column"
+            >
               <template #default="{ row }">
-                <el-button size="small" type="danger" @click="handleDeleteSemester(row)">删除</el-button>
+                <div class="operation-actions">
+                  <el-button
+                    size="small"
+                    type="danger"
+                    class="delete-btn"
+                    @click="handleDeleteSemester(row)"
+                  >
+                    删除
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
+
+
+
         </div>
 
         <el-dialog v-model="semesterDialogVisible" title="新增学期" width="400px">
@@ -269,5 +343,116 @@ onMounted(async () => {
 
 .tab-header {
   margin-bottom: var(--space-4);
+}
+/* 学年学期表格：缩小整体宽度，让操作列往左移 */
+.semester-table {
+  width: 82%;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* 表头和行高稍微紧凑 */
+:deep(.semester-table .el-table__header th) {
+  height: 42px;
+  background-color: #f7f7fa;
+  color: #606266;
+  font-weight: 700;
+}
+
+:deep(.semester-table .el-table__row td) {
+  height: 50px;
+}
+
+:deep(.semester-table .cell) {
+  font-size: 14px;
+}
+
+/* 操作列居中 */
+:deep(.semester-operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 删除按钮样式 */
+.delete-btn {
+  height: 25px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.delete-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
+}
+
+:deep(.delete-btn.el-button) {
+  margin-left: 0;
+}
+/* 数据字典操作列按钮统一美化 */
+:deep(.dict-operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dict-operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.dict-action-btn {
+  height: 25px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+:deep(.dict-action-btn.el-button) {
+  margin-left: 0;
+}
+
+/* 编辑按钮：浅紫色 */
+.dict-edit-btn {
+  color: #7e57c2;
+  border-color: #d8c9f3;
+  background-color: #f6f0ff;
+}
+
+.dict-edit-btn:hover {
+  color: #6f42c1;
+  border-color: #b79dea;
+  background-color: #efe6ff;
+}
+
+/* 删除按钮：粉红色 */
+.dict-delete-btn {
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.dict-delete-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
 }
 </style>

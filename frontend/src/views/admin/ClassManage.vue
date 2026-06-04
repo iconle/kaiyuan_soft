@@ -18,11 +18,40 @@
         <el-table-column prop="majorName" label="所属专业" min-width="160" />
         <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
         <el-table-column prop="studentCount" label="学生人数" width="100" />
-        <el-table-column label="操作" width="230">
+        <el-table-column
+          label="操作"
+          width="240"
+          align="center"
+          class-name="operation-column"
+        >
           <template #default="{ row }">
-            <el-button size="small" type="primary" @click="showStudents(row)">管理学生</el-button>
-            <el-button size="small" @click="showDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="operation-actions">
+              <el-button
+                size="small"
+                type="primary"
+                class="manage-btn"
+                @click="showStudents(row)"
+              >
+                管理学生
+              </el-button>
+
+              <el-button
+                size="small"
+                class="action-btn edit-btn"
+                @click="showDialog(row)"
+              >
+                编辑
+              </el-button>
+
+              <el-button
+                size="small"
+                type="danger"
+                class="action-btn delete-btn"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -187,4 +216,23 @@ async function handleRemoveStudent(row) {
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .filter-bar { margin-bottom: var(--space-4); }
 .pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
+/* 操作列居中 */
+:deep(.operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+:deep(.operation-actions .el-button + .el-button) {
+  margin-left: 0;
+}
 </style>

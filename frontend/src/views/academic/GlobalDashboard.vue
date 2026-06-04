@@ -56,18 +56,21 @@
           <div ref="lineChartRef" class="chart chart-lg"></div>
         </div>
 
-        <div class="chart-card">
+        <div class="chart-card status-card">
           <div class="chart-card-header">
             <div>
               <h4>状态占比</h4>
               <p>当前专业课程状态分布</p>
             </div>
           </div>
-          <div class="pie-wrap">
-            <div ref="pieChartRef" class="chart chart-pie"></div>
-            <div class="completion-center">
-              <strong>{{ completionRate }}%</strong>
-              <span>完成率</span>
+
+          <div class="pie-panel">
+            <div class="pie-wrap">
+              <div ref="pieChartRef" class="chart chart-pie"></div>
+              <div class="completion-center">
+                <strong>{{ completionRate }}%</strong>
+                <span>完成率</span>
+              </div>
             </div>
           </div>
         </div>
@@ -310,13 +313,24 @@ function renderLineChart() {
         return `${item.axisValue}<br/>累计锁定：${item.data} 门`
       }
     },
-    grid: { left: 42, right: 24, top: 28, bottom: 36 },
+    grid: {
+      left: 42,
+      right: 56,
+      top: 28,
+      bottom: 44,
+      containLabel: true
+    },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: labels.length ? labels : ['暂无'],
       axisLine: { lineStyle: { color: '#dcdfe6' } },
-      axisLabel: { color: '#606266' }
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12,
+        margin: 10,
+        interval: 0
+      }
     },
     yAxis: {
       type: 'value',
@@ -394,15 +408,52 @@ function renderPieChart() {
   chart.setOption({
     color: [chartColors.locked, chartColors.unfinished, chartColors.empty, chartColors.primary],
     tooltip: { trigger: 'item', formatter: '{b}<br/>{c} 门 ({d}%)' },
-    legend: { bottom: 0, textStyle: { color: '#606266' } },
+    legend: {
+      bottom: 0,
+      left: 'center',
+      itemWidth: 18,
+      itemHeight: 10,
+      icon: 'roundRect',
+      itemGap: 16,
+      textStyle: {
+        color: '#606266',
+        fontSize: 13
+      }
+    },
     series: [{
-      name: '课程状态',
+      name: '状态占比',
       type: 'pie',
-      radius: ['56%', '74%'],
-      center: ['50%', '45%'],
+      radius: ['48%', '68%'],
+      center: ['50%', '46%'],
       avoidLabelOverlap: true,
-      data: statusSummary.value,
-      label: { formatter: '{b}: {d}%', color: '#303133' }
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 3
+      },
+      label: {
+        show: true,
+        color: '#606266',
+        fontSize: 12,
+        formatter: '{b}'
+      },
+      labelLine: {
+        show: true,
+        length: 10,
+        length2: 8,
+        lineStyle: {
+          width: 1.5
+        }
+      },
+      emphasis: {
+        scale: true,
+        scaleSize: 6,
+        itemStyle: {
+          shadowBlur: 14,
+          shadowColor: 'rgba(0, 0, 0, 0.12)'
+        }
+      },
+      data: statusSummary.value
     }]
   })
 }
@@ -586,35 +637,60 @@ function pad(value) {
   height: 300px;
 }
 
-.chart-pie {
-  height: 320px;
+/* 状态占比卡片美化 */
+.status-card {
+  overflow: hidden;
+}
+
+.pie-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 8px;
 }
 
 .pie-wrap {
   position: relative;
+  width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-pie {
+  width: 270px;
+  height: 270px;
 }
 
 .completion-center {
   position: absolute;
+  top: 46%;
   left: 50%;
-  top: 44%;
   transform: translate(-50%, -50%);
-  text-align: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 1px #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 
 .completion-center strong {
-  display: block;
-  color: var(--text-primary);
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1;
+  font-weight: 800;
+  color: #303133;
 }
 
 .completion-center span {
-  display: block;
-  margin-top: 6px;
-  color: var(--text-secondary);
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #909399;
 }
 
 .empty-chart,
@@ -663,5 +739,11 @@ function pad(value) {
   .metric-grid {
     grid-template-columns: 1fr;
   }
+}
+.pie-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 8px;
 }
 </style>

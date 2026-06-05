@@ -1,20 +1,53 @@
 <template>
   <div class="login-container">
+    <div class="login-bg-orb login-bg-orb-left"></div>
+    <div class="login-bg-orb login-bg-orb-right"></div>
+
     <div class="login-card">
+      <div class="login-logo">
+        <img src="../../assets/zjnu.png" alt="平台标识" />
+      </div>
+
       <h2 class="login-title">OBE 达成度计算平台</h2>
       <p class="login-subtitle">面向专业认证的毕业要求达成度统一计算平台</p>
 
-      <el-form ref="formRef" :model="form" :rules="rules" @keyup.enter="handleLogin">
+      <el-form
+        ref="formRef"
+        class="login-form"
+        :model="form"
+        :rules="rules"
+        @keyup.enter="handleLogin"
+      >
         <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="用户名" prefix-icon="User" size="large" />
+          <el-input
+            v-model="form.username"
+            placeholder="用户名"
+            prefix-icon="User"
+            size="large"
+            class="login-input"
+          />
         </el-form-item>
+
         <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" placeholder="密码"
-                    prefix-icon="Lock" size="large" show-password />
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="密码"
+            prefix-icon="Lock"
+            size="large"
+            show-password
+            class="login-input"
+          />
         </el-form-item>
+
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleLogin"
-                     size="large" class="login-btn">
+          <el-button
+            type="primary"
+            :loading="loading"
+            @click="handleLogin"
+            size="large"
+            class="login-btn"
+          >
             登 录
           </el-button>
         </el-form-item>
@@ -74,64 +107,175 @@ async function handleLogin() {
 
 <style scoped>
 .login-container {
+  position: relative;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: var(--gray-0);
-  background-image:
-    radial-gradient(ellipse at 20% 30%, rgba(155, 142, 196, 0.10) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 50%, rgba(240, 181, 164, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 80%, rgba(168, 216, 200, 0.06) 0%, transparent 45%);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(158, 137, 205, 0.16), transparent 32%),
+    radial-gradient(circle at 82% 42%, rgba(242, 167, 179, 0.14), transparent 30%),
+    radial-gradient(circle at 50% 82%, rgba(154, 211, 188, 0.10), transparent 34%),
+    linear-gradient(135deg, #fbfafc 0%, #f7f5fb 48%, #ffffff 100%);
+}
+
+.login-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(8px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.login-bg-orb-left {
+  width: 260px;
+  height: 260px;
+  left: 12%;
+  top: 22%;
+  background: rgba(158, 137, 205, 0.16);
+}
+
+.login-bg-orb-right {
+  width: 320px;
+  height: 320px;
+  right: 10%;
+  bottom: 18%;
+  background: rgba(242, 167, 179, 0.13);
 }
 
 .login-card {
+  position: relative;
+  z-index: 1;
   width: 440px;
-  padding: 56px 48px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--gray-150);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 42px 46px 40px;
+  box-sizing: border-box;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.90);
+  border: 1px solid rgba(158, 137, 205, 0.16);
+  box-shadow:
+    0 22px 56px rgba(31, 41, 55, 0.11),
+    0 8px 24px rgba(128, 107, 191, 0.09);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: all 0.28s ease;
 }
 
 .login-card:hover {
+  transform: translateY(-3px);
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.08),
-    0 8px 24px rgba(155, 142, 196, 0.10);
-  transform: translateY(-2px);
+    0 34px 78px rgba(31, 41, 55, 0.14),
+    0 14px 34px rgba(128, 107, 191, 0.14);
+}
+
+.login-logo {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(158, 137, 205, 0.18);
+  box-shadow: 0 12px 28px rgba(128, 107, 191, 0.18);
+}
+
+.login-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.00);
 }
 
 .login-title {
+  margin: 0;
   text-align: center;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
+  font-size: 34px;
+  font-weight: 800;
   letter-spacing: 1px;
+  color: transparent;
+  background: linear-gradient(90deg, #3b256f 0%, #6f55b5 50%, #9e89cd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .login-subtitle {
+  margin: 14px 0 42px;
   text-align: center;
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 40px;
-  line-height: 1.6;
+  font-size: 15px;
+  color: #777084;
+  line-height: 1.7;
+  letter-spacing: 0.2px;
+}
+
+.login-form {
+  width: 100%;
+}
+
+:deep(.login-input .el-input__wrapper) {
+  min-height: 50px;
+  border-radius: 16px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 1px rgba(158, 137, 205, 0.16) inset;
+  transition: all 0.2s ease;
+}
+
+:deep(.login-input .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px rgba(158, 137, 205, 0.32) inset;
+}
+
+:deep(.login-input .el-input__wrapper.is-focus) {
+  box-shadow:
+    0 0 0 1px rgba(128, 107, 191, 0.58) inset,
+    0 8px 18px rgba(128, 107, 191, 0.12);
+}
+
+:deep(.login-input .el-input__inner) {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 22px;
 }
 
 .login-btn {
   width: 100%;
-  height: 48px;
-  border-radius: var(--radius-base);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  height: 52px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 18px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  box-shadow: 0 14px 28px rgba(128, 107, 191, 0.28);
+  transition: all 0.2s ease;
 }
 
 .login-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(155, 142, 196, 0.45) !important;
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #a895d4, #735ab8) !important;
+  box-shadow: 0 18px 34px rgba(128, 107, 191, 0.36) !important;
+}
+
+@media (max-width: 640px) {
+  .login-card {
+    width: calc(100% - 40px);
+    padding: 46px 30px 42px;
+  }
+
+  .login-title {
+    font-size: 28px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+  }
 }
 </style>

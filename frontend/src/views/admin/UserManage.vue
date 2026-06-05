@@ -16,13 +16,26 @@
         <el-button type="primary" @click="loadUsers" style="margin-left: 12px">查询</el-button>
       </div>
 
-      <el-table :data="users" border stripe v-loading="loading">
+      <el-table
+        :data="users"
+        border
+        stripe
+        v-loading="loading"
+        class="user-table"
+      >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="140" />
         <el-table-column prop="realName" label="姓名" width="160" class-name="name-column" />
-        <el-table-column label="角色" width="120">
+        <el-table-column
+          label="角色"
+          width="140"
+          align="center"
+          class-name="role-column"
+        >
           <template #default="{ row }">
-            <el-tag>{{ getRoleName(row.roleId) }}</el-tag>
+            <span :class="['role-pill', getRoleClass(row.roleId)]">
+              {{ getRoleName(row.roleId) }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100">
@@ -33,13 +46,42 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" min-width="160" />
-        <el-table-column label="操作" fixed="right" width="240">
+        <el-table-column
+          label="操作"
+          fixed="right"
+          width="280"
+          align="center"
+          class-name="operation-column"
+        >
           <template #default="{ row }">
-            <el-button size="small" @click="showEditDialog(row)">编辑</el-button>
-            <el-button size="small" @click="handleResetPwd(row)">重置密码</el-button>
-            <el-button size="small" type="danger" @click="handleDisable(row)"
-                       :disabled="row.status === 0 || isCurrentUser(row)"
-                       :title="isCurrentUser(row) ? '不能禁用当前登录用户' : ''">禁用</el-button>
+            <div class="operation-actions">
+              <el-button
+                size="small"
+                class="action-btn edit-btn"
+                @click="showEditDialog(row)"
+              >
+                编辑
+              </el-button>
+
+              <el-button
+                size="small"
+                class="action-btn reset-btn"
+                @click="handleResetPwd(row)"
+              >
+                重置密码
+              </el-button>
+
+              <el-button
+                size="small"
+                type="danger"
+                class="action-btn disable-btn"
+                @click="handleDisable(row)"
+                :disabled="row.status === 0 || isCurrentUser(row)"
+                :title="isCurrentUser(row) ? '不能禁用当前登录用户' : ''"
+              >
+                禁用
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -141,7 +183,16 @@ async function loadColleges() {
 function getRoleName(roleId) {
   return roles.value.find(r => r.id === roleId)?.roleName || '-'
 }
+function getRoleClass(roleId) {
+  const roleName = getRoleName(roleId)
 
+  if (roleName.includes('系统管理员')) return 'role-admin'
+  if (roleName.includes('教务管理员')) return 'role-academic'
+  if (roleName.includes('专业负责人')) return 'role-director'
+  if (roleName.includes('主讲教师')) return 'role-teacher'
+
+  return 'role-default'
+}
 function isCurrentUser(row) {
   return currentUserId.value != null && String(row.id) === String(currentUserId.value)
 }
@@ -223,5 +274,151 @@ async function handleResetPwd(row) {
   line-height: 1.6;
   word-break: keep-all;
   overflow-wrap: anywhere;
+}
+/* 用户管理表格优化 */
+.user-table {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:deep(.user-table .el-table__header th) {
+  height: 46px;
+  background-color: #f7f7fa;
+  color: #606266;
+  font-weight: 700;
+}
+
+:deep(.user-table .el-table__row td) {
+  height: 64px;
+}
+
+:deep(.user-table .el-table__row:hover td) {
+  background-color: #fbf8ff;
+}
+
+/* 角色标签：不同角色不同颜色 */
+:deep(.role-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-pill {
+  min-width: 86px;
+  height: 25px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 30px;
+}
+
+.role-admin {
+  color: #d36bad;
+  background: #f3d3f063;
+  border: 1px solid #ffd4fe85;
+}
+
+.role-academic {
+  color: #2f9e9b;
+  background: #eafafa;
+  border: 1px solid #c9eeee;
+}
+
+.role-director {
+  color: #3f7edb;
+  background: #eef5ff;
+  border: 1px solid #cfe2ff;
+}
+
+.role-teacher {
+  color: #d58a2f;
+  background: #fff6e8;
+  border: 1px solid #f4ddb6;
+}
+
+.role-default {
+  color: #606266;
+  background: #f4f4f5;
+  border: 1px solid #e4e7ed;
+}
+
+/* 操作列居中 */
+:deep(.operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.action-btn {
+  height: 25px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+:deep(.action-btn.el-button) {
+  margin-left: 0;
+}
+
+/* 编辑：紫色 */
+.edit-btn {
+  color: #7e57c2;
+  border-color: #d8c9f3;
+  background-color: #f6f0ff;
+}
+
+.edit-btn:hover {
+  color: #6f42c1;
+  border-color: #b79dea;
+  background-color: #efe6ff;
+}
+
+/* 重置密码：橙色 */
+.reset-btn {
+  color: #d58a2f;
+  border-color: #f2d0a4;
+  background-color: #fff7ec;
+}
+
+.reset-btn:hover {
+  color: #bf7420;
+  border-color: #edbd7c;
+  background-color: #fff0dc;
+}
+
+/* 禁用：粉红色 */
+.disable-btn {
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.disable-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
+}
+
+.disable-btn.is-disabled,
+.disable-btn.is-disabled:hover {
+  color: #fff;
+  border-color: #f6d4d7;
+  background-color: #f6d4d7;
+  opacity: 0.65;
 }
 </style>

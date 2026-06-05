@@ -22,7 +22,15 @@
       </div>
 
       <div style="overflow-x: auto; max-width: 100%;">
-      <el-table :data="scoreRows" border stripe size="small" v-loading="loading" v-if="questions.length > 0">
+      <el-table
+        :data="scoreRows"
+        border
+        stripe
+        size="small"
+        v-loading="loading"
+        v-if="questions.length > 0"
+        class="score-import-table"
+      >
         <el-table-column prop="studentNo" label="学号" width="120" fixed />
         <el-table-column prop="studentName" label="姓名" width="100" fixed />
         <el-table-column v-for="q in questions" :key="q.id" :label="q.name" min-width="110">
@@ -31,9 +39,18 @@
             <div style="font-size:11px;color:var(--text-secondary)">满分:{{ q.maxScore }}→{{ questionObjLabel(q) }}</div>
           </template>
           <template #default="{ row }">
-            <el-input-number v-if="status !== 'LOCKED'" :model-value="getQScore(row.studentId, q.id)"
-              @update:model-value="val => setQScore(row.studentId, q.id, val)" :min="0" :max="q.maxScore"
-              :precision="1" size="small" controls-position="right" style="width:100%" />
+            <el-input-number
+              v-if="status !== 'LOCKED'"
+              :model-value="getQScore(row.studentId, q.id)"
+              @update:model-value="val => setQScore(row.studentId, q.id, val)"
+              :min="0"
+              :max="q.maxScore"
+              :precision="1"
+              size="small"
+              controls-position="right"
+              style="width:100%"
+              class="score-number-input"
+            />
             <span v-else>{{ getQScore(row.studentId, q.id) ?? '-' }}</span>
           </template>
         </el-table-column>
@@ -196,4 +213,18 @@ async function downloadTemplate() {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+/* 成绩输入框上下调节按钮：浅紫色 */
+:deep(.score-import-table .score-number-input .el-input-number__increase),
+:deep(.score-import-table .score-number-input .el-input-number__decrease) {
+  background-color: #ede7ff;
+  border-color: #d8c9f3;
+  color: #7e57c2;
+}
+
+:deep(.score-import-table .score-number-input .el-input-number__increase:hover),
+:deep(.score-import-table .score-number-input .el-input-number__decrease:hover) {
+  background-color: #e3d8ff;
+  border-color: #c7b3f5;
+  color: #6f42c1;
+}
 </style>

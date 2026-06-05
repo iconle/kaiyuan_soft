@@ -25,12 +25,35 @@
             <el-button size="small" type="primary" @click="manageStudents(row)">管理学生</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+
+        <el-table-column
+          label="操作"
+          width="170"
+          align="center"
+          class-name="operation-column"
+        >
           <template #default="{ row }">
-            <el-button size="small" text @click="showDialog(row)">编辑</el-button>
-            <el-button size="small" text type="danger" @click="handleDelete(row)">删除</el-button>
+            <div class="operation-actions">
+              <el-button
+                size="small"
+                class="action-btn edit-btn"
+                @click="showDialog(row)"
+              >
+                编辑
+              </el-button>
+
+              <el-button
+                size="small"
+                type="danger"
+                class="action-btn delete-btn"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
+
       </el-table>
 
       <div class="pagination-wrap">
@@ -51,10 +74,17 @@
     </el-dialog>
 
     <!-- Student management dialog -->
-    <el-dialog v-model="studentDialogVisible" :title="`学生管理 - ${currentClass?.className || ''}`" width="800px" append-to-body>
-      <el-tabs v-model="studentTab">
+    <el-dialog
+      v-model="studentDialogVisible"
+      :title="`学生管理 - ${currentClass?.className || ''}`"
+      width="860px"
+      append-to-body
+      class="student-manage-dialog"
+    >
+      <el-tabs v-model="studentTab" class="student-tabs">
         <el-tab-pane label="添加学生" name="add">
-          <div class="student-filter-bar">
+          <div class="assigned-panel">
+            <div class="student-filter-bar">
             <el-select v-model="stuFilterCollegeId" placeholder="学院" clearable style="width:150px" @change="loadAvailable">
               <el-option v-for="c in stuColleges" :key="c.id" :label="c.name" :value="c.id" />
             </el-select>
@@ -83,15 +113,43 @@
             <el-table-column prop="enrollmentYear" label="入学年份" width="80" />
             <el-table-column prop="adminClassName" label="行政班级" width="150" />
           </el-table>
+          </div>
         </el-tab-pane>
+
         <el-tab-pane label="已分配学生" name="list">
-          <el-table :data="classStudents" border size="small" max-height="360">
-            <el-table-column prop="studentNo" label="学号" width="130" />
-            <el-table-column prop="name" label="姓名" width="120" />
-            <el-table-column label="操作" width="80">
-              <template #default="{ row }"><el-button size="small" type="danger" @click="handleRemoveStudent(row)">移除</el-button></template>
-            </el-table-column>
-          </el-table>
+          <div class="assigned-panel">
+            <div class="assigned-toolbar">
+              <div>
+                <div class="assigned-title">已分配学生</div>
+                <div class="assigned-subtitle">
+                  当前教学班级共 {{ classStudents.length }} 名学生
+                </div>
+              </div>
+            </div>
+
+            <el-table
+              :data="classStudents"
+              border
+              size="small"
+              max-height="420"
+              class="student-table"
+            >
+              <el-table-column prop="studentNo" label="学号" min-width="180" />
+              <el-table-column prop="name" label="姓名" min-width="160" />
+              <el-table-column label="操作" width="140" align="center" class-name="student-action-column">
+                <template #default="{ row }">
+                  <el-button
+                    size="small"
+                    type="danger"
+                    class="remove-student-btn"
+                    @click="handleRemoveStudent(row)"
+                  >
+                    移除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
@@ -268,4 +326,204 @@ async function handleRemoveStudent(row) {
 .pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
 .wide-class-table { width: 100%; }
 :deep(.nowrap-column .cell) { white-space: nowrap; }
+/* 学生管理弹窗整体美化 */
+:deep(.student-manage-dialog .el-dialog) {
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(31, 45, 61, 0.22);
+}
+
+:deep(.student-manage-dialog .el-dialog__header) {
+  padding: 24px 28px 16px;
+  margin-right: 0;
+  border-bottom: 1px solid #f0edf7;
+}
+
+:deep(.student-manage-dialog .el-dialog__title) {
+  font-size: 18px;
+  font-weight: 700;
+  color: #303133;
+}
+
+:deep(.student-manage-dialog .el-dialog__headerbtn) {
+  top: 22px;
+  right: 24px;
+}
+
+:deep(.student-manage-dialog .el-dialog__body) {
+  padding: 18px 28px 28px;
+}
+
+/* 页签美化 */
+:deep(.student-manage-dialog .el-tabs__header) {
+  margin-bottom: 22px;
+}
+
+:deep(.student-manage-dialog .el-tabs__nav-wrap::after) {
+  height: 1px;
+  background-color: #eeeaf6;
+}
+
+:deep(.student-manage-dialog .el-tabs__item) {
+  height: 42px;
+  padding: 0 24px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #606266;
+}
+
+:deep(.student-manage-dialog .el-tabs__item.is-active) {
+  color: #7e57c2;
+  font-weight: 700;
+}
+
+:deep(.student-manage-dialog .el-tabs__active-bar) {
+  height: 3px;
+  border-radius: 3px;
+  background-color: #9b7bd3;
+}
+
+/* 内容卡片 */
+.assigned-panel {
+  padding: 18px 18px 20px;
+  border: 1px solid #f0edf7;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
+}
+
+.assigned-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.assigned-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.assigned-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #909399;
+}
+
+/* 表格美化 */
+.student-table {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:deep(.student-table .el-table__header th) {
+  height: 48px;
+  background-color: #f7f5fb;
+  color: #606266;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+:deep(.student-table .el-table__row td) {
+  height: 54px;
+  color: #303133;
+  font-size: 14px;
+}
+
+:deep(.student-table .el-table__row:hover td) {
+  background-color: #fbf8ff;
+}
+
+:deep(.student-action-column .cell) {
+  display: flex;
+  justify-content: center;
+}
+
+/* 移除按钮 */
+.remove-student-btn {
+  height: 30px;
+  padding: 0 18px;
+  border-radius: 16px;
+  font-weight: 500;
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.remove-student-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
+}
+
+/* 添加学生筛选栏顺手统一一下 */
+.student-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.student-filter-bar :deep(.el-select),
+.student-filter-bar :deep(.el-input) {
+  margin-left: 0 !important;
+}
+
+.student-filter-bar :deep(.el-input__wrapper),
+.student-filter-bar :deep(.el-select__wrapper) {
+  min-height: 38px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px #e6e1f0 inset;
+}
+/* 操作列：对齐学生管理格式 */
+:deep(.operation-column .cell) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.action-btn {
+  height: 25px;
+  padding: 0 18px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+:deep(.action-btn.el-button) {
+  margin-left: 0;
+}
+
+.edit-btn {
+  color: #7e57c2;
+  border-color: #d8c9f3;
+  background-color: #f6f0ff;
+}
+
+.edit-btn:hover {
+  color: #6f42c1;
+  border-color: #b79dea;
+  background-color: #efe6ff;
+}
+
+.delete-btn {
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.delete-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
+}
 </style>

@@ -25,10 +25,20 @@
               <div class="indicator-header">{{ ind.indicatorNo }}</div>
             </template>
             <template #default="{ row }">
-              <el-input-number v-if="row.cells[ind.id] !== undefined" v-model="row.cells[ind.id].weight"
-                               :min="0" :max="1" :step="0.05" :precision="2" size="small"
-                               style="width: 110px"
-                               @change="onWeightChange(row.courseId, ind.id, row.cells[ind.id].weight)" />
+              
+              <el-input-number
+                v-if="row.cells[ind.id] !== undefined"
+                v-model="row.cells[ind.id].weight"
+                :min="0"
+                :max="1"
+                :step="0.05"
+                :precision="2"
+                size="small"
+                class="macro-weight-input"
+                style="width: 110px"
+                @change="onWeightChange(row.courseId, ind.id, row.cells[ind.id].weight)"
+              />
+               
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -67,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted,h } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMacroMatrix, updateMacroMatrix } from '../../api/director'
 import { listGradReqs } from '../../api/director'
@@ -113,8 +123,20 @@ const allColumnsValid = computed(() => {
 function getSummaries({ columns }) {
   return columns.map((column, index) => {
     if (index === 0) return '列合计'
+
     const ind = indicators.value[index - 1]
-    return ind ? (columnSums.value[ind.id]?.sum?.toFixed(2) || '-') : '-'
+    if (!ind) return '-'
+
+    const sumText = columnSums.value[ind.id]?.sum?.toFixed(2) || '0.00'
+    const isValid = sumText === '1.00'
+
+    return h(
+      'span',
+      {
+        class: ['macro-col-sum', isValid ? 'is-valid' : 'is-invalid']
+      },
+      sumText
+    )
   })
 }
 
@@ -185,12 +207,60 @@ function clearHighlight() {}
 .indicator-header { font-size: var(--text-xs); text-align: center; }
 .hint { color: var(--text-secondary); font-size: 13px; }
 :deep(.nowrap-column .cell) { white-space: nowrap; }
-:deep(.el-table__footer-wrapper td) {
-  color: var(--el-color-success);
-  font-weight: var(--font-medium);
+/* 列合计行：只控制字体颜色和粗细 */
+:deep(.matrix-table .el-table__footer-wrapper td) {
   text-align: center;
+  font-weight: var(--font-medium);
 }
-:deep(.el-table__footer-wrapper td:first-child) {
+
+:deep(.matrix-table .el-table__footer-wrapper td:first-child) {
   color: var(--text-primary);
+  font-weight: 600;
+}
+
+:deep(.matrix-table .el-table__footer-wrapper .macro-col-sum) {
+  font-weight: 600;
+}
+
+:deep(.matrix-table .el-table__footer-wrapper .macro-col-sum.is-valid) {
+  color: var(--el-color-success);
+}
+
+:deep(.matrix-table .el-table__footer-wrapper .macro-col-sum.is-invalid) {
+  color: var(--el-color-danger);
+  font-weight: 700;
+}
+/* 宏观矩阵权重输入框：加减按钮浅紫色填充 */
+:deep(.matrix-table .macro-weight-input .el-input-number__decrease),
+:deep(.matrix-table .macro-weight-input .el-input-number__increase) {
+  background: #f1eaff;
+  border-color: #d9c8f5;
+  color: #7e57c2;
+  font-weight: 700;
+  transition: all 0.18s ease;
+}
+
+:deep(.matrix-table .macro-weight-input .el-input-number__decrease:hover),
+:deep(.matrix-table .macro-weight-input .el-input-number__increase:hover) {
+  background: #e6dcff;
+  border-color: #c7b3f2;
+  color: #6f42c1;
+}
+
+/* 禁用状态，例如已经到 0 或 1 时，颜色淡一点 */
+:deep(.matrix-table .macro-weight-input .el-input-number__decrease.is-disabled),
+:deep(.matrix-table .macro-weight-input .el-input-number__increase.is-disabled) {
+  background: #f5f2fb;
+  border-color: #ebe6f5;
+  color: #c3b6de;
+}
+
+/* 输入框本体保持干净，只轻微圆角统一 */
+:deep(.matrix-table .macro-weight-input .el-input__wrapper) {
+  box-shadow: 0 0 0 1px #ebe6f5 inset;
+}
+
+:deep(.matrix-table .macro-weight-input .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #d9c8f5 inset;
 }
 </style>

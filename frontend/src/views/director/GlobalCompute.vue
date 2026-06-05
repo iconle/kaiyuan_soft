@@ -31,31 +31,72 @@
     </div>
 
     <!-- Results -->
-    <el-card v-if="hasResults" header="专业级达成度结果（第三级）">
-      <el-table :data="resultData" border stripe size="small">
-        <el-table-column prop="indicatorNo" label="指标点" width="120" />
-        <el-table-column prop="achievement" label="达成度 G_k">
+    <el-card v-if="hasResults" class="result-card" shadow="never">
+      <template #header>
+        <div class="result-card-header">
+          <div>
+            <div class="result-title">专业级达成度结果（第三级）</div>
+            <div class="result-subtitle">毕业要求指标点达成度计算结果</div>
+          </div>
+        </div>
+      </template>
+
+      <el-table
+        :data="resultData"
+        border
+        stripe
+        size="small"
+        class="professional-result-table"
+      >
+        <el-table-column
+          prop="indicatorNo"
+          label="指标点"
+          width="140"
+          align="center"
+          class-name="index-column"
+        />
+
+        <el-table-column
+          prop="achievement"
+          label="达成度 G_k"
+          min-width="180"
+          align="center"
+          class-name="gk-column"
+        >
           <template #default="{ row }">
-            <el-tag :type="getAchievementType(row.achievement)" effect="plain">
+            <span :class="['gk-pill', `is-${getAchievementType(row.achievement)}`]">
               {{ row.achievement.toFixed(3) }}
-            </el-tag>
+            </span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="140"
+          align="center"
+          class-name="status-column"
+        >
           <template #default="{ row }">
-            <span :style="{ color: getStatusColor(row.achievement) }">
+            <span
+              :class="['status-pill', `is-${getAchievementType(row.achievement)}`]"
+              :style="{ color: getStatusColor(row.achievement) }"
+            >
               {{ getStatusText(row.achievement) }}
             </span>
           </template>
         </el-table-column>
       </el-table>
-      <div style="margin-top:12px; color:var(--text-secondary); font-size:13px">
-        计算时间：{{ calcTime }}
-      </div>
-      <div style="margin-top:12px">
-        <el-button @click="downloadExcel">导出穿透式 Excel 台账</el-button>
+
+      <div class="result-footer">
+        <div class="calc-time">计算时间：{{ calcTime || '-' }}</div>
+        <el-button class="export-btn" @click="downloadExcel">
+          导出穿透式 Excel 台账
+        </el-button>
       </div>
     </el-card>
+
+
 
     <!-- Charts Section -->
     <el-card v-if="hasResults" header="达成度可视化分析" style="margin-top:16px">
@@ -466,4 +507,140 @@ async function downloadExcel() {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+/* 专业达成度结果表格美化 */
+.result-card {
+  margin-top: 16px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #eef1f6;
+  box-shadow: 0 10px 28px rgba(31, 45, 61, 0.06);
+}
+
+:deep(.result-card .el-card__header) {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f0f2f5;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+}
+
+:deep(.result-card .el-card__body) {
+  padding: 18px 22px 20px;
+}
+
+.result-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.result-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #909399;
+}
+
+.professional-result-table {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:deep(.professional-result-table .el-table__header th) {
+  height: 48px;
+  background: #f7f7fa;
+  color: #606266;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+:deep(.professional-result-table .el-table__row td) {
+  height: 58px;
+  color: #303133;
+  font-size: 14px;
+}
+
+:deep(.professional-result-table .el-table__row:hover td) {
+  background-color: #fbf8ff;
+}
+
+:deep(.index-column .cell),
+:deep(.gk-column .cell),
+:deep(.status-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gk-pill,
+.status-pill {
+  min-width: 72px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  line-height: 30px;
+}
+
+.gk-pill.is-success {
+  color: #45b97c;
+  background: #f2fff8;
+  border: 1px solid #d8f5e5;
+}
+
+.gk-pill.is-warning {
+  color: #e6a23c;
+  background: #fff8e8;
+  border: 1px solid #f6ddb0;
+}
+
+.gk-pill.is-danger {
+  color: #f56c6c;
+  background: #fff1f0;
+  border: 1px solid #f8c9c9;
+}
+
+.status-pill.is-success {
+  color: #67c23a !important;
+  background: #f0f9eb;
+  border: 1px solid #d8f0c8;
+}
+
+.status-pill.is-warning {
+  color: #e6a23c !important;
+  background: #fdf6ec;
+  border: 1px solid #f5dab1;
+}
+
+.status-pill.is-danger {
+  color: #f56c6c !important;
+  background: #fef0f0;
+  border: 1px solid #fbc4c4;
+}
+
+.result-footer {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calc-time {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.export-btn {
+  border-radius: 999px;
+  padding: 0 18px;
+}
 </style>

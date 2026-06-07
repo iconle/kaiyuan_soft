@@ -75,6 +75,12 @@ const routes = [
         meta: { roles: ['DIRECTOR'] }
       },
       {
+        path: 'director/dashboard',
+        name: 'DirectorGlobalDashboard',
+        component: () => import('../views/director/GlobalDashboard.vue'),
+        meta: { roles: ['DIRECTOR'] }
+      },
+      {
         path: 'director/global-compute',
         name: 'GlobalCompute',
         component: () => import('../views/director/GlobalCompute.vue'),

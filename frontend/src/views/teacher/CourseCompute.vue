@@ -14,7 +14,7 @@
       <div style="margin-top:8px;font-size:13px">
         如需勘误成绩，请点击下方按钮提交勘误申请，由教务管理员或系统管理员审批解锁。
         <el-button v-if="!hasPendingRequest" size="small" type="warning" style="margin-left:8px"
-          @click="showRequestDialog">提交勘误申请</el-button>
+          @click="showRequestDialog"> 提交勘误申请</el-button>
       </div>
     </el-alert>
     <el-alert v-else-if="status === 'IMPORTED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
@@ -76,6 +76,85 @@
       </el-card>
     </div>
 
+    <!-- Charts Section -->
+    <template v-if="hasResults">
+      <!-- Objective Chart -->
+      <el-card header="课程目标达成度可视化分析（第一级）" style="margin-top:16px">
+        <div style="margin-bottom:16px; display:flex; gap:12px; align-items:center">
+          <span>图表类型：</span>
+          <el-radio-group v-model="objectiveChartType" @change="renderObjectiveChart">
+            <el-radio-button value="radar">雷达图</el-radio-button>
+            <el-radio-button value="bar">柱状图</el-radio-button>
+            <el-radio-button value="line">趋势图</el-radio-button>
+          </el-radio-group>
+          <el-button v-if="objectiveChartType !== 'radar'" @click="toggleSort" size="small" style="margin-left:auto">
+            {{ sortAsc ? '降序排列' : '升序排列' }}
+          </el-button>
+        </div>
+        <div ref="objectiveChartRef" style="width:100%;height:400px"></div>
+        <div style="margin-top:16px; padding:12px; background:#f5f7fa; border-radius:4px">
+          <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:16px">
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ objectiveStats.avg.toFixed(3) }}</div>
+              <div style="color:#909399; font-size:12px">平均达成度</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ objectiveStats.max.toFixed(3) }}</div>
+              <div style="color:#909399; font-size:12px">最高达成度</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ objectiveStats.min.toFixed(3) }}</div>
+              <div style="color:#909399; font-size:12px">最低达成度</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold" :style="{ color: objectiveStats.weakCount > 0 ? '#F56C6C' : '#67C23A' }">
+                {{ objectiveStats.weakCount }}
+              </div>
+              <div style="color:#909399; font-size:12px">低于0.7的目标数</div>
+            </div>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- Indicator Chart -->
+      <el-card header="课程级指标点达成度可视化分析（第二级）" style="margin-top:16px">
+        <div style="margin-bottom:16px; display:flex; gap:12px; align-items:center">
+          <span>图表类型：</span>
+          <el-radio-group v-model="indicatorChartType" @change="renderIndicatorChart">
+            <el-radio-button value="radar">雷达图</el-radio-button>
+            <el-radio-button value="bar">柱状图</el-radio-button>
+            <el-radio-button value="line">趋势图</el-radio-button>
+          </el-radio-group>
+          <el-button v-if="indicatorChartType !== 'radar'" @click="toggleSort" size="small" style="margin-left:auto">
+            {{ sortAsc ? '降序排列' : '升序排列' }}
+          </el-button>
+        </div>
+        <div ref="indicatorChartRef" style="width:100%;height:400px"></div>
+        <div style="margin-top:16px; padding:12px; background:#f5f7fa; border-radius:4px">
+          <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:16px">
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ indicatorStats.avg.toFixed(3) }}</div>
+              <div style="color:#909399; font-size:12px">平均达成度</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ indicatorStats.max.toFixed(3) }}</div>
+              <div style="color:#909399; font-size:12px">最高达成度</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ indicatorStats.min.toFixed(3) }}</div>
+              <div style="color:#909399; font-size:12px">最低达成度</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:24px; font-weight:bold" :style="{ color: indicatorStats.weakCount > 0 ? '#F56C6C' : '#67C23A' }">
+                {{ indicatorStats.weakCount }}
+              </div>
+              <div style="color:#909399; font-size:12px">低于0.7的指标点</div>
+            </div>
+          </div>
+        </div>
+      </el-card>
+    </template>
+
     <div v-if="hasResults" style="margin-top: 16px; display: flex; gap: 8px;">
       <el-button @click="downloadPdf">导出 PDF 报告</el-button>
       <el-button @click="downloadExcel">导出 Excel 报告</el-button>
@@ -84,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
@@ -94,6 +173,7 @@ import {
 } from '../../api/teacher'
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
+import * as echarts from 'echarts'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -106,6 +186,15 @@ const unlockReason = ref('')
 const myRequests = ref([])
 const results = reactive({ objectiveAchievements: {}, courseAchievements: {}, calcTime: null, objectiveLabels: {}, indicatorLabels: {} })
 
+// Chart related refs
+const objectiveChartRef = ref(null)
+const indicatorChartRef = ref(null)
+const objectiveChartType = ref('radar')
+const indicatorChartType = ref('radar')
+const objectiveChartInstance = ref(null)
+const indicatorChartInstance = ref(null)
+const sortAsc = ref(false)
+
 const hasPendingRequest = computed(() => myRequests.value.some(r => r.status === 'PENDING'))
 
 onMounted(() => { if (classId.value) loadData() })
@@ -117,6 +206,8 @@ async function loadData() {
     if (status.value === 'LOCKED') {
       const rRes = await getCourseComputeResults(classId.value)
       Object.assign(results, rRes.data || {})
+      await nextTick()
+      renderCharts()
     }
     loadMyRequests()
   } catch { /* handled */ }
@@ -214,6 +305,412 @@ function downloadBlob(blob, filename) {
   a.href = url; a.download = filename; a.click()
   URL.revokeObjectURL(url)
 }
+
+// Chart rendering functions
+async function renderCharts() {
+  await nextTick()
+  renderObjectiveChart()
+  renderIndicatorChart()
+}
+
+function renderObjectiveChart() {
+  if (!objectiveChartRef.value) return
+  if (objectiveChartInstance.value) {
+    objectiveChartInstance.value.dispose()
+  }
+
+  const labels = results.objectiveLabels || {}
+  const data = Object.entries(results.objectiveAchievements || {}).map(([id, val]) => ({
+    name: labels[id] || `目标${id}`,
+    value: val
+  }))
+
+  if (data.length === 0) return
+
+  const chart = echarts.init(objectiveChartRef.value)
+  objectiveChartInstance.value = chart
+
+  if (objectiveChartType.value === 'radar') {
+    renderObjectiveRadar(chart, data)
+  } else if (objectiveChartType.value === 'bar') {
+    renderObjectiveBar(chart, data)
+  } else if (objectiveChartType.value === 'line') {
+    renderObjectiveLine(chart, data)
+  }
+}
+
+function renderIndicatorChart() {
+  if (!indicatorChartRef.value) return
+  if (indicatorChartInstance.value) {
+    indicatorChartInstance.value.dispose()
+  }
+
+  const labels = results.indicatorLabels || {}
+  const data = Object.entries(results.courseAchievements || {}).map(([id, val]) => ({
+    name: labels[id] || `指标点${id}`,
+    value: val
+  }))
+
+  if (data.length === 0) return
+
+  const chart = echarts.init(indicatorChartRef.value)
+  indicatorChartInstance.value = chart
+
+  if (indicatorChartType.value === 'radar') {
+    renderIndicatorRadar(chart, data)
+  } else if (indicatorChartType.value === 'bar') {
+    renderIndicatorBar(chart, data)
+  } else if (indicatorChartType.value === 'line') {
+    renderIndicatorLine(chart, data)
+  }
+}
+
+function renderObjectiveRadar(chart, data) {
+  chart.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        return `${params.name}<br/>${data.map(d =>
+          `${d.name}: ${d.value.toFixed(3)}`
+        ).join('<br/>')}`
+      }
+    },
+    legend: {
+      data: ['达成度'],
+      bottom: 10
+    },
+    radar: {
+      indicator: data.map(d => ({ name: d.name, max: 1 })),
+      radius: '65%',
+      axisName: {
+        color: '#333',
+        fontSize: 13
+      },
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(64, 158, 255, 0.05)', 'rgba(64, 158, 255, 0.1)']
+        }
+      }
+    },
+    series: [{
+      type: 'radar',
+      name: '达成度',
+      data: [{
+        value: data.map(d => d.value),
+        name: '达成度',
+        itemStyle: { color: '#409EFF' },
+        areaStyle: {
+          color: 'rgba(64, 158, 255, 0.3)'
+        },
+        lineStyle: {
+          color: '#409EFF',
+          width: 2
+        }
+      }]
+    }]
+  }, true)
+}
+
+function renderIndicatorRadar(chart, data) {
+  chart.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        return `${params.name}<br/>${data.map(d =>
+          `${d.name}: ${d.value.toFixed(3)}`
+        ).join('<br/>')}`
+      }
+    },
+    legend: {
+      data: ['达成度'],
+      bottom: 10
+    },
+    radar: {
+      indicator: data.map(d => ({ name: d.name, max: 1 })),
+      radius: '65%',
+      axisName: {
+        color: '#333',
+        fontSize: 13
+      },
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(103, 194, 58, 0.05)', 'rgba(103, 194, 58, 0.1)']
+        }
+      }
+    },
+    series: [{
+      type: 'radar',
+      name: '达成度',
+      data: [{
+        value: data.map(d => d.value),
+        name: '达成度',
+        itemStyle: { color: '#67C23A' },
+        areaStyle: {
+          color: 'rgba(103, 194, 58, 0.3)'
+        },
+        lineStyle: {
+          color: '#67C23A',
+          width: 2
+        }
+      }]
+    }]
+  }, true)
+}
+
+function renderObjectiveBar(chart, data) {
+  const sortedData = [...data].sort((a, b) => sortAsc.value ? a.value - b.value : b.value - a.value)
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: (params) => {
+        const val = params[0].value
+        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedData.map(d => d.name),
+      axisLabel: {
+        rotate: 45,
+        fontSize: 11
+      }
+    },
+    yAxis: {
+      type: 'value',
+      max: 1
+    },
+    series: [{
+      type: 'bar',
+      data: sortedData.map(d => ({
+        value: d.value,
+        itemStyle: {
+          color: getBarColor(d.value)
+        }
+      })),
+      barWidth: '60%',
+      label: {
+        show: true,
+        position: 'top',
+        formatter: (params) => params.value.toFixed(3),
+        fontSize: 11
+      }
+    }]
+  }, true)
+}
+
+function renderIndicatorBar(chart, data) {
+  const sortedData = [...data].sort((a, b) => sortAsc.value ? a.value - b.value : b.value - a.value)
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: (params) => {
+        const val = params[0].value
+        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedData.map(d => d.name),
+      axisLabel: {
+        rotate: 45,
+        fontSize: 11
+      }
+    },
+    yAxis: {
+      type: 'value',
+      max: 1
+    },
+    series: [{
+      type: 'bar',
+      data: sortedData.map(d => ({
+        value: d.value,
+        itemStyle: {
+          color: getBarColor(d.value)
+        }
+      })),
+      barWidth: '60%',
+      label: {
+        show: true,
+        position: 'top',
+        formatter: (params) => params.value.toFixed(3),
+        fontSize: 11
+      }
+    }]
+  }, true)
+}
+
+function renderObjectiveLine(chart, data) {
+  const sortedData = [...data].sort((a, b) => sortAsc.value ? a.value - b.value : b.value - a.value)
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => {
+        const val = params[0].value
+        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedData.map(d => d.name),
+      axisLabel: {
+        rotate: 45,
+        fontSize: 11
+      }
+    },
+    yAxis: {
+      type: 'value',
+      max: 1
+    },
+    series: [{
+      type: 'line',
+      data: sortedData.map(d => d.value),
+      smooth: true,
+      lineStyle: {
+        color: '#409EFF',
+        width: 3
+      },
+      itemStyle: {
+        color: '#409EFF'
+      },
+      areaStyle: {
+        color: 'rgba(64, 158, 255, 0.2)'
+      },
+      markLine: {
+        data: [
+          { yAxis: 0.7, name: '达标线', lineStyle: { color: '#E6A23C', type: 'dashed' } },
+          { yAxis: 0.65, name: '预警线', lineStyle: { color: '#F56C6C', type: 'dashed' } }
+        ],
+        label: {
+          formatter: '{b}: {c}'
+        }
+      }
+    }]
+  }, true)
+}
+
+function renderIndicatorLine(chart, data) {
+  const sortedData = [...data].sort((a, b) => sortAsc.value ? a.value - b.value : b.value - a.value)
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => {
+        const val = params[0].value
+        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedData.map(d => d.name),
+      axisLabel: {
+        rotate: 45,
+        fontSize: 11
+      }
+    },
+    yAxis: {
+      type: 'value',
+      max: 1
+    },
+    series: [{
+      type: 'line',
+      data: sortedData.map(d => d.value),
+      smooth: true,
+      lineStyle: {
+        color: '#67C23A',
+        width: 3
+      },
+      itemStyle: {
+        color: '#67C23A'
+      },
+      areaStyle: {
+        color: 'rgba(103, 194, 58, 0.2)'
+      },
+      markLine: {
+        data: [
+          { yAxis: 0.7, name: '达标线', lineStyle: { color: '#E6A23C', type: 'dashed' } },
+          { yAxis: 0.65, name: '预警线', lineStyle: { color: '#F56C6C', type: 'dashed' } }
+        ],
+        label: {
+          formatter: '{b}: {c}'
+        }
+      }
+    }]
+  }, true)
+}
+
+// Helper functions
+function getStatusText(value) {
+  if (value >= 0.7) return '达标'
+  if (value >= 0.65) return '预警'
+  return '不达标'
+}
+
+function getBarColor(value) {
+  if (value >= 0.7) return '#67C23A'
+  if (value >= 0.65) return '#E6A23C'
+  return '#F56C6C'
+}
+
+function toggleSort() {
+  sortAsc.value = !sortAsc.value
+  renderCharts()
+}
+
+// Stats computed properties
+const objectiveStats = computed(() => {
+  const values = Object.values(results.objectiveAchievements || {}).map(Number)
+  if (values.length === 0) return { avg: 0, max: 0, min: 0, weakCount: 0 }
+  return {
+    avg: values.reduce((a, b) => a + b, 0) / values.length,
+    max: Math.max(...values),
+    min: Math.min(...values),
+    weakCount: values.filter(v => v < 0.7).length
+  }
+})
+
+const indicatorStats = computed(() => {
+  const values = Object.values(results.courseAchievements || {}).map(Number)
+  if (values.length === 0) return { avg: 0, max: 0, min: 0, weakCount: 0 }
+  return {
+    avg: values.reduce((a, b) => a + b, 0) / values.length,
+    max: Math.max(...values),
+    min: Math.min(...values),
+    weakCount: values.filter(v => v < 0.7).length
+  }
+})
 </script>
 
 <style scoped>

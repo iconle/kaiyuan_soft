@@ -29,6 +29,7 @@
           <template #title><el-icon><DataAnalysis /></el-icon><span>专业管理</span></template>
           <el-menu-item index="/director/grad-req"><el-icon><Document /></el-icon>毕业要求</el-menu-item>
           <el-menu-item index="/director/macro-matrix"><el-icon><Grid /></el-icon>支撑矩阵</el-menu-item>
+          <el-menu-item index="/director/dashboard"><el-icon><DataBoard /></el-icon>宏观看板</el-menu-item>
           <el-menu-item index="/director/global-compute"><el-icon><TrendCharts /></el-icon>专业级计算</el-menu-item>
         </el-sub-menu>
         <!-- 主讲教师 -->

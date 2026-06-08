@@ -43,7 +43,10 @@ export function getMajorReport(majorId, semesterId) {
 }
 
 export function downloadMajorExcel(majorId, semesterId) {
-  return request.get('/api/reports/major/excel', { params: { majorId, semesterId } }, { responseType: 'blob' })
+  return request.get('/api/reports/major/excel', {
+    params: { majorId, semesterId },
+    responseType: 'blob'
+  })
 }
 
 // 导入课程Excel (已有功能，补充参数说明)

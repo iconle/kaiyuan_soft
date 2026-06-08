@@ -1,37 +1,12 @@
-# Node.js
-node_modules/
-frontend/node_modules/
-frontend/.vite/
+# ===== 忽略所有文件 =====
+*
 
-# Frontend build output
-dist/
-dist-ssr/
-frontend/dist/
+# ===== 允许目录遍历（Git 需要） =====
+!*/
 
-# Backend build output
-backend/target/
+# ===== Bug 修复文件 — 仅追踪这些 =====
+!backend/src/main/java/com/obe/platform/config/SecurityConfig.java
+!backend/src/main/java/com/obe/platform/config/CorsConfig.java
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# IDE and editor files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-*.lst
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Environment files
-.env
-.env.local
-.env.*.local
-*.local
+# ===== 允许 .gitignore 自身 =====
+!.gitignore

@@ -2,8 +2,8 @@
   <div class="page-container">
     <div class="dashboard-toolbar">
       <div>
-        <h3>宏观看板</h3>
-        <p>查看当前专业课程计算进度与达成度准备情况</p>
+        <h3>{{ title }}</h3>
+        <p>{{ description }}</p>
       </div>
       <div class="toolbar-actions">
         <el-select v-model="selectedMajorId" placeholder="选择专业" @change="loadData" class="major-select">
@@ -139,10 +139,25 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import * as echarts from 'echarts'
-import { getDashboard as apiGetDashboard } from '../../api/director'
+import { getDashboard as getAcademicDashboard } from '../../api/academic'
 import { listMajors } from '../../api/admin'
 import { getCourseComputeResults } from '../../api/teacher'
 import StatusTag from '../../components/StatusTag.vue'
+
+const props = defineProps({
+  title: {
+    type: String,
+    default: '宏观看板'
+  },
+  description: {
+    type: String,
+    default: '查看当前专业课程计算进度与达成度准备情况'
+  },
+  loadDashboard: {
+    type: Function,
+    default: getAcademicDashboard
+  }
+})
 
 const statusLabels = {
   LOCKED: '已锁定',
@@ -259,7 +274,7 @@ async function showDetail(row) {
 onMounted(async () => {
   window.addEventListener('resize', resizeCharts)
   try {
-    const res = await listMajors()
+    const res = await listMajors({ page: 1, size: 100 })
     majors.value = res.data?.records || []
     if (majors.value.length > 0) {
       selectedMajorId.value = majors.value[0].id
@@ -281,7 +296,7 @@ async function loadData() {
   if (!selectedMajorId.value) return
   loading.value = true
   try {
-    const res = await apiGetDashboard(selectedMajorId.value)
+    const res = await props.loadDashboard(selectedMajorId.value)
     Object.assign(dashboard, res.data || {})
     await nextTick()
     renderCharts()

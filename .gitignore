@@ -1,0 +1,12 @@
+# ===== 忽略所有文件 =====
+*
+
+# ===== 允许目录遍历（Git 需要） =====
+!*/
+
+# ===== Bug 修复文件 — 仅追踪这些 =====
+!backend/src/main/java/com/obe/platform/config/SecurityConfig.java
+!backend/src/main/java/com/obe/platform/config/CorsConfig.java
+
+# ===== 允许 .gitignore 自身 =====
+!.gitignore

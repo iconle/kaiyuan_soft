@@ -59,7 +59,7 @@ const routes = [
         path: 'academic/dashboard',
         name: 'GlobalDashboard',
         component: () => import('../views/academic/GlobalDashboard.vue'),
-        meta: { roles: ['ACADEMIC', 'DIRECTOR'] }
+        meta: { roles: ['ACADEMIC'] }
       },
       // 专业负责人
       {

@@ -1,6 +1,9 @@
 package com.obe.platform.moduled.exporter;
 
 import com.obe.platform.common.BizException;
+import com.obe.platform.moduled.service.CourseReportService.CourseAssessmentResult;
+import com.obe.platform.moduled.service.CourseReportService.CourseIndicatorResult;
+import com.obe.platform.moduled.service.CourseReportService.CourseObjectiveResult;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -10,16 +13,19 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 public class PdfExporter {
 
     private static final float MARGIN = 50;
     private static final float LINE_HEIGHT = 18;
+    private static final float BOTTOM_MARGIN = 50;
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static byte[] generateCourseReport(String courseName, String className,
@@ -72,6 +78,69 @@ public class PdfExporter {
         }
     }
 
+    public static byte[] generateCourseReport(
+            String courseName,
+            String className,
+            List<CourseObjectiveResult> objectiveResults,
+            List<CourseIndicatorResult> indicatorResults,
+            List<CourseAssessmentResult> assessmentResults,
+            LocalDateTime calcTime) {
+        try (PDDocument doc = new PDDocument();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            PDFont font = loadFont(doc);
+            ReportWriter writer = new ReportWriter(doc, font);
+
+            writer.writeLine("课程达成度报告", 16, MARGIN);
+            writer.blank();
+            writer.writeLine("课程名称: " + safe(courseName), 11, MARGIN);
+            writer.writeLine("教学班级: " + safe(className), 11, MARGIN);
+            writer.writeLine("计算时间: " + (calcTime != null ? calcTime.format(DTF) : "-"), 10, MARGIN);
+            writer.blank();
+
+            writer.writeLine("一、课程目标达成度（第一级）", 13, MARGIN);
+            if (objectiveResults.isEmpty()) {
+                writer.writeLine("暂无课程目标达成度数据", 10, MARGIN + 20);
+            } else {
+                for (CourseObjectiveResult item : objectiveResults) {
+                    writer.writeLine(item.objectiveNo() + "  达成度: " + format(item.achievement())
+                            + "  " + safe(item.description()), 10, MARGIN + 20);
+                }
+            }
+            writer.blank();
+
+            writer.writeLine("二、课程级指标点达成度（第二级）", 13, MARGIN);
+            if (indicatorResults.isEmpty()) {
+                writer.writeLine("暂无指标点达成度数据", 10, MARGIN + 20);
+            } else {
+                for (CourseIndicatorResult item : indicatorResults) {
+                    writer.writeLine(item.indicatorNo() + "  达成度: " + format(item.achievement())
+                            + "  " + safe(item.content()), 10, MARGIN + 20);
+                }
+            }
+            writer.blank();
+
+            writer.writeLine("三、考核点均分明细", 13, MARGIN);
+            if (assessmentResults.isEmpty()) {
+                writer.writeLine("暂无考核点成绩数据", 10, MARGIN + 20);
+            } else {
+                for (CourseAssessmentResult item : assessmentResults) {
+                    writer.writeLine(safe(item.assessmentName())
+                            + "  目标: " + safe(item.objectiveNos())
+                            + "  满分: " + format(item.maxScore())
+                            + "  平均分: " + format(item.averageScore())
+                            + "  人数: " + item.scoreCount(), 10, MARGIN + 20);
+                }
+            }
+
+            writer.close();
+            doc.save(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new BizException("PDF export failed: " + e.getMessage());
+        }
+    }
+
     private static float writeLine(PDPageContentStream cs, PDFont font, float fontSize,
                                     float x, float y, String text) throws Exception {
         cs.beginText();
@@ -95,7 +164,118 @@ public class PdfExporter {
                 }
             } catch (Exception ignored) {}
         }
+        for (String path : new String[]{
+                "C:/Windows/Fonts/NotoSansSC-VF.ttf",
+                "C:/Windows/Fonts/simhei.ttf",
+                "C:/Windows/Fonts/msyh.ttc",
+                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+                "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"}) {
+            try {
+                File fontFile = new File(path);
+                if (fontFile.exists()) {
+                    return PDType0Font.load(doc, fontFile);
+                }
+            } catch (Exception ignored) {}
+        }
         // Fallback to built-in Helvetica
         return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+    }
+
+    private static String format(BigDecimal value) {
+        return value != null ? value.stripTrailingZeros().toPlainString() : "-";
+    }
+
+    private static String safe(String value) {
+        return value != null ? value : "";
+    }
+
+    private static class ReportWriter {
+        private final PDDocument document;
+        private final PDFont font;
+        private PDPage page;
+        private PDPageContentStream contentStream;
+        private float y;
+
+        ReportWriter(PDDocument document, PDFont font) throws Exception {
+            this.document = document;
+            this.font = font;
+            newPage();
+        }
+
+        void writeLine(String text, float fontSize, float x) throws Exception {
+            for (String line : wrap(text, fontSize, x)) {
+                ensureSpace();
+                contentStream.beginText();
+                contentStream.setFont(font, fontSize);
+                contentStream.newLineAtOffset(x, y);
+                contentStream.showText(displayable(line));
+                contentStream.endText();
+                y -= LINE_HEIGHT;
+            }
+        }
+
+        void blank() {
+            y -= LINE_HEIGHT / 2;
+        }
+
+        void close() throws Exception {
+            if (contentStream != null) {
+                contentStream.close();
+            }
+        }
+
+        private void ensureSpace() throws Exception {
+            if (y < BOTTOM_MARGIN) {
+                newPage();
+            }
+        }
+
+        private void newPage() throws Exception {
+            if (contentStream != null) {
+                contentStream.close();
+            }
+            page = new PDPage();
+            document.addPage(page);
+            contentStream = new PDPageContentStream(document, page);
+            y = page.getMediaBox().getHeight() - MARGIN;
+        }
+
+        private List<String> wrap(String text, float fontSize, float x) throws Exception {
+            float maxWidth = page.getMediaBox().getWidth() - x - MARGIN;
+            String value = safe(text);
+            List<String> lines = new java.util.ArrayList<>();
+            StringBuilder line = new StringBuilder();
+            for (int i = 0; i < value.length(); i++) {
+                char ch = value.charAt(i);
+                String candidate = line + String.valueOf(ch);
+                if (!line.isEmpty() && textWidth(displayable(candidate), fontSize) > maxWidth) {
+                    lines.add(line.toString());
+                    line = new StringBuilder(String.valueOf(ch));
+                } else {
+                    line.append(ch);
+                }
+            }
+            lines.add(line.toString());
+            return lines;
+        }
+
+        private float textWidth(String text, float fontSize) throws Exception {
+            return font.getStringWidth(text) / 1000 * fontSize;
+        }
+
+        private String displayable(String text) {
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < text.length(); i++) {
+                String ch = String.valueOf(text.charAt(i));
+                try {
+                    font.encode(ch);
+                    result.append(ch);
+                } catch (Exception ignored) {
+                    result.append("?");
+                }
+            }
+            return result.toString();
+        }
     }
 }

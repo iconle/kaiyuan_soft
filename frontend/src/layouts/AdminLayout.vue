@@ -53,6 +53,7 @@
           <el-menu-item :index="`/teacher/${activeClassId}/questions`"><el-icon><Edit /></el-icon>题目设置</el-menu-item>
           <el-menu-item :index="`/teacher/${activeClassId}/scores`"><el-icon><Upload /></el-icon>成绩导入</el-menu-item>
           <el-menu-item :index="`/teacher/${activeClassId}/compute`"><el-icon><Finished /></el-icon>课程级计算</el-menu-item>
+          <el-menu-item :index="`/teacher/${activeClassId}/personal-achievements`"><el-icon><UserFilled /></el-icon>个人达成度</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

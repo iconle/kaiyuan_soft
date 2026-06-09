@@ -80,6 +80,21 @@ export function getCourseComputeResults(classId) {
   return request.get(`/api/classes/${classId}/compute/results`)
 }
 
+// 个人达成度
+export function listPersonalAchievements(classId) {
+  return request.get(`/api/classes/${classId}/personal-achievements`)
+}
+
+export function getPersonalAchievement(classId, studentId) {
+  return request.get(`/api/classes/${classId}/personal-achievements/${studentId}`)
+}
+
+export function downloadPersonalAchievements(classId) {
+  return request.get(`/api/classes/${classId}/personal-achievements/excel`, {
+    responseType: 'blob'
+  })
+}
+
 // 报表
 export function getCourseReport(classId) {
   return request.get(`/api/reports/course/${classId}`)

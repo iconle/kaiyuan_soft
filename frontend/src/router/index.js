@@ -122,6 +122,12 @@ const routes = [
         name: 'CourseCompute',
         component: () => import('../views/teacher/CourseCompute.vue'),
         meta: { roles: ['TEACHER'] }
+      },
+      {
+        path: 'teacher/:classId/personal-achievements',
+        name: 'PersonalAchievement',
+        component: () => import('../views/teacher/PersonalAchievement.vue'),
+        meta: { roles: ['TEACHER'] }
       }
     ]
   }

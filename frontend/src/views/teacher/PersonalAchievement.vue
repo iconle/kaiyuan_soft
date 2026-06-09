@@ -1,0 +1,368 @@
+<template>
+  <div class="page-container">
+    <div class="page-header">
+      <div>
+        <h3>个人达成度</h3>
+        <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
+      </div>
+      <el-button
+        type="primary"
+        :icon="Download"
+        :loading="exporting"
+        :disabled="rows.length === 0"
+        @click="handleExport"
+      >
+        导出 Excel
+      </el-button>
+    </div>
+
+    <div class="summary-band">
+      <div class="summary-item">
+        <span>学生数</span>
+        <strong>{{ rows.length }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>平均达成度</span>
+        <strong>{{ averageAchievement.toFixed(3) }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>达标人数</span>
+        <strong class="success">{{ achievedCount }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>未达标人数</span>
+        <strong :class="{ danger: unachievedCount > 0 }">{{ unachievedCount }}</strong>
+      </div>
+    </div>
+
+    <div class="table-toolbar">
+      <el-input
+        v-model="keyword"
+        :prefix-icon="Search"
+        clearable
+        placeholder="搜索学号或姓名"
+        class="search-input"
+      />
+    </div>
+
+    <el-table
+      v-loading="loading"
+      :data="filteredRows"
+      border
+      stripe
+      empty-text="暂无个人达成度数据"
+    >
+      <el-table-column prop="studentNo" label="学号" min-width="150" />
+      <el-table-column prop="studentName" label="姓名" min-width="120" />
+      <el-table-column label="综合达成度" width="150" align="center">
+        <template #default="{ row }">
+          <span class="achievement-value">{{ formatAchievement(row.overallAchievement) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="120" align="center">
+        <template #default="{ row }">
+          <el-tag :type="statusType(row.overallAchievement)">
+            {{ statusText(row.overallAchievement) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="110" align="center">
+        <template #default="{ row }">
+          <el-button link type="primary" @click="openDetail(row)">查看详情</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <el-dialog
+      v-model="detailVisible"
+      :title="detailTitle"
+      width="720px"
+      destroy-on-close
+    >
+      <div v-loading="detailLoading">
+        <div class="detail-summary">
+          <span>综合达成度</span>
+          <strong>{{ formatAchievement(detail.overallAchievement) }}</strong>
+          <el-tag :type="statusType(detail.overallAchievement)">
+            {{ statusText(detail.overallAchievement) }}
+          </el-tag>
+        </div>
+
+        <el-tabs>
+          <el-tab-pane label="课程目标">
+            <el-table :data="objectiveRows" border size="small">
+              <el-table-column prop="label" label="课程目标" />
+              <el-table-column label="达成度" width="150" align="center">
+                <template #default="{ row }">{{ formatAchievement(row.value) }}</template>
+              </el-table-column>
+              <el-table-column label="状态" width="110" align="center">
+                <template #default="{ row }">
+                  <el-tag :type="statusType(row.value)" size="small">{{ statusText(row.value) }}</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+          <el-tab-pane label="指标点">
+            <el-table :data="indicatorRows" border size="small">
+              <el-table-column prop="label" label="指标点" />
+              <el-table-column label="达成度" width="150" align="center">
+                <template #default="{ row }">{{ formatAchievement(row.value) }}</template>
+              </el-table-column>
+              <el-table-column label="状态" width="110" align="center">
+                <template #default="{ row }">
+                  <el-tag :type="statusType(row.value)" size="small">{{ statusText(row.value) }}</el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { Download, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import {
+  downloadPersonalAchievements,
+  getPersonalAchievement,
+  listPersonalAchievements
+} from '../../api/teacher'
+
+const route = useRoute()
+const classId = computed(() => route.params.classId)
+const loading = ref(false)
+const exporting = ref(false)
+const keyword = ref('')
+const rows = ref([])
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detail = reactive({
+  studentNo: '',
+  studentName: '',
+  overallAchievement: 0,
+  objectiveAchievements: {},
+  indicatorAchievements: {},
+  objectiveLabels: {},
+  indicatorLabels: {}
+})
+
+const filteredRows = computed(() => {
+  const query = keyword.value.trim().toLowerCase()
+  if (!query) return rows.value
+  return rows.value.filter(row =>
+    String(row.studentNo || '').toLowerCase().includes(query) ||
+    String(row.studentName || '').toLowerCase().includes(query)
+  )
+})
+
+const averageAchievement = computed(() => {
+  if (rows.value.length === 0) return 0
+  return rows.value.reduce((sum, row) => sum + Number(row.overallAchievement || 0), 0) / rows.value.length
+})
+
+const achievedCount = computed(() =>
+  rows.value.filter(row => Number(row.overallAchievement) >= 0.7).length
+)
+const unachievedCount = computed(() => rows.value.length - achievedCount.value)
+const detailTitle = computed(() =>
+  `${detail.studentName || '学生'}（${detail.studentNo || '-'}）`
+)
+
+const objectiveRows = computed(() => toDetailRows(
+  detail.objectiveAchievements,
+  detail.objectiveLabels,
+  '课程目标'
+))
+const indicatorRows = computed(() => toDetailRows(
+  detail.indicatorAchievements,
+  detail.indicatorLabels,
+  '指标点'
+))
+
+onMounted(loadRows)
+watch(classId, loadRows)
+
+async function loadRows() {
+  if (!classId.value) return
+  loading.value = true
+  try {
+    const response = await listPersonalAchievements(classId.value)
+    rows.value = response.data || []
+  } finally {
+    loading.value = false
+  }
+}
+
+async function openDetail(row) {
+  detailVisible.value = true
+  detailLoading.value = true
+  try {
+    const response = await getPersonalAchievement(classId.value, row.studentId)
+    Object.assign(detail, response.data || {})
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+async function handleExport() {
+  exporting.value = true
+  try {
+    const blob = await downloadPersonalAchievements(classId.value)
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `个人达成度-${classId.value}.xlsx`
+    anchor.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('个人达成度 Excel 已导出')
+  } finally {
+    exporting.value = false
+  }
+}
+
+function toDetailRows(values = {}, labels = {}, fallback) {
+  return Object.entries(values || {}).map(([id, value]) => ({
+    id,
+    label: labels?.[id] || `${fallback}${id}`,
+    value: Number(value || 0)
+  }))
+}
+
+function formatAchievement(value) {
+  return Number(value || 0).toFixed(3)
+}
+
+function statusType(value) {
+  const achievement = Number(value || 0)
+  if (achievement >= 0.7) return 'success'
+  if (achievement >= 0.65) return 'warning'
+  return 'danger'
+}
+
+function statusText(value) {
+  const achievement = Number(value || 0)
+  if (achievement >= 0.7) return '达标'
+  if (achievement >= 0.65) return '预警'
+  return '未达标'
+}
+</script>
+
+<style scoped>
+.page-container {
+  padding: var(--space-5);
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.page-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.summary-band {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  border: 1px solid var(--gray-150);
+  border-radius: 6px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  min-height: 84px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid var(--gray-150);
+}
+
+.summary-item:last-child {
+  border-right: 0;
+}
+
+.summary-item span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.summary-item strong {
+  margin-top: 6px;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.summary-item strong.success {
+  color: #67c23a;
+}
+
+.summary-item strong.danger {
+  color: #f56c6c;
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 260px;
+}
+
+.achievement-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #f7f8fa;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+}
+
+.detail-summary span {
+  color: var(--text-secondary);
+}
+
+.detail-summary strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 800px) {
+  .summary-band {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-item:nth-child(2) {
+    border-right: 0;
+  }
+
+  .summary-item:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--gray-150);
+  }
+}
+</style>

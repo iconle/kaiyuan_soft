@@ -5,6 +5,7 @@ import com.obe.platform.moduled.service.CourseReportService.CourseIndicatorResul
 import com.obe.platform.moduled.service.CourseReportService.CourseObjectiveResult;
 import com.obe.platform.moduled.service.CourseReportService.CourseStudentScoreResult;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,8 @@ class CourseReportExporterTest {
     @Test
     void generatesReadablePdfWithAllSections() throws Exception {
         byte[] pdf = PdfExporter.generateCourseReport(
-                "Data Structures",
-                "Class 1",
+                "计算机网络",
+                "计算机科学与技术2023级1班",
                 objectives(),
                 indicators(),
                 assessments(),
@@ -31,6 +32,14 @@ class CourseReportExporterTest {
         assertThat(pdf).isNotEmpty();
         try (var document = Loader.loadPDF(pdf)) {
             assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(1);
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text)
+                    .contains("课程达成度报告")
+                    .contains("计算机网络")
+                    .contains("课程目标达成度")
+                    .contains("理解OSI与TCP/IP体系结构")
+                    .contains("期末考试");
+            assertThat(text).doesNotContain("????");
         }
     }
 
@@ -60,21 +69,21 @@ class CourseReportExporterTest {
     private List<CourseObjectiveResult> objectives() {
         return List.of(new CourseObjectiveResult(
                 "1",
-                "Knowledge",
-                "Understand core data structures",
+                "知识目标",
+                "理解OSI与TCP/IP体系结构",
                 new BigDecimal("0.82")));
     }
 
     private List<CourseIndicatorResult> indicators() {
         return List.of(new CourseIndicatorResult(
                 "1-1",
-                "Apply foundational knowledge",
+                "能够运用网络基础知识分析复杂工程问题",
                 new BigDecimal("0.79")));
     }
 
     private List<CourseAssessmentResult> assessments() {
         return List.of(new CourseAssessmentResult(
-                "Final exam",
+                "期末考试",
                 "1",
                 new BigDecimal("100"),
                 new BigDecimal("81.50"),

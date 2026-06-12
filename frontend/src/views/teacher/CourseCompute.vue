@@ -25,21 +25,77 @@
     </el-alert>
 
     <!-- My unlock requests status -->
-    <el-card v-if="myRequests.length > 0" header="我的勘误申请" style="margin-bottom:16px">
-      <el-table :data="myRequests" border stripe size="small">
-        <el-table-column prop="id" label="工单ID" width="65" />
-        <el-table-column prop="reason" label="勘误原因" min-width="140" />
-        <el-table-column prop="createdAt" label="提交时间" width="155" />
-        <el-table-column label="状态" width="170">
+    <el-card
+      v-if="myRequests.length > 0"
+      header="我的勘误申请"
+      class="my-unlock-card"
+    >
+      <el-table
+        :data="myRequests"
+        border
+        stripe
+        size="small"
+        class="my-unlock-table"
+      >
+        <el-table-column
+          prop="id"
+          label="工单ID"
+          width="70"
+          align="center"
+        />
+
+        <el-table-column
+          prop="reason"
+          label="勘误原因"
+          min-width="220"
+          show-overflow-tooltip
+        />
+
+        <el-table-column
+          prop="createdAt"
+          label="提交时间"
+          width="300"
+          align="center"
+          class-name="unlock-time-column"
+        />
+
+        <el-table-column
+          label="状态"
+          width="210"
+          align="center"
+          class-name="unlock-status-column"
+        >
           <template #default="{ row }">
-            <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
+            <el-tag
+              :type="statusTagType(row.status)"
+              size="small"
+              effect="light"
+              class="unlock-status-tag"
+            >
+              {{ statusLabel(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="90">
+
+        <el-table-column
+          label="操作"
+          width="120"
+          align="center"
+          class-name="unlock-operation-column"
+        >
           <template #default="{ row }">
-            <el-button v-if="row.status === 'PENDING'" size="small" type="danger"
-              @click="handleCancelRequest(row)">撤销</el-button>
-            <span v-else style="color:var(--text-secondary)">-</span>
+            <div class="unlock-operation-actions">
+              <el-button
+                v-if="row.status === 'PENDING'"
+                size="small"
+                type="danger"
+                class="unlock-cancel-btn"
+                @click="handleCancelRequest(row)"
+              >
+                撤销
+              </el-button>
+              <span v-else class="operation-placeholder">-</span>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -717,4 +773,88 @@ const indicatorStats = computed(() => {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+/* 我的勘误申请表格优化 */
+:deep(.my-unlock-table .el-table__header th) {
+  height: 42px;
+  background-color: #f7f7fa;
+  color: #606266;
+  font-weight: 700;
+}
+
+:deep(.my-unlock-table .el-table__row td) {
+  height: 56px;
+}
+
+/* 提交时间一行显示 */
+:deep(.unlock-time-column .cell) {
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 状态列居中 */
+:deep(.unlock-status-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 状态标签更明显 */
+.unlock-status-tag {
+  min-width: 120px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* 操作列居中 */
+:deep(.unlock-operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unlock-operation-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 撤销按钮美化 */
+.unlock-cancel-btn {
+  height: 28px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.unlock-cancel-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
+}
+
+:deep(.unlock-cancel-btn.el-button) {
+  margin-left: 0;
+}
+
+/* 无操作占位符居中 */
+.operation-placeholder {
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.my-unlock-card {
+  width: 100%;
+  margin-bottom: 20px;
+}
 </style>

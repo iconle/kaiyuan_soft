@@ -113,22 +113,145 @@
         <el-button type="primary" @click="handleRequestUnlock" :loading="requesting">提交申请</el-button>
       </template>
     </el-dialog>
-
-    <div v-if="hasResults" style="display:flex; gap: 20px; flex-wrap: wrap;">
+    <div v-if="hasResults" class="achievement-overview">
       <!-- Objective achievements -->
-      <el-card header="课程目标达成度（第一级）" style="flex:1; min-width: 360px;">
-        <el-table :data="objectiveData" border stripe size="small">
-          <el-table-column prop="objectiveNo" label="目标编号" width="100" />
-          <el-table-column prop="achievement" label="达成度" />
-        </el-table>
+      <el-card class="achievement-panel" shadow="hover">
+        <template #header>
+          <div class="achievement-panel-header">
+            <div>
+              <div class="achievement-title">课程目标达成度（第一级）</div>
+              <div class="achievement-subtitle">按课程目标展示达成情况</div>
+            </div>
+            <el-tag type="success" effect="light" class="achievement-count-tag">
+              共 {{ objectiveData.length }} 项
+            </el-tag>
+          </div>
+        </template>
+
+        <div class="achievement-summary">
+          <div class="summary-item">
+            <div class="summary-label">平均值</div>
+            <div class="summary-value primary">
+              {{ formatAchievement(objectiveStats.avg) }}
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">最高值</div>
+            <div class="summary-value success">
+              {{ formatAchievement(objectiveStats.max) }}
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">最低值</div>
+            <div class="summary-value warning">
+              {{ formatAchievement(objectiveStats.min) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="achievement-list">
+          <div
+            v-for="item in objectiveData"
+            :key="item.objectiveNo"
+            class="achievement-item"
+          >
+            <div class="achievement-item-top">
+              <div class="achievement-name">
+                {{ item.objectiveNo }}
+              </div>
+
+              <div class="achievement-value">
+                {{ formatAchievement(item.achievement) }}
+              </div>
+
+              <el-tag
+                size="small"
+                effect="light"
+                :type="achievementTagType(item.achievement)"
+                class="achievement-status-tag"
+              >
+                {{ achievementTagText(item.achievement) }}
+              </el-tag>
+            </div>
+
+            <el-progress
+              :percentage="achievementPercent(item.achievement)"
+              :stroke-width="10"
+              :show-text="false"
+              class="achievement-progress"
+            />
+          </div>
+        </div>
       </el-card>
 
       <!-- Course indicator achievements -->
-      <el-card header="课程级指标点达成度（第二级）" style="flex:1; min-width: 360px;">
-        <el-table :data="indicatorData" border stripe size="small">
-          <el-table-column prop="indicatorId" label="指标点编号" width="110" />
-          <el-table-column prop="achievement" label="达成度" />
-        </el-table>
+      <el-card class="achievement-panel" shadow="hover">
+        <template #header>
+          <div class="achievement-panel-header">
+            <div>
+              <div class="achievement-title">课程级指标点达成度（第二级）</div>
+              <div class="achievement-subtitle">按指标点展示达成情况</div>
+            </div>
+            <el-tag type="success" effect="light" class="achievement-count-tag">
+              共 {{ indicatorData.length }} 项
+            </el-tag>
+          </div>
+        </template>
+
+        <div class="achievement-summary">
+          <div class="summary-item">
+            <div class="summary-label">平均值</div>
+            <div class="summary-value primary">
+              {{ formatAchievement(indicatorStats.avg) }}
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">最高值</div>
+            <div class="summary-value success">
+              {{ formatAchievement(indicatorStats.max) }}
+            </div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">最低值</div>
+            <div class="summary-value warning">
+              {{ formatAchievement(indicatorStats.min) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="achievement-list">
+          <div
+            v-for="item in indicatorData"
+            :key="item.indicatorId"
+            class="achievement-item"
+          >
+            <div class="achievement-item-top">
+              <div class="achievement-name">
+                {{ item.indicatorId }}
+              </div>
+
+              <div class="achievement-value">
+                {{ formatAchievement(item.achievement) }}
+              </div>
+
+              <el-tag
+                size="small"
+                effect="light"
+                :type="achievementTagType(item.achievement)"
+                class="achievement-status-tag"
+              >
+                {{ achievementTagText(item.achievement) }}
+              </el-tag>
+            </div>
+
+            <el-progress
+              :percentage="achievementPercent(item.achievement)"
+              :stroke-width="10"
+              :show-text="false"
+              class="achievement-progress"
+            />
+          </div>
+        </div>
       </el-card>
     </div>
 
@@ -311,7 +434,29 @@ const indicatorData = computed(() => {
     indicatorId: labels[id] || `指标点${id}`, achievement: val
   }))
 })
+function formatAchievement(value) {
+  const num = Number(value)
+  if (Number.isNaN(num)) return '-'
+  return num.toFixed(4)
+}
 
+function achievementPercent(value) {
+  const num = Number(value)
+  if (Number.isNaN(num)) return 0
+  return Math.max(0, Math.min(100, Number((num * 100).toFixed(1))))
+}
+
+function achievementTagType(value) {
+  const num = Number(value)
+  if (Number.isNaN(num)) return 'info'
+  return num >= 0.7 ? 'success' : 'warning'
+}
+
+function achievementTagText(value) {
+  const num = Number(value)
+  if (Number.isNaN(num)) return '暂无数据'
+  return num >= 0.7 ? '达标' : '需关注'
+}
 function showRequestDialog() {
   unlockReason.value = ''
   requestDialogVisible.value = true
@@ -856,5 +1001,145 @@ const indicatorStats = computed(() => {
 .my-unlock-card {
   width: 100%;
   margin-bottom: 20px;
+}
+/* 课程达成度结果展示优化 */
+.achievement-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(360px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.achievement-panel {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.achievement-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.achievement-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.achievement-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.achievement-count-tag {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.achievement-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  padding: 12px 10px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fbf8ff 0%, #ffffff 100%);
+  border: 1px solid #f0eafd;
+  text-align: center;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.summary-value.primary {
+  color: #7e57c2;
+}
+
+.summary-value.success {
+  color: #67c23a;
+}
+
+.summary-value.warning {
+  color: #e6a23c;
+}
+
+.achievement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.achievement-item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #fbf8ff 0%, #ffffff 100%);
+  border: 1px solid #f0eafd;
+  transition: all 0.2s ease;
+}
+
+.achievement-item:hover {
+  box-shadow: 0 8px 20px rgba(126, 87, 194, 0.08);
+  transform: translateY(-1px);
+}
+
+.achievement-item-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.achievement-name {
+  min-width: 64px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #303133;
+}
+
+.achievement-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #7e57c2;
+}
+
+.achievement-status-tag {
+  margin-left: auto;
+  border-radius: 999px;
+  font-weight: 600;
+  min-width: 64px;
+  text-align: center;
+}
+
+.achievement-progress {
+  width: 100%;
+}
+
+:deep(.achievement-progress .el-progress-bar__outer) {
+  border-radius: 999px;
+  background-color: #f1eef8;
+}
+
+:deep(.achievement-progress .el-progress-bar__inner) {
+  border-radius: 999px;
+}
+
+@media (max-width: 1200px) {
+  .achievement-overview {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

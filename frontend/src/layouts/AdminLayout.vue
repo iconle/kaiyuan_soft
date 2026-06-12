@@ -37,12 +37,26 @@
           <template #title><el-icon><EditPen /></el-icon><span>课程大纲</span></template>
           <div class="teacher-sidebar-selects" @click.stop>
             <div class="teacher-select-label">教学学期</div>
-            <el-select v-model="teacherFilterSemester" placeholder="全部学期" size="small" clearable class="teacher-select" @click.stop>
+           
+            <el-select
+              v-model="teacherFilterSemester"
+              placeholder="全部学期"
+              size="default"
+              clearable
+              class="teacher-select"
+              @click.stop
+            >
               <el-option v-for="s in teacherSemesters" :key="s.id" :label="s.label" :value="s.id" />
             </el-select>
             <div class="teacher-select-label">教学班级</div>
-            <el-select v-model="activeClassId" placeholder="选择教学班级" size="small" class="teacher-select"
-              @change="switchTeacherClass" @click.stop>
+            <el-select
+            v-model="activeClassId"
+            placeholder="选择教学班级"
+            size="default"
+            class="teacher-select"
+            @change="switchTeacherClass"
+            @click.stop
+          >
               <el-option v-for="c in filteredTeacherClasses" :key="c.id"
                 :label="`${c.courseName || '课程'} - ${c.className || '班级'+c.id}`" :value="String(c.id)" />
             </el-select>
@@ -327,5 +341,48 @@ function handleLogout() {
 .teacher-select {
   width: 100%;
   margin-bottom: var(--space-2);
+}
+/* Issue #93：侧边栏菜单项高度和选中区域优化 */
+:deep(.layout-aside .el-menu) {
+  border-right: none;
+  padding-top: 10px;
+}
+
+/* 一级菜单标题，例如“教务管理” */
+:deep(.layout-aside .el-sub-menu__title) {
+  height: 60px;
+  line-height: 60px;
+  padding-left: 32px !important;
+  font-size: 16px;
+}
+
+/* 二级菜单项，例如“课程体系、学生管理、教学班级”等 */
+:deep(.layout-aside .el-menu-item) {
+  height: 52px;
+  line-height: 52px;
+  margin: 25px 6px;
+  padding-left: 58px !important;
+  border-radius: 16px;
+  font-size: 16px;
+}
+
+/* 图标与文字间距 */
+:deep(.layout-aside .el-menu-item .el-icon),
+:deep(.layout-aside .el-sub-menu__title .el-icon) {
+  margin-right: 12px;
+  font-size: 20px;
+}
+
+/* 选中项背景加宽、加高 */
+:deep(.layout-aside .el-menu-item.is-active) {
+  background: linear-gradient(90deg, #f3edff 0%, #ffffff 100%);
+  color: #7e57c2;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(126, 87, 194, 0.08);
+}
+
+/* 选中项左侧小圆点位置微调 */
+:deep(.layout-aside .el-menu-item.is-active::before) {
+  left: 12px;
 }
 </style>

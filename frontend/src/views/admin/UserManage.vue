@@ -25,7 +25,12 @@
       >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="140" />
-        <el-table-column prop="realName" label="姓名" width="160" class-name="name-column" />
+        <el-table-column
+          prop="realName"
+          label="姓名"
+          width="220"
+          class-name="name-column"
+        />
         <el-table-column
           label="角色"
           width="140"
@@ -273,7 +278,7 @@ async function handleResetPwd(row) {
 :deep(.name-column .cell) {
   line-height: 1.6;
   word-break: keep-all;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 /* 用户管理表格优化 */
 .user-table {

@@ -51,24 +51,77 @@
       border
       stripe
       empty-text="暂无个人达成度数据"
+      class="personal-achievement-table"
     >
-      <el-table-column prop="studentNo" label="学号" min-width="150" />
-      <el-table-column prop="studentName" label="姓名" min-width="120" />
-      <el-table-column label="综合达成度" width="150" align="center">
+      <el-table-column
+        prop="studentNo"
+        label="学号"
+        min-width="150"
+        align="center"
+      />
+
+      <el-table-column
+        prop="studentName"
+        label="姓名"
+        min-width="120"
+        align="center"
+      />
+
+      <el-table-column
+        label="综合达成度"
+        width="190"
+        align="center"
+        header-align="center"
+        class-name="achievement-column"
+      >
         <template #default="{ row }">
-          <span class="achievement-value">{{ formatAchievement(row.overallAchievement) }}</span>
+          <div class="achievement-cell">
+            <span class="achievement-value">
+              {{ formatAchievement(row.overallAchievement) }}
+            </span>
+            <el-progress
+              :percentage="achievementPercent(row.overallAchievement)"
+              :stroke-width="7"
+              :show-text="false"
+              class="achievement-progress-mini"
+            />
+          </div>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="120" align="center">
+
+      <el-table-column
+        label="状态"
+        width="130"
+        align="center"
+        class-name="personal-status-column"
+      >
         <template #default="{ row }">
-          <el-tag :type="statusType(row.overallAchievement)">
+          <el-tag
+            :type="statusType(row.overallAchievement)"
+            effect="light"
+            class="personal-status-tag"
+          >
             {{ statusText(row.overallAchievement) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="110" align="center">
+
+      <el-table-column
+        label="操作"
+        width="150"
+        align="center"
+        class-name="personal-operation-column"
+      >
         <template #default="{ row }">
-          <el-button link type="primary" @click="openDetail(row)">查看详情</el-button>
+          <div class="personal-operation-actions">
+            <el-button
+              size="small"
+              class="detail-action-btn"
+              @click="openDetail(row)"
+            >
+              查看详情
+            </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -235,7 +288,11 @@ function toDetailRows(values = {}, labels = {}, fallback) {
 function formatAchievement(value) {
   return Number(value || 0).toFixed(3)
 }
-
+function achievementPercent(value) {
+  const num = Number(value || 0)
+  if (Number.isNaN(num)) return 0
+  return Math.max(0, Math.min(100, Number((num * 100).toFixed(1))))
+}
 function statusType(value) {
   const achievement = Number(value || 0)
   if (achievement >= 0.7) return 'success'
@@ -364,5 +421,122 @@ function statusText(value) {
   .summary-item:nth-child(-n + 2) {
     border-bottom: 1px solid var(--gray-150);
   }
+}
+/* 个人达成度表格优化 */
+.personal-achievement-table {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+:deep(.personal-achievement-table .el-table__header th) {
+  height: 44px;
+  background-color: #f7f7fa;
+  color: #606266;
+  font-weight: 700;
+}
+
+:deep(.personal-achievement-table .el-table__row td) {
+  height: 58px;
+}
+
+/* 综合达成度：数值 + 小进度条 */
+.achievement-cell {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.achievement-value {
+  min-width: 48px;
+  font-weight: 800;
+  color: #303133;
+  font-variant-numeric: tabular-nums;
+}
+
+.achievement-progress-mini {
+  width: 82px;
+}
+
+:deep(.achievement-progress-mini .el-progress-bar__outer) {
+  border-radius: 999px;
+  background-color: #f1eef8;
+}
+
+:deep(.achievement-progress-mini .el-progress-bar__inner) {
+  border-radius: 999px;
+  background-color: #9b87c9;
+}
+
+/* 状态列居中并突出显示 */
+:deep(.personal-status-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.personal-status-tag {
+  min-width: 64px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* 操作列居中 */
+:deep(.personal-operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.personal-operation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 查看详情按钮：紫色胶囊按钮 */
+.detail-action-btn {
+  height: 30px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  border-color: #9b87c9;
+  background-color: #9b87c9;
+  box-shadow: 0 6px 14px rgba(126, 87, 194, 0.18);
+}
+
+.detail-action-btn:hover {
+  color: #fff;
+  border-color: #8c76c2;
+  background-color: #8c76c2;
+}
+
+:deep(.detail-action-btn.el-button) {
+  margin-left: 0;
+}
+/* 综合达成度列居中 */
+:deep(.achievement-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 综合达成度内容整体居中 */
+.achievement-cell {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 </style>

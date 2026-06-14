@@ -29,6 +29,23 @@ export function deleteIndicator(id) {
   return request.delete(`/api/grad-req/indicators/${id}`)
 }
 
+// 指标点批量导入
+export function downloadIndicatorTemplate(majorId) {
+  return request.get('/api/grad-req/indicator-template', {
+    params: { majorId },
+    responseType: 'blob'
+  })
+}
+
+export function importIndicators(majorId, file) {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post('/api/grad-req/indicators/import', form, {
+    params: { majorId },
+    skipErrorMessage: true
+  })
+}
+
 // 宏观支撑矩阵
 export function getMacroMatrix(majorId) {
   return request.get('/api/macro-matrix', { params: { majorId } })
@@ -65,8 +82,5 @@ export function getRadarData(majorId, semesterId) {
 }
 
 export function downloadMajorExcel(majorId, semesterId) {
-  return request.get('/api/reports/major/excel', {
-    params: { majorId, semesterId },
-    responseType: 'blob'
-  })
+  return request.get('/api/reports/major/excel', { params: { majorId, semesterId } }, { responseType: 'blob' })
 }

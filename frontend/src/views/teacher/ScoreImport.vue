@@ -6,6 +6,15 @@
         <el-option v-for="ap in assessments" :key="ap.id" :label="`${ap.name} → ${assessmentObjLabel(ap)}`" :value="ap.id" />
       </el-select>
       <el-button type="primary" @click="downloadTemplate" :disabled="!selectedAssessmentId">下载模板</el-button>
+      <el-upload
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="uploadFile"
+        accept=".xlsx"
+        :disabled="status === 'LOCKED'"
+      >
+        <el-button type="primary" plain :loading="importing" :disabled="status === 'LOCKED'">导入成绩</el-button>
+      </el-upload>
       <StatusTag v-if="status" :status="status" />
     </div>
 
@@ -87,8 +96,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { getScores, getScoreStatus, downloadScoreTemplate, listAssessments } from '../../api/teacher'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores
+} from '../../api/teacher'
 import StatusTag from '../../components/StatusTag.vue'
 import request from '../../utils/request'
 
@@ -102,6 +113,7 @@ const selectedAssessmentId = ref(null)
 const questions = ref([])
 const scoreRows = ref([])
 const edits = ref({})
+const importing = ref(false)
 
 onMounted(async () => { if (classId.value) await loadAll() })
 
@@ -205,6 +217,31 @@ async function saveAll() {
 
 async function downloadTemplate() {
   try { const blob = await downloadScoreTemplate(classId.value); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '成绩模板.xlsx'; a.click(); URL.revokeObjectURL(url) } catch { /* handled */ }
+}
+
+function beforeUpload(file) {
+  const valid = file.name?.toLowerCase().endsWith('.xlsx')
+  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
+  return valid
+}
+
+async function uploadFile({ file }) {
+  importing.value = true
+  const form = new FormData()
+  form.append('file', file)
+  try {
+    await uploadScores(classId.value, form)
+    ElMessage.success('成绩导入成功')
+    await loadAll()
+  } catch (error) {
+    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
+      dangerouslyUseHTMLString: true, type: 'error'
+    })
+  } finally { importing.value = false }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 </script>
 

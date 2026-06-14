@@ -3,10 +3,17 @@ package com.obe.platform.moduleb.controller;
 import com.obe.platform.common.Result;
 import com.obe.platform.moduleb.entity.AssessmentQuestion;
 import com.obe.platform.moduleb.service.QuestionService;
+import com.obe.platform.moduleb.service.TeacherConfigImportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -16,6 +23,7 @@ import java.util.List;
 public class QuestionController {
 
     private final QuestionService questionService;
+    private final TeacherConfigImportService importService;
 
     @GetMapping
     public Result<List<AssessmentQuestion>> list(@PathVariable Long assessmentId) {
@@ -43,5 +51,23 @@ public class QuestionController {
                                 @PathVariable Long id) {
         questionService.delete(id);
         return Result.ok();
+    }
+
+    @GetMapping("/import-template")
+    public ResponseEntity<byte[]> downloadImportTemplate(@PathVariable Long assessmentId) {
+        byte[] data = importService.generateQuestionTemplate(
+                importService.requireAssessment(assessmentId),
+                importService.listAssessmentObjectives(assessmentId));
+        String filename = URLEncoder.encode("考核点题目导入模板.xlsx", StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @PostMapping("/import")
+    public Result<Integer> importQuestions(@PathVariable Long assessmentId,
+                                           @RequestParam("file") MultipartFile file) {
+        return Result.ok(importService.importQuestions(assessmentId, file));
     }
 }

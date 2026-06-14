@@ -17,6 +17,16 @@ export function deleteObjective(classId, id) {
   return request.delete(`/api/classes/${classId}/objectives/${id}`)
 }
 
+export function downloadObjectiveTemplate(classId) {
+  return request.get(`/api/classes/${classId}/objectives/import-template`, {
+    responseType: 'blob'
+  })
+}
+
+export function importObjectives(classId, file) {
+  return uploadImport(`/api/classes/${classId}/objectives/import`, file)
+}
+
 // 内部权重
 export function getWeights(classId) {
   return request.get(`/api/classes/${classId}/weights`)
@@ -47,6 +57,26 @@ export function deleteAssessment(classId, id) {
   return request.delete(`/api/classes/${classId}/assessments/${id}`)
 }
 
+export function downloadAssessmentTemplate(classId) {
+  return request.get(`/api/classes/${classId}/assessments/import-template`, {
+    responseType: 'blob'
+  })
+}
+
+export function importAssessments(classId, file) {
+  return uploadImport(`/api/classes/${classId}/assessments/import`, file)
+}
+
+export function downloadQuestionTemplate(assessmentId) {
+  return request.get(`/api/assessments/${assessmentId}/questions/import-template`, {
+    responseType: 'blob'
+  })
+}
+
+export function importQuestions(assessmentId, file) {
+  return uploadImport(`/api/assessments/${assessmentId}/questions/import`, file)
+}
+
 // 成绩模板
 export function downloadScoreTemplate(classId) {
   return request.get(`/api/classes/${classId}/score-template`, { responseType: 'blob' })
@@ -55,8 +85,15 @@ export function downloadScoreTemplate(classId) {
 // 成绩录入与管理
 export function uploadScores(classId, formData) {
   return request.post(`/api/classes/${classId}/scores/upload`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    skipErrorMessage: true
   })
+}
+
+function uploadImport(url, file) {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post(url, form, { skipErrorMessage: true })
 }
 
 export function getScores(classId) {

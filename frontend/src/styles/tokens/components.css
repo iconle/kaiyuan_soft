@@ -1,0 +1,33 @@
+/* ============================================================
+   tokens/components.css — Ins风组件令牌
+   ============================================================ */
+:root {
+  --sidebar-bg:               var(--surface-sidebar);
+  --sidebar-logo-bg:          var(--brand-50);
+  --sidebar-text:             var(--text-sidebar);
+  --sidebar-text-active:      var(--text-sidebar-active);
+  --sidebar-item-hover:       var(--surface-sidebar-hover);
+  --sidebar-active-indicator: var(--brand-500);
+
+  --header-bg:                var(--surface-card);
+  --header-border:            var(--border-default);
+  --header-height:            56px;
+
+  --page-bg:                  var(--surface-page);
+  --page-padding-x:           var(--space-8);
+  --page-padding-y:           var(--space-6);
+
+  --card-bg:                  var(--surface-card);
+  --card-radius:              var(--radius-md);
+  --card-shadow:              var(--shadow-sm);
+  --card-padding:             var(--space-6);
+
+  --table-header-bg:          var(--gray-50);
+  --table-header-weight:      var(--font-semibold);
+  --table-row-hover:          var(--brand-50);
+  --table-border:             var(--border-default);
+
+  --stat-value-size:          var(--text-3xl);
+  --stat-label-size:          var(--text-sm);
+  --stat-value-color:         var(--text-primary);
+}

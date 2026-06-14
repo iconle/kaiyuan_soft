@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram name="系统架构图" id="arch">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ========== Layer 1: Client ========== -->
+        <mxCell id="2" value="客户端层 — Vue 3 + Element Plus + Pinia + Vite" style="swimlane;startSize=32;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;rounded=1;arcSize=6;swimlaneLine=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="1120" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="&lt;b&gt;系统管理&lt;/b&gt;&lt;br&gt;模块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="2">
+          <mxGeometry x="20" y="45" width="190" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="4" value="&lt;b&gt;宏观配置&lt;/b&gt;&lt;br&gt;模块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="2">
+          <mxGeometry x="230" y="45" width="190" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="5" value="&lt;b&gt;课程大纲&lt;/b&gt;&lt;br&gt;模块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="2">
+          <mxGeometry x="440" y="45" width="190" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="6" value="&lt;b&gt;成绩计算&lt;/b&gt;&lt;br&gt;模块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="2">
+          <mxGeometry x="650" y="45" width="190" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="7" value="&lt;b&gt;报表导出&lt;/b&gt;&lt;br&gt;模块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="2">
+          <mxGeometry x="860" y="45" width="190" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== API Bar ========== -->
+        <mxCell id="8" value="HTTP / RESTful API (JSON)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="200" y="210" width="800" height="38" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: Client → API -->
+        <mxCell id="21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d79b00;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Layer 3: Backend ========== -->
+        <mxCell id="9" value="后端服务层 — Spring Boot 3 (JDK 17) + MyBatis-Plus" style="swimlane;startSize=32;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=13;rounded=1;arcSize=6;swimlaneLine=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="290" width="1120" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="10" value="&lt;b&gt;模块A&lt;/b&gt;&lt;br&gt;基础与宏观管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="9">
+          <mxGeometry x="20" y="45" width="240" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="11" value="&lt;b&gt;模块B&lt;/b&gt;&lt;br&gt;课程大纲与微观映射" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="9">
+          <mxGeometry x="280" y="45" width="240" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="12" value="&lt;b&gt;模块C&lt;/b&gt;&lt;br&gt;成绩录入与直接评价" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="9">
+          <mxGeometry x="540" y="45" width="240" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="13" value="&lt;b&gt;模块D&lt;/b&gt;&lt;br&gt;报表生成与底稿导出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="9">
+          <mxGeometry x="800" y="45" width="240" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="14" value="&lt;b&gt;核心计算引擎&lt;/b&gt; — 三级达成度计算（Level1 + Level2 + Level3）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=0;" vertex="1" parent="9">
+          <mxGeometry x="20" y="120" width="510" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="15" value="&lt;b&gt;Spring Security + JWT + RBAC&lt;/b&gt; — 四角色权限控制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=0;" vertex="1" parent="9">
+          <mxGeometry x="550" y="120" width="510" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: API → Backend -->
+        <mxCell id="22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="8" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Layer 4: Data ========== -->
+        <mxCell id="16" value="数据存储层 — MySQL 8.0+" style="swimlane;startSize=32;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=13;rounded=1;arcSize=6;swimlaneLine=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="570" width="1120" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="17" value="&lt;b&gt;权限与字典表&lt;/b&gt;&lt;br&gt;sys_user, sys_college,&lt;br&gt;sys_major, sys_dict_semester" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=10;fontStyle=0;align=center;" vertex="1" parent="16">
+          <mxGeometry x="20" y="42" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="18" value="&lt;b&gt;培养方案与宏观矩阵&lt;/b&gt;&lt;br&gt;grad_requirement, indicator,&lt;br&gt;course, macro_support_matrix" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=10;fontStyle=0;align=center;" vertex="1" parent="16">
+          <mxGeometry x="280" y="42" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="19" value="&lt;b&gt;课程大纲与微观映射&lt;/b&gt;&lt;br&gt;course_outline, course_objective,&lt;br&gt;assessment_point, obj_ind_weight" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=10;fontStyle=0;align=center;" vertex="1" parent="16">
+          <mxGeometry x="540" y="42" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="20" value="&lt;b&gt;成绩与计算结果&lt;/b&gt;&lt;br&gt;score_sheet, student_score,&lt;br&gt;obj/course/major_achievement" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666;fontSize=10;fontStyle=0;align=center;" vertex="1" parent="16">
+          <mxGeometry x="800" y="42" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: Backend → Data -->
+        <mxCell id="23" value="JDBC / HikariCP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;fontStyle=1;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="9" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Module-to-Data dashed alignment lines ========== -->
+        <mxCell id="24" value="" style="endArrow=classic;dashed=1;dashPattern=5 5;html=1;strokeColor=#B0B0B0;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="9" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="25" value="" style="endArrow=classic;dashed=1;dashPattern=5 5;html=1;strokeColor=#B0B0B0;exitX=0.38;exitY=1;exitDx=0;exitDy=0;entryX=0.38;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="9" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="26" value="" style="endArrow=classic;dashed=1;dashPattern=5 5;html=1;strokeColor=#B0B0B0;exitX=0.62;exitY=1;exitDx=0;exitDy=0;entryX=0.62;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="9" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="27" value="" style="endArrow=classic;dashed=1;dashPattern=5 5;html=1;strokeColor=#B0B0B0;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="9" target="16">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Title ========== -->
+        <mxCell id="28" value="面向专业认证的毕业要求达成度统一计算平台 — 系统架构图" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="310" y="0" width="580" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ========== Legend ========== -->
+        <mxCell id="29" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="720" width="1120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="30" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="733" width="20" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="31" value="前端 (Client)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="85" y="730" width="80" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="32" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="180" y="733" width="20" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="33" value="API 网关" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="205" y="730" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="34" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="733" width="20" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="35" value="后端 (Backend)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="305" y="730" width="90" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="36" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="410" y="733" width="20" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="37" value="计算引擎" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="435" y="730" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="38" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="510" y="733" width="20" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="39" value="安全认证" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="535" y="730" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="40" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="610" y="733" width="20" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="41" value="数据存储 (MySQL)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="635" y="730" width="110" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

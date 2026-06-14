@@ -9,4 +9,11 @@
 !backend/src/main/java/com/obe/platform/config/CorsConfig.java
 
 # ===== 允许 .gitignore 自身 =====
+!backend/src/main/java/com/obe/platform/modulec/controller/PersonalAchievementController.java
+!backend/src/main/java/com/obe/platform/modulec/service/PersonalAchievementService.java
+!backend/src/main/java/com/obe/platform/moduled/exporter/PersonalAchievementExcelExporter.java
+!backend/src/test/java/com/obe/platform/moduled/exporter/PersonalAchievementExcelExporterTest.java
+!backend/src/main/resources/fonts/wqy-microhei.ttf
+!backend/src/main/resources/fonts/LICENSE-WQY-APACHE2.txt
+!frontend/src/views/teacher/PersonalAchievement.vue
 !.gitignore

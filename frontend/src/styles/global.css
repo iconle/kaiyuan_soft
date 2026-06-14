@@ -1,0 +1,382 @@
+/* ============================================================
+   global.css — Ins风全局样式与微交互体系
+   ============================================================ */
+
+/* === 全局重置 === */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background: var(--surface-global);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: var(--action-primary); text-decoration: none; }
+a:hover { color: var(--action-primary-hover); }
+
+/* 移除浏览器自动填充的背景色 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* === 滚动条 === */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-300); }
+
+/* === 页面容器 === */
+.page-container {
+  padding: var(--page-padding-y) var(--page-padding-x);
+}
+
+/* === 页面标题栏 === */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+.page-header h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  padding-left: 16px;
+  position: relative;
+}
+.page-header h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--brand-400), var(--peach-400));
+}
+
+/* === 搜索栏 === */
+.search-bar {
+  margin-bottom: var(--space-4);
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* === 表格底部 === */
+.table-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+/* === 统计卡片行 === */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+/* ============================================================
+   核心：content-card — Ins风柔雾卡片
+   ============================================================ */
+.content-card {
+  background: #ffffff;
+  border: 1px solid var(--gray-150);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-5);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.content-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-300), var(--peach-300), var(--mint-300));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.content-card:hover {
+  border-color: var(--brand-100);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+.content-card:hover::before { opacity: 1; }
+
+/* ============================================================
+   表格 — Ins风 + 自适应宽度
+   ============================================================ */
+.el-table,
+.el-table__inner-wrapper,
+.el-table__header-wrapper,
+.el-table__body-wrapper {
+  width: 100% !important;
+}
+.el-table {
+  border-radius: var(--radius-xs) !important;
+  overflow: hidden;
+}
+.el-table thead th {
+  background: var(--gray-50) !important;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid var(--gray-150) !important;
+}
+.el-table tbody td {
+  padding: 14px 12px !important;
+}
+.el-table tbody tr {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.el-table tbody tr:hover td {
+  background: linear-gradient(90deg, var(--brand-50) 0%, rgba(246, 244, 250, 0.3) 100%) !important;
+}
+
+/* 操作列按钮强制水平排列 */
+.el-table .el-table__cell .cell {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+}
+.el-table .el-table__cell .cell > .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* ============================================================
+   菜单 — 白侧边栏 + 大圆角 + 弹性交互
+   ============================================================ */
+.el-menu {
+  border-right: none !important;
+  padding: 12px 8px;
+}
+.el-menu .el-menu-item {
+  border-radius: var(--radius-sm);
+  margin: 3px 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: var(--text-sidebar);
+  font-weight: 500;
+  font-size: 14px;
+  height: 42px;
+  line-height: 42px;
+}
+.el-menu .el-menu-item:hover {
+  background: var(--brand-50) !important;
+  color: var(--brand-600) !important;
+  transform: translateX(4px);
+}
+.el-menu .el-menu-item.is-active {
+  background: linear-gradient(90deg, var(--brand-50) 0%, rgba(246, 244, 250, 0.3) 100%) !important;
+  color: var(--brand-700) !important;
+  font-weight: 600;
+  position: relative;
+}
+.el-menu .el-menu-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-500);
+  box-shadow: 0 0 8px rgba(155, 142, 196, 0.4);
+}
+.el-sub-menu .el-sub-menu__title {
+  border-radius: var(--radius-sm);
+  margin: 3px 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-weight: 500;
+}
+.el-sub-menu .el-sub-menu__title:hover {
+  background: var(--brand-50) !important;
+  color: var(--brand-600) !important;
+  transform: translateX(2px);
+}
+
+/* ============================================================
+   按钮
+   ============================================================ */
+.el-button--primary {
+  background: var(--brand-500) !important;
+  border: none !important;
+  border-radius: var(--radius-base) !important;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(155, 142, 196, 0.25);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.el-button--primary:hover {
+  background: var(--brand-600) !important;
+  box-shadow: 0 6px 20px rgba(155, 142, 196, 0.40);
+  transform: translateY(-3px);
+}
+.el-button--primary:active {
+  transform: translateY(-1px) scale(0.97);
+  box-shadow: 0 1px 4px rgba(155, 142, 196, 0.30);
+  transition: all 0.1s ease !important;
+}
+
+.el-button--default {
+  border-radius: var(--radius-base);
+  border-color: var(--gray-200);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.el-button--default:hover {
+  border-color: var(--brand-300);
+  color: var(--brand-600);
+  background: var(--brand-50);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.el-button--default:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.el-button.is-text:hover {
+  transform: translateX(2px);
+}
+
+/* ============================================================
+   输入框 — Ins风圆润 + 可见边界 + 聚焦柔光
+   ============================================================ */
+.el-input .el-input__wrapper {
+  border-radius: var(--radius-base) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 0 1px var(--gray-200) inset !important;
+}
+.el-input .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--brand-300) inset !important;
+}
+.el-input.is-focus .el-input__wrapper {
+  box-shadow:
+    0 0 0 1px var(--brand-400) inset,
+    0 0 0 4px rgba(155, 142, 196, 0.10) !important;
+}
+
+.el-select .el-select__wrapper {
+  border-radius: var(--radius-base) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 0 1px var(--gray-200) inset !important;
+}
+.el-select .el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--brand-300) inset !important;
+}
+
+/* ============================================================
+   Tag
+   ============================================================ */
+.el-tag {
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.el-tag:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   Dialog
+   ============================================================ */
+.el-dialog {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-xl) !important;
+  border: 1px solid var(--gray-150);
+}
+
+.dialog-fade-enter-active {
+  animation: ins-dialog-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+@keyframes ins-dialog-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.dialog-fade-leave-active {
+  animation: ins-dialog-out 0.2s ease !important;
+}
+@keyframes ins-dialog-out {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+
+/* ============================================================
+   Pagination
+   ============================================================ */
+.el-pagination {
+  margin-top: var(--space-4);
+  justify-content: flex-end;
+}
+.el-pagination .el-pager li,
+.el-pagination .btn-prev,
+.el-pagination .btn-next {
+  border-radius: var(--radius-xs) !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.el-pagination .el-pager li:hover,
+.el-pagination .btn-prev:hover,
+.el-pagination .btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+.el-pagination .el-pager li.is-active {
+  background: var(--brand-500) !important;
+  box-shadow: 0 2px 8px rgba(155, 142, 196, 0.3);
+}
+
+/* ============================================================
+   等宽数字
+   ============================================================ */
+.stat-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ============================================================
+   Vue 页面过渡
+   ============================================================ */
+.page-fade-enter-active {
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+}
+.page-fade-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+.page-fade-leave-to { opacity: 0; }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }

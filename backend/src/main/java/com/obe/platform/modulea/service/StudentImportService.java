@@ -104,7 +104,7 @@ public class StudentImportService {
             return outputStream.toByteArray();
         }
     }
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int importStudents(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BizException("上传文件为空，请选择文件");
@@ -127,17 +127,17 @@ public class StudentImportService {
             }
         }
 
-        Map<String, Long> majorNameToId = new HashMap<>();
+        Map<String, SysMajor> majorNameToObj = new HashMap<>();
         for (SysMajor major : majors) {
             if (major.getName() != null) {
-                majorNameToId.put(major.getName().trim(), major.getId());
+                majorNameToObj.put(major.getName().trim(), major);
             }
         }
 
-        Map<String, Long> adminClassNameToId = new HashMap<>();
+        Map<String, SysAdminClass> adminClassNameToObj = new HashMap<>();
         for (SysAdminClass ac : adminClasses) {
             if (ac.getClassName() != null) {
-                adminClassNameToId.put(ac.getClassName().trim(), ac.getId());
+                adminClassNameToObj.put(ac.getClassName().trim(), ac);
             }
         }
 
@@ -237,11 +237,12 @@ public class StudentImportService {
 
                 // 学院（必填）
                 String collegeName = getCellString(row.getCell(2));
+                Long collegeId = null;
                 if (collegeName == null || collegeName.isBlank()) {
                     rowErrors.add("学院不能为空");
                 } else {
                     collegeName = collegeName.trim();
-                    Long collegeId = collegeNameToId.get(collegeName);
+                    collegeId = collegeNameToId.get(collegeName);
                     if (collegeId == null) {
                         rowErrors.add("学院「" + collegeName + "」不存在");
                     } else {
@@ -249,17 +250,19 @@ public class StudentImportService {
                     }
                 }
 
-                // 专业（必填）
+                // 专业（必填）且必须属于所选学院
                 String majorName = getCellString(row.getCell(3));
                 if (majorName == null || majorName.isBlank()) {
                     rowErrors.add("专业不能为空");
                 } else {
                     majorName = majorName.trim();
-                    Long majorId = majorNameToId.get(majorName);
-                    if (majorId == null) {
+                    SysMajor major = majorNameToObj.get(majorName);
+                    if (major == null) {
                         rowErrors.add("专业「" + majorName + "」不存在");
+                    } else if (collegeId != null && !major.getCollegeId().equals(collegeId)) {
+                        rowErrors.add("专业「" + majorName + "」不属于学院「" + collegeName + "」");
                     } else {
-                        student.setMajorId(majorId);
+                        student.setMajorId(major.getId());
                     }
                 }
 
@@ -280,17 +283,19 @@ public class StudentImportService {
                     }
                 }
 
-                // 行政班级（必填）
+                // 行政班级（必填）且必须属于所选专业
                 String adminClassName = getCellString(row.getCell(5));
                 if (adminClassName == null || adminClassName.isBlank()) {
                     rowErrors.add("行政班级不能为空");
                 } else {
                     adminClassName = adminClassName.trim();
-                    Long adminClassId = adminClassNameToId.get(adminClassName);
-                    if (adminClassId == null) {
+                    SysAdminClass adminClass = adminClassNameToObj.get(adminClassName);
+                    if (adminClass == null) {
                         rowErrors.add("行政班级「" + adminClassName + "」不存在");
+                    } else if (student.getMajorId() != null && !adminClass.getMajorId().equals(student.getMajorId())) {
+                        rowErrors.add("行政班级「" + adminClassName + "」不属于所选专业");
                     } else {
-                        student.setAdminClassId(adminClassId);
+                        student.setAdminClassId(adminClass.getId());
                     }
                 }
 

@@ -31,7 +31,7 @@ public class StudentImportService {
     private final SysMajorMapper majorMapper;
     private final SysAdminClassMapper adminClassMapper;
 
-    private static final String[] TEMPLATE_HEADERS = {"学号*", "姓名*", "学院", "专业", "入学年份", "行政班级"};
+    private static final String[] TEMPLATE_HEADERS = {"学号*", "姓名*", "学院*", "专业*", "入学年份*", "行政班级*"};
 
     public byte[] generateTemplate() throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -86,7 +86,7 @@ public class StudentImportService {
             noteHeader.createCell(0).setCellValue("填写说明：");
 
             String[] notes = {
-                "1. 带 * 的字段为必填项",
+                "1. 所有字段均为必填项",
                 "2. 学号不能重复，否则将报错",
                 "3. 学院、专业、行政班级填写名称，系统会自动匹配",
                 "4. 入学年份填写数字，如：2024",
@@ -129,12 +129,16 @@ public class StudentImportService {
 
         Map<String, Long> majorNameToId = new HashMap<>();
         for (SysMajor major : majors) {
-            majorNameToId.put(major.getName().trim(), major.getId());
+            if (major.getName() != null) {
+                majorNameToId.put(major.getName().trim(), major.getId());
+            }
         }
 
         Map<String, Long> adminClassNameToId = new HashMap<>();
         for (SysAdminClass ac : adminClasses) {
-            adminClassNameToId.put(ac.getClassName().trim(), ac.getId());
+            if (ac.getClassName() != null) {
+                adminClassNameToId.put(ac.getClassName().trim(), ac.getId());
+            }
         }
 
         List<Student> validStudents = new ArrayList<>();
@@ -231,9 +235,11 @@ public class StudentImportService {
                     student.setName(name.trim());
                 }
 
-                // 学院（可选）
+                // 学院（必填）
                 String collegeName = getCellString(row.getCell(2));
-                if (collegeName != null && !collegeName.isBlank()) {
+                if (collegeName == null || collegeName.isBlank()) {
+                    rowErrors.add("学院不能为空");
+                } else {
                     collegeName = collegeName.trim();
                     Long collegeId = collegeNameToId.get(collegeName);
                     if (collegeId == null) {
@@ -243,9 +249,11 @@ public class StudentImportService {
                     }
                 }
 
-                // 专业（可选）
+                // 专业（必填）
                 String majorName = getCellString(row.getCell(3));
-                if (majorName != null && !majorName.isBlank()) {
+                if (majorName == null || majorName.isBlank()) {
+                    rowErrors.add("专业不能为空");
+                } else {
                     majorName = majorName.trim();
                     Long majorId = majorNameToId.get(majorName);
                     if (majorId == null) {
@@ -255,9 +263,11 @@ public class StudentImportService {
                     }
                 }
 
-                // 入学年份（可选）
+                // 入学年份（必填）
                 String enrollmentYearStr = getCellString(row.getCell(4));
-                if (enrollmentYearStr != null && !enrollmentYearStr.isBlank()) {
+                if (enrollmentYearStr == null || enrollmentYearStr.isBlank()) {
+                    rowErrors.add("入学年份不能为空");
+                } else {
                     try {
                         int year = Integer.parseInt(enrollmentYearStr.trim());
                         if (year < 2000 || year > 2100) {
@@ -270,9 +280,11 @@ public class StudentImportService {
                     }
                 }
 
-                // 行政班级（可选）
+                // 行政班级（必填）
                 String adminClassName = getCellString(row.getCell(5));
-                if (adminClassName != null && !adminClassName.isBlank()) {
+                if (adminClassName == null || adminClassName.isBlank()) {
+                    rowErrors.add("行政班级不能为空");
+                } else {
                     adminClassName = adminClassName.trim();
                     Long adminClassId = adminClassNameToId.get(adminClassName);
                     if (adminClassId == null) {

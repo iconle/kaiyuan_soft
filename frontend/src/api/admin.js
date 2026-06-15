@@ -117,6 +117,21 @@ export function removeAdminClassStudent(classId, studentId) {
   return request.delete(`/api/dict/admin-classes/${classId}/students/${studentId}`)
 }
 
+// 学生导入
+export function downloadStudentTemplate() {
+  return request.get('/api/students/template', {
+    responseType: 'blob'
+  })
+}
+
+export function importStudentExcel(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/api/students/import-excel', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
 // 教学班级管理（教务管理员）
 export function listTeachingClasses(params) {
   return request.get('/api/teaching-classes', { params })

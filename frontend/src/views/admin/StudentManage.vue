@@ -2,6 +2,8 @@
   <div class="page-container">
     <div class="page-header">
       <h3>学生管理</h3>
+      <el-button @click="handleDownloadTemplate">下载模板</el-button>
+      <el-button type="primary" @click="showImportDialog">导入 Excel</el-button>
       <el-button type="primary" @click="showDialog()">新增学生</el-button>
     </div>
 
@@ -97,13 +99,44 @@
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 导入 Excel 对话框 -->
+    <el-dialog v-model="importDialogVisible" title="导入学生名单" width="480px">
+      <div class="import-tip">
+        请先下载模板，按模板格式填写学生信息后上传。
+      </div>
+      <el-upload
+        ref="uploadRef"
+        :auto-upload="false"
+        :limit="1"
+        accept=".xlsx"
+        :on-change="handleFileChange"
+        :on-exceed="handleExceed"
+        drag
+      >
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">
+          将文件拖到此处，或<em>点击上传</em>
+        </div>
+        <template #tip>
+          <div class="el-upload__tip">
+            只支持 .xlsx 格式，单次最多导入 1000 条记录
+          </div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <el-button @click="importDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleImport" :loading="importing">确定导入</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listStudents, createStudent, updateStudent, deleteStudent, listColleges, listMajors, listAdminClasses } from '../../api/admin'
+import { UploadFilled } from '@element-plus/icons-vue'
+import { listStudents, createStudent, updateStudent, deleteStudent, listColleges, listMajors, listAdminClasses, downloadStudentTemplate, importStudentExcel } from '../../api/admin'
 
 const loading = ref(false)
 const students = ref([])
@@ -124,6 +157,11 @@ const enrollmentYears = [2021, 2022, 2023, 2024, 2025, 2026]
 const dialogVisible = ref(false)
 const editing = ref(null)
 const form = reactive({ studentNo: '', name: '', collegeId: null, majorId: null, enrollmentYear: 2024, adminClassId: null })
+
+const importDialogVisible = ref(false)
+const importing = ref(false)
+const uploadRef = ref(null)
+const selectedFile = ref(null)
 
 let searchTimer = null
 
@@ -201,6 +239,58 @@ async function handleDelete(row) {
   ElMessage.success('已删除')
   loadData()
 }
+
+function showImportDialog() {
+  selectedFile.value = null
+  if (uploadRef.value) {
+    uploadRef.value.clearFiles()
+  }
+  importDialogVisible.value = true
+}
+
+function handleFileChange(file) {
+  selectedFile.value = file.raw
+}
+
+function handleExceed() {
+  ElMessage.warning('只能上传一个文件')
+}
+
+async function handleDownloadTemplate() {
+  try {
+    const res = await downloadStudentTemplate()
+    const url = URL.createObjectURL(new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '学生名单导入模板.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.error('下载模板失败')
+  }
+}
+
+async function handleImport() {
+  if (!selectedFile.value) {
+    ElMessage.warning('请选择要导入的文件')
+    return
+  }
+
+  importing.value = true
+  try {
+    const res = await importStudentExcel(selectedFile.value)
+    ElMessage.success(`成功导入 ${res.data} 条学生记录`)
+    importDialogVisible.value = false
+    loadData()
+  } catch (e) {
+    const errorMsg = e.response?.data?.msg || e.message || '导入失败'
+    ElMessage.error(errorMsg)
+  } finally {
+    importing.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -260,5 +350,25 @@ async function handleDelete(row) {
   color: #fff;
   border-color: #e78087;
   background-color: #e78087;
+}
+
+.import-tip {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(128, 107, 191, 0.08);
+  color: #806bbf;
+  font-size: 13px;
+}
+
+:deep(.el-upload-dragger) {
+  border: 2px dashed #d8c9f3;
+  border-radius: 12px;
+  background: #fafbff;
+}
+
+:deep(.el-upload-dragger:hover) {
+  border-color: #806bbf;
+  background: #f6f0ff;
 }
 </style>

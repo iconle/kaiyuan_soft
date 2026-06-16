@@ -105,6 +105,21 @@ export function deleteAdminClass(id) {
   return request.delete(`/api/dict/admin-classes/${id}`)
 }
 
+export function downloadAdminClassTemplate() {
+  return request.get('/api/dict/admin-classes/import-template', {
+    responseType: 'blob'
+  })
+}
+
+export function importAdminClassExcel(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/api/dict/admin-classes/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    skipErrorMessage: true
+  })
+}
+
 export function getAdminClassStudents(classId) {
   return request.get(`/api/dict/admin-classes/${classId}/students`)
 }

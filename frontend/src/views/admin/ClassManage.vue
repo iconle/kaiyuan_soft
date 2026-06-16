@@ -2,7 +2,19 @@
   <div class="page-container">
     <div class="page-header">
       <h3>行政班级管理</h3>
-      <el-button type="primary" @click="showDialog()">新增班级</el-button>
+      <div class="header-actions">
+        <el-button :loading="templateDownloading" @click="handleDownloadTemplate">下载模板</el-button>
+        <el-upload
+          class="upload-control"
+          accept=".xlsx"
+          :show-file-list="false"
+          :auto-upload="false"
+          :on-change="handleImportFile"
+        >
+          <el-button type="success" :loading="importing">班级导入</el-button>
+        </el-upload>
+        <el-button type="primary" @click="showDialog()">新增班级</el-button>
+      </div>
     </div>
 
     <div class="content-card">
@@ -110,7 +122,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   listAdminClasses, createAdminClass, updateAdminClass, deleteAdminClass,
   getAdminClassStudents, addAdminClassStudent, removeAdminClassStudent,
-  listMajors
+  listMajors, downloadAdminClassTemplate, importAdminClassExcel
 } from '../../api/admin'
 import { listStudents } from '../../api/academic'
 
@@ -121,6 +133,8 @@ const page = ref(1)
 const size = ref(10)
 const total = ref(0)
 const filterMajorId = ref(null)
+const templateDownloading = ref(false)
+const importing = ref(false)
 
 const dialogVisible = ref(false)
 const editing = ref(null)
@@ -153,6 +167,66 @@ async function loadData() {
     classes.value = res.data?.records || []
     total.value = res.data?.total || 0
   } finally { loading.value = false }
+}
+
+async function handleDownloadTemplate() {
+  templateDownloading.value = true
+  try {
+    const blob = await downloadAdminClassTemplate()
+    saveBlob(blob, '行政班级导入模板.xlsx')
+  } catch { /* handled */ }
+  finally { templateDownloading.value = false }
+}
+
+async function handleImportFile(uploadFile) {
+  if (importing.value) return
+  const file = uploadFile?.raw
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.xlsx')) {
+    ElMessage.warning('仅支持上传 .xlsx 格式文件')
+    return
+  }
+
+  importing.value = true
+  try {
+    const res = await importAdminClassExcel(file)
+    ElMessage.success(`成功导入 ${res.data || 0} 个班级`)
+    page.value = 1
+    await loadData()
+  } catch (error) {
+    showImportError(error)
+  } finally {
+    importing.value = false
+  }
+}
+
+function saveBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
+}
+
+function showImportError(error) {
+  const message = error?.response?.data?.message || error?.message || '班级导入失败，请检查模板格式后重试'
+  ElMessageBox.alert(escapeHtml(message).replace(/\n/g, '<br>'), '导入失败', {
+    confirmButtonText: '我知道了',
+    dangerouslyUseHTMLString: true,
+    type: 'error'
+  })
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 function showDialog(row) {
@@ -212,8 +286,11 @@ async function handleRemoveStudent(row) {
 
 <style scoped>
 .page-container { padding: var(--space-5); }
-.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+.header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.upload-control { display: inline-flex; }
+:deep(.upload-control .el-upload) { display: inline-flex; }
 .filter-bar { margin-bottom: var(--space-4); }
 .pagination-wrap { margin-top: var(--space-4); display: flex; justify-content: flex-end; }
 /* 操作列居中 */

@@ -1,6 +1,7 @@
 package com.obe.platform.modulea.controller;
 
 import com.obe.platform.modulea.service.DictService;
+import com.obe.platform.modulea.service.AdminClassImportService;
 import com.obe.platform.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ class DictControllerTest {
 
     @MockBean
     private DictService dictService;
+
+    @MockBean
+    private AdminClassImportService adminClassImportService;
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;

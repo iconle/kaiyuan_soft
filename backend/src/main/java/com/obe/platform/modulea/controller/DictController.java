@@ -8,11 +8,18 @@ import com.obe.platform.modulea.entity.SysCollege;
 import com.obe.platform.modulea.entity.SysDictSemester;
 import com.obe.platform.modulea.entity.SysMajor;
 import com.obe.platform.modulea.entity.TeachingClass;
+import com.obe.platform.modulea.service.AdminClassImportService;
 import com.obe.platform.modulea.service.DictService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +29,7 @@ import java.util.Map;
 public class DictController {
 
     private final DictService dictService;
+    private final AdminClassImportService adminClassImportService;
 
     // ========== 学院 ==========
 
@@ -113,6 +121,23 @@ public class DictController {
     @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
     public Result<SysAdminClass> createAdminClass(@RequestBody SysAdminClass ac) {
         return Result.ok(dictService.createAdminClass(ac));
+    }
+
+    @GetMapping("/admin-classes/import-template")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
+    public ResponseEntity<byte[]> downloadAdminClassTemplate() {
+        byte[] data = adminClassImportService.generateTemplate();
+        String filename = URLEncoder.encode("行政班级导入模板.xlsx", StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @PostMapping("/admin-classes/import")
+    @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
+    public Result<Integer> importAdminClasses(@RequestParam("file") MultipartFile file) {
+        return Result.ok(adminClassImportService.importAdminClasses(file));
     }
 
     @PutMapping("/admin-classes/{id}")

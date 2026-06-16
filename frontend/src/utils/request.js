@@ -31,7 +31,9 @@ request.interceptors.response.use(
         localStorage.removeItem('token')
         router.push('/login')
       }
-      return Promise.reject(new Error(res.message))
+      const error = new Error(res.message || '请求失败')
+      error.response = response
+      return Promise.reject(error)
     }
     return res
   },

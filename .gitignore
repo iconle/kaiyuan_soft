@@ -17,6 +17,8 @@
 !backend/src/main/resources/fonts/LICENSE-WQY-APACHE2.txt
 !backend/src/main/java/com/obe/platform/moduleb/service/TeacherConfigImportService.java
 !backend/src/test/java/com/obe/platform/moduleb/service/TeacherConfigImportServiceTest.java
+!backend/src/main/java/com/obe/platform/modulea/service/AdminClassImportService.java
+!backend/src/test/java/com/obe/platform/modulea/service/AdminClassImportServiceTest.java
 !backend/src/test/java/com/obe/platform/modulec/service/ExcelParseServiceTest.java
 !frontend/src/views/teacher/PersonalAchievement.vue
 !.gitignore

@@ -23,7 +23,10 @@ request.interceptors.response.use(
     }
     const res = response.data
     if (res.code !== 200) {
-      ElMessage.error(res.message || '请求失败')
+      // 调用方可通过 config.skipErrorMessage 自行处理错误展示（如多行校验报告）
+      if (!response.config.skipErrorMessage) {
+        ElMessage.error(res.message || '请求失败')
+      }
       if (res.code === 401) {
         localStorage.removeItem('token')
         router.push('/login')
@@ -37,7 +40,9 @@ request.interceptors.response.use(
       localStorage.removeItem('token')
       router.push('/login')
     }
-    ElMessage.error(error.response?.data?.message || '网络错误')
+    if (!error.config?.skipErrorMessage) {
+      ElMessage.error(error.response?.data?.message || '网络错误')
+    }
     return Promise.reject(error)
   }
 )

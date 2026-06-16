@@ -26,6 +26,24 @@
         >
           新增毕业要求
         </el-button>
+
+        <el-button
+          class="primary-pill-btn template-pill-btn"
+          :loading="downloading"
+          :disabled="!currentMajorId"
+          @click="handleDownloadTemplate"
+        >
+          下载模板
+        </el-button>
+
+        <el-button
+          type="primary"
+          class="primary-pill-btn"
+          :disabled="!currentMajorId"
+          @click="openImportDialog"
+        >
+          导入指标点
+        </el-button>
       </div>
     </div>
 
@@ -176,13 +194,33 @@
         <el-button type="primary" @click="handleIndicatorSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 指标点导入对话框 -->
+    <el-dialog v-model="importDialogVisible" title="导入指标点" width="520px">
+      <div class="import-tip">
+        请先点击「下载模板」获取标准模板，按格式填写后再上传。<br />
+        仅支持 .xlsx 文件，<b>表头不可修改</b>，否则将无法导入。
+      </div>
+      <el-upload
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="customUpload"
+        accept=".xlsx"
+        :disabled="importing"
+      >
+        <el-button type="primary" :loading="importing">选择文件并导入</el-button>
+        <template #tip>
+          <div class="upload-tip">仅支持 .xlsx 格式，校验通过后才会写入数据库。</div>
+        </template>
+      </el-upload>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listGradReqs, createGradReq, updateGradReq, deleteGradReq, addIndicator, updateIndicator, deleteIndicator } from '../../api/director'
+import { listGradReqs, createGradReq, updateGradReq, deleteGradReq, addIndicator, updateIndicator, deleteIndicator, downloadIndicatorTemplate, importIndicators } from '../../api/director'
 import { listMajors } from '../../api/admin'
 
 const loading = ref(false)
@@ -199,6 +237,10 @@ const indicatorDialogVisible = ref(false)
 const editingIndicator = ref(null)
 const currentGradReqId = ref(null)
 const indicatorForm = reactive({ indicatorNo: '', content: '' })
+
+const importing = ref(false)
+const downloading = ref(false)
+const importDialogVisible = ref(false)
 
 onMounted(async () => {
   const res = await listMajors({ page: 1, size: 100 })
@@ -265,6 +307,73 @@ async function handleDeleteIndicator(id) {
   ElMessage.success('已删除')
   loadData()
 }
+
+function openImportDialog() {
+  if (!currentMajorId.value) { ElMessage.warning('请先选择专业'); return }
+  importDialogVisible.value = true
+}
+
+async function handleDownloadTemplate() {
+  if (!currentMajorId.value) { ElMessage.warning('请先选择专业'); return }
+  downloading.value = true
+  try {
+    const blob = await downloadIndicatorTemplate(currentMajorId.value)
+    // 后端业务异常以 HTTP 200 + JSON 返回，blob 需判别后展示错误
+    if (blob && blob.type && blob.type.includes('json')) {
+      let msg = '下载失败'
+      try { msg = JSON.parse(await blob.text()).message || msg } catch (_) {}
+      ElMessage.error(msg)
+      return
+    }
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = '指标点导入模板.xlsx'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('模板已开始下载')
+  } catch (_) {
+    /* 网络错误已由拦截器提示 */
+  } finally {
+    downloading.value = false
+  }
+}
+
+function beforeUpload(file) {
+  const ok = !!file.name && file.name.toLowerCase().endsWith('.xlsx')
+  if (!ok) ElMessage.error('仅支持 .xlsx 格式文件，请先下载标准模板')
+  return ok
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+async function customUpload(opt) {
+  const file = opt.file
+  importing.value = true
+  try {
+    const res = await importIndicators(currentMajorId.value, file)
+    ElMessage.success(`成功导入 ${res.data} 个指标点`)
+    importDialogVisible.value = false
+    loadData()
+  } catch (e) {
+    const msg = e && e.message ? e.message : '导入失败'
+    // 后端逐行列出问题，换行展示，便于用户对照修改
+    ElMessageBox.alert(escapeHtml(msg).replace(/\n/g, '<br/>'), '导入失败', {
+      dangerouslyUseHTMLString: true,
+      confirmButtonText: '知道了',
+      type: 'error'
+    })
+  } finally {
+    importing.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -308,6 +417,36 @@ async function handleDeleteIndicator(id) {
   border-radius: 999px;
   font-weight: 600;
   box-shadow: 0 6px 14px rgba(126, 87, 194, 0.18);
+}
+
+/* 下载模板：次级描边按钮，与主操作区分 */
+.template-pill-btn {
+  color: #6f42c1;
+  border-color: #d9c4ff;
+  background: rgba(246, 240, 255, 0.72);
+}
+
+.template-pill-btn:hover {
+  color: #fff;
+  border-color: #6f42c1;
+  background: linear-gradient(135deg, #9e89cd, #6f42c1);
+}
+
+.import-tip {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6f42c1;
+  background: rgba(128, 107, 191, 0.08);
+  border: 1px solid rgba(128, 107, 191, 0.16);
+}
+
+.upload-tip {
+  margin-top: 8px;
+  color: var(--text-secondary, #909399);
+  font-size: 12px;
 }
 
 .grad-req-card {

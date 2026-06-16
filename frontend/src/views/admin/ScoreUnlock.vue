@@ -20,12 +20,25 @@
               </template>
             </el-table-column>
             <el-table-column prop="lockedAt" label="锁定时间" width="220" class-name="time-column" />
-            <el-table-column label="操作" width="140">
+            <el-table-column
+              label="操作"
+              width="140"
+              align="center"
+              class-name="unlock-operation-column"
+            >
               <template #default="{ row }">
-                <el-button v-if="row.status === 'LOCKED'" size="small" type="danger" @click="handleDirectUnlock(row)">
-                  紧急解锁
-                </el-button>
-                <span v-else style="color:var(--text-secondary)">-</span>
+                <div class="unlock-operation-actions">
+                  <el-button
+                    v-if="row.status === 'LOCKED'"
+                    size="small"
+                    type="danger"
+                    class="unlock-action-btn danger-action-btn"
+                    @click="handleDirectUnlock(row)"
+                  >
+                    紧急解锁
+                  </el-button>
+                  <span v-else class="operation-placeholder">-</span>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -52,24 +65,58 @@
               </template>
             </el-table-column>
             <el-table-column prop="createdAt" label="申请时间" width="220" class-name="time-column" />
-            <el-table-column label="操作" width="180">
+            <el-table-column
+              label="操作"
+              width="180"
+              align="center"
+              class-name="unlock-operation-column"
+            >
               <template #default="{ row }">
-                <!-- PENDING: review requests -->
-                <template v-if="row.status === 'PENDING'">
-                  <el-button size="small" type="success" @click="handleApprove(row)">同意</el-button>
-                  <el-button size="small" type="danger" @click="handleReject(row)">拒绝</el-button>
-                </template>
-                <!-- APPROVED: final unlock -->
-                <template v-else-if="row.status === 'APPROVED'">
-                  <el-button size="small" type="success" @click="handleUnlock(row)">解锁</el-button>
-                  <el-button size="small" type="danger" @click="handleReject(row)">拒绝</el-button>
-                </template>
-                <!-- UNLOCKED -->
-                <template v-else-if="row.status === 'UNLOCKED'">
-                  <el-tag size="small" type="success">已解锁</el-tag>
-                </template>
-                <!-- Other cases: already processed -->
-                <span v-else style="color:var(--text-secondary)">已处理</span>
+                <div class="unlock-operation-actions">
+                  <template v-if="row.status === 'PENDING'">
+                    <el-button
+                      size="small"
+                      type="success"
+                      class="unlock-action-btn agree-action-btn"
+                      @click="handleApprove(row)"
+                    >
+                      同意
+                    </el-button>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      class="unlock-action-btn reject-action-btn"
+                      @click="handleReject(row)"
+                    >
+                      拒绝
+                    </el-button>
+                  </template>
+
+                  <template v-else-if="row.status === 'APPROVED'">
+                    <el-button
+                      size="small"
+                      type="success"
+                      class="unlock-action-btn agree-action-btn"
+                      @click="handleUnlock(row)"
+                    >
+                      解锁
+                    </el-button>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      class="unlock-action-btn reject-action-btn"
+                      @click="handleReject(row)"
+                    >
+                      拒绝
+                    </el-button>
+                  </template>
+
+                  <template v-else-if="row.status === 'UNLOCKED'">
+                    <el-tag size="small" type="success">已解锁</el-tag>
+                  </template>
+
+                  <span v-else class="operation-placeholder">已处理</span>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -171,4 +218,64 @@ async function handleReject(row) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 :deep(.time-column .cell) { white-space: nowrap; }
+/* 成绩解锁页面：操作列居中 */
+:deep(.unlock-operation-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unlock-operation-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.unlock-action-btn {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:deep(.unlock-action-btn.el-button) {
+  margin-left: 0;
+}
+
+.agree-action-btn {
+  color: #fff;
+  border-color: #67c23a;
+  background-color: #67c23a;
+}
+
+.agree-action-btn:hover {
+  color: #fff;
+  border-color: #5daf34;
+  background-color: #5daf34;
+}
+
+.reject-action-btn,
+.danger-action-btn {
+  color: #fff;
+  border-color: #ef9aa0;
+  background-color: #ef9aa0;
+}
+
+.reject-action-btn:hover,
+.danger-action-btn:hover {
+  color: #fff;
+  border-color: #e78087;
+  background-color: #e78087;
+}
+
+.operation-placeholder {
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>

@@ -9,11 +9,9 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -151,35 +149,13 @@ public class PdfExporter {
         return y - LINE_HEIGHT;
     }
 
-    private static PDFont loadFont(PDDocument doc) {
-        // Try Chinese fonts first
-        for (String path : new String[]{
-                "/fonts/NotoSansSC-Regular.ttf",
-                "/fonts/SimHei.ttf",
-                "/fonts/simsun.ttf"}) {
-            try {
-                InputStream is = PdfExporter.class.getResourceAsStream(path);
-                if (is != null) {
-                    return PDType0Font.load(doc, is);
-                }
-            } catch (Exception ignored) {}
+    private static PDFont loadFont(PDDocument doc) throws IOException {
+        try (InputStream input = PdfExporter.class.getResourceAsStream("/fonts/wqy-microhei.ttf")) {
+            if (input == null) {
+                throw new IOException("Bundled Chinese font /fonts/wqy-microhei.ttf not found");
+            }
+            return PDType0Font.load(doc, input);
         }
-        for (String path : new String[]{
-                "C:/Windows/Fonts/NotoSansSC-VF.ttf",
-                "C:/Windows/Fonts/simhei.ttf",
-                "C:/Windows/Fonts/msyh.ttc",
-                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-                "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"}) {
-            try {
-                File fontFile = new File(path);
-                if (fontFile.exists()) {
-                    return PDType0Font.load(doc, fontFile);
-                }
-            } catch (Exception ignored) {}
-        }
-        // Fallback to built-in Helvetica
-        return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
     }
 
     private static String format(BigDecimal value) {
@@ -209,7 +185,7 @@ public class PdfExporter {
                 contentStream.beginText();
                 contentStream.setFont(font, fontSize);
                 contentStream.newLineAtOffset(x, y);
-                contentStream.showText(displayable(line));
+                contentStream.showText(line);
                 contentStream.endText();
                 y -= LINE_HEIGHT;
             }
@@ -249,7 +225,7 @@ public class PdfExporter {
             for (int i = 0; i < value.length(); i++) {
                 char ch = value.charAt(i);
                 String candidate = line + String.valueOf(ch);
-                if (!line.isEmpty() && textWidth(displayable(candidate), fontSize) > maxWidth) {
+                if (!line.isEmpty() && textWidth(candidate, fontSize) > maxWidth) {
                     lines.add(line.toString());
                     line = new StringBuilder(String.valueOf(ch));
                 } else {
@@ -262,20 +238,6 @@ public class PdfExporter {
 
         private float textWidth(String text, float fontSize) throws Exception {
             return font.getStringWidth(text) / 1000 * fontSize;
-        }
-
-        private String displayable(String text) {
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < text.length(); i++) {
-                String ch = String.valueOf(text.charAt(i));
-                try {
-                    font.encode(ch);
-                    result.append(ch);
-                } catch (Exception ignored) {
-                    result.append("?");
-                }
-            }
-            return result.toString();
         }
     }
 }

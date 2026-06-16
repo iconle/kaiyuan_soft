@@ -2,6 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <h3>考核点细分与映射</h3>
+      <el-button @click="downloadTemplate" :loading="downloading">下载模板</el-button>
+      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
+        <el-button type="primary" plain :loading="importing">导入考核点</el-button>
+      </el-upload>
       <el-button type="primary" @click="showDialog()">新增考核点</el-button>
       <span v-if="weightSum !== null" :style="{color: weightSum === 100 ? 'var(--el-color-success)' : 'var(--el-color-danger)', fontSize: '14px', fontWeight:'bold'}">
         总权重: {{ weightSum }}% {{ weightSum === 100 ? '✓' : '✗ 必须等于100%' }}
@@ -81,7 +85,10 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listAssessments, createAssessment, updateAssessment, deleteAssessment, listObjectives } from '../../api/teacher'
+import {
+  listAssessments, createAssessment, updateAssessment, deleteAssessment, listObjectives,
+  downloadAssessmentTemplate, importAssessments
+} from '../../api/teacher'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -91,6 +98,8 @@ const objectives = ref([])
 const dialogVisible = ref(false)
 const editing = ref(null)
 const form = reactive({ name: '', maxScore: 100, weightPercent: null, objectiveIds: [], sortOrder: 1 })
+const importing = ref(false)
+const downloading = ref(false)
 
 const weightSum = computed(() => {
   if (assessments.value.length === 0) return null
@@ -146,6 +155,45 @@ async function handleDelete(row) {
   await deleteAssessment(classId.value, row.id)
   ElMessage.success('已删除')
   loadData()
+}
+
+async function downloadTemplate() {
+  downloading.value = true
+  try {
+    saveBlob(await downloadAssessmentTemplate(classId.value), '考核点导入模板.xlsx')
+  } finally { downloading.value = false }
+}
+
+function beforeUpload(file) {
+  const valid = file.name?.toLowerCase().endsWith('.xlsx')
+  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
+  return valid
+}
+
+async function uploadFile({ file }) {
+  importing.value = true
+  try {
+    const res = await importAssessments(classId.value, file)
+    ElMessage.success(`成功导入 ${res.data} 个考核点`)
+    loadData()
+  } catch (error) {
+    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
+      dangerouslyUseHTMLString: true, type: 'error'
+    })
+  } finally { importing.value = false }
+}
+
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 </script>
 

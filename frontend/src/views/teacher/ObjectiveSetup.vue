@@ -2,6 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <h3>课程目标设定</h3>
+      <el-button @click="downloadTemplate" :loading="downloading">下载模板</el-button>
+      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
+        <el-button type="primary" plain :loading="importing">导入课程目标</el-button>
+      </el-upload>
       <el-button type="primary" @click="showDialog()">新增目标</el-button>
     </div>
 
@@ -70,7 +74,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listObjectives, createObjective, updateObjective, deleteObjective } from '../../api/teacher'
+import {
+  listObjectives, createObjective, updateObjective, deleteObjective,
+  downloadObjectiveTemplate, importObjectives
+} from '../../api/teacher'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -79,6 +86,8 @@ const objectives = ref([])
 const dialogVisible = ref(false)
 const editing = ref(null)
 const form = reactive({ objNo: '', dimension: '', description: '' })
+const importing = ref(false)
+const downloading = ref(false)
 
 onMounted(() => { if (classId.value) loadObjectives() })
 
@@ -114,6 +123,49 @@ async function handleDelete(row) {
   await deleteObjective(classId.value, row.id)
   ElMessage.success('已删除')
   loadObjectives()
+}
+
+async function downloadTemplate() {
+  downloading.value = true
+  try {
+    saveBlob(await downloadObjectiveTemplate(classId.value), '课程目标导入模板.xlsx')
+  } finally { downloading.value = false }
+}
+
+function beforeUpload(file) {
+  const valid = file.name?.toLowerCase().endsWith('.xlsx')
+  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
+  return valid
+}
+
+async function uploadFile({ file }) {
+  importing.value = true
+  try {
+    const res = await importObjectives(classId.value, file)
+    ElMessage.success(`成功导入 ${res.data} 个课程目标`)
+    loadObjectives()
+  } catch (error) {
+    showImportError(error)
+  } finally { importing.value = false }
+}
+
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+function showImportError(error) {
+  ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
+    dangerouslyUseHTMLString: true, type: 'error'
+  })
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 </script>
 

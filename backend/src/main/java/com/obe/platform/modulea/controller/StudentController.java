@@ -3,10 +3,12 @@ package com.obe.platform.modulea.controller;
 import com.obe.platform.common.PageResult;
 import com.obe.platform.common.Result;
 import com.obe.platform.modulea.entity.Student;
+import com.obe.platform.modulea.service.StudentImportService;
 import com.obe.platform.modulea.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,6 +18,7 @@ import java.util.List;
 public class StudentController {
 
     private final StudentService studentService;
+    private final StudentImportService studentImportService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','ACADEMIC')")
@@ -60,6 +63,19 @@ public class StudentController {
     @PreAuthorize("hasRole('ACADEMIC')")
     public Result<Integer> importStudents(@RequestBody List<Student> students) {
         int imported = studentService.importStudents(students);
+        return Result.ok(imported);
+    }
+
+    @GetMapping("/template")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ACADEMIC')")
+    public byte[] downloadTemplate() throws Exception {
+        return studentImportService.generateTemplate();
+    }
+
+    @PostMapping("/import-excel")
+    @PreAuthorize("hasRole('ACADEMIC')")
+    public Result<Integer> importExcel(@RequestParam("file") MultipartFile file) {
+        int imported = studentImportService.importStudents(file);
         return Result.ok(imported);
     }
 }

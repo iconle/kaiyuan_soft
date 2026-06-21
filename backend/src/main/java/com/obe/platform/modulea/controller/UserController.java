@@ -69,6 +69,14 @@ public class UserController {
         return Result.ok();
     }
 
+    @DeleteMapping("/{id}/remove")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Void> remove(@PathVariable Long id) {
+        Long currentUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        userService.deleteUser(id, currentUserId);
+        return Result.ok();
+    }
+
     @PutMapping("/{id}/reset-password")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {

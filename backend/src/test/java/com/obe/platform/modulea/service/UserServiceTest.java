@@ -3,6 +3,7 @@ package com.obe.platform.modulea.service;
 import com.obe.platform.common.BizException;
 import com.obe.platform.modulea.mapper.SysRoleMapper;
 import com.obe.platform.modulea.mapper.SysUserMapper;
+import com.obe.platform.modulea.mapper.TeachingClassMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -16,7 +17,8 @@ class UserServiceTest {
     private final SysUserMapper userMapper = mock(SysUserMapper.class);
     private final SysRoleMapper roleMapper = mock(SysRoleMapper.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-    private final UserService userService = new UserService(userMapper, roleMapper, passwordEncoder);
+    private final TeachingClassMapper teachingClassMapper = mock(TeachingClassMapper.class);
+    private final UserService userService = new UserService(userMapper, roleMapper, passwordEncoder, teachingClassMapper);
 
     @Test
     void disableUserRejectsCurrentUser() {

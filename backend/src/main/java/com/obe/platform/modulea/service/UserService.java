@@ -8,8 +8,10 @@ import com.obe.platform.modulea.dto.UserCreateRequest;
 import com.obe.platform.modulea.dto.UserUpdateRequest;
 import com.obe.platform.modulea.entity.SysRole;
 import com.obe.platform.modulea.entity.SysUser;
+import com.obe.platform.modulea.entity.TeachingClass;
 import com.obe.platform.modulea.mapper.SysRoleMapper;
 import com.obe.platform.modulea.mapper.SysUserMapper;
+import com.obe.platform.modulea.mapper.TeachingClassMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class UserService {
     private final SysUserMapper userMapper;
     private final SysRoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
+    private final TeachingClassMapper teachingClassMapper;
 
     public PageResult<SysUser> listUsers(long page, long size, String keyword, Long roleId) {
         var wrapper = new LambdaQueryWrapper<SysUser>();
@@ -126,5 +129,21 @@ public class UserService {
         }
         user.setStatus(1);
         userMapper.updateById(user);
+    }
+
+    public void deleteUser(Long id, Long currentUserId) {
+        if (id != null && id.equals(currentUserId)) {
+            throw new BizException("不能删除当前登录用户");
+        }
+        SysUser user = userMapper.selectById(id);
+        if (user == null) {
+            throw new BizException("用户不存在");
+        }
+        Long classCount = teachingClassMapper.selectCount(
+                new LambdaQueryWrapper<TeachingClass>().eq(TeachingClass::getTeacherId, id));
+        if (classCount > 0) {
+            throw new BizException("该教师已关联教学班级，请先调整教学班级主讲教师后再删除");
+        }
+        userMapper.deleteById(id);
     }
 }

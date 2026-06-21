@@ -172,6 +172,21 @@ export function deleteTeachingClass(id) {
   return request.delete(`/api/teaching-classes/${id}`)
 }
 
+export function downloadTeachingClassTemplate() {
+  return request.get('/api/teaching-classes/import-template', {
+    responseType: 'blob'
+  })
+}
+
+export function importTeachingClassExcel(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/api/teaching-classes/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    skipErrorMessage: true
+  })
+}
+
 export function getTeachingClassStudents(classId) {
   return request.get(`/api/teaching-classes/${classId}/students`)
 }

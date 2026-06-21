@@ -9,11 +9,18 @@ import com.obe.platform.modulea.entity.TeachingClass;
 import com.obe.platform.modulea.mapper.CourseMapper;
 import com.obe.platform.modulea.mapper.TeachingClassMapper;
 import com.obe.platform.modulea.service.DictService;
+import com.obe.platform.modulea.service.TeachingClassImportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -24,6 +31,7 @@ public class TeachingClassController {
     private final DictService dictService;
     private final TeachingClassMapper teachingClassMapper;
     private final CourseMapper courseMapper;
+    private final TeachingClassImportService teachingClassImportService;
 
     /** Get all classes for the current teacher (for course switcher) */
     @GetMapping("/my-classes")
@@ -53,6 +61,23 @@ public class TeachingClassController {
     @PreAuthorize("hasRole('ACADEMIC')")
     public Result<TeachingClass> create(@RequestBody TeachingClass tc) {
         return Result.ok(dictService.createClass(tc));
+    }
+
+    @GetMapping("/import-template")
+    @PreAuthorize("hasRole('ACADEMIC')")
+    public ResponseEntity<byte[]> downloadImportTemplate() {
+        byte[] data = teachingClassImportService.generateTemplate();
+        String filename = URLEncoder.encode("教学班级导入模板.xlsx", StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasRole('ACADEMIC')")
+    public Result<Integer> importTeachingClasses(@RequestParam("file") MultipartFile file) {
+        return Result.ok(teachingClassImportService.importTeachingClasses(file));
     }
 
     @PutMapping("/{id}")

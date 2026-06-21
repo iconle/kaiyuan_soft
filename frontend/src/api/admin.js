@@ -42,6 +42,10 @@ export function updateCollege(id, name) {
   return request.put(`/api/dict/colleges/${id}`, { name })
 }
 
+export function deleteCollege(id) {
+  return request.delete(`/api/dict/colleges/${id}`)
+}
+
 export function listMajors(params) {
   return request.get('/api/dict/majors', { params })
 }

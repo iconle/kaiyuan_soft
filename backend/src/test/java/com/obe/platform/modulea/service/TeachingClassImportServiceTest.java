@@ -92,6 +92,20 @@ class TeachingClassImportServiceTest {
     }
 
     @Test
+    void rejectsLegacyXlsFileWithActionableMessage() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "教学班级导入.xls",
+                "application/vnd.ms-excel",
+                new byte[]{1, 2, 3});
+
+        assertThatThrownBy(() -> service.importTeachingClasses(file))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("不支持.xls旧版Excel格式")
+                .hasMessageContaining("保存为.xlsx后上传");
+    }
+
+    @Test
     void importsValidTeachingClassesAfterValidation() throws Exception {
         Course course = new Course();
         course.setId(2L);

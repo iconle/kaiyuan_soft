@@ -3,7 +3,13 @@
     <div class="page-header">
       <h3>教学班级管理</h3>
       <div class="header-actions">
-        <el-button :loading="templateDownloading" @click="handleDownloadTemplate">下载模板</el-button>
+        <el-button
+          :loading="templateDownloading"
+          :disabled="importing"
+          @click="handleDownloadTemplate"
+        >
+          下载模板
+        </el-button>
         <el-upload
           class="upload-control"
           accept=".xlsx"
@@ -11,7 +17,7 @@
           :auto-upload="false"
           :on-change="handleImportFile"
         >
-          <el-button type="success" :loading="importing">班级导入</el-button>
+          <el-button type="success" :loading="importing" :disabled="importing">班级导入</el-button>
         </el-upload>
         <el-button type="primary" @click="showDialog()">新增教学班级</el-button>
       </div>

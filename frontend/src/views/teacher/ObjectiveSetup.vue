@@ -4,7 +4,7 @@
       <h3>课程目标设定</h3>
       <el-button @click="downloadTemplate" :loading="downloading">下载模板</el-button>
       <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
-        <el-button type="primary" plain :loading="importing">导入课程目标</el-button>
+        <el-button type="primary" plain class="objective-import-btn" :loading="importing">导入课程目标</el-button>
       </el-upload>
       <el-button type="primary" @click="showDialog()">新增目标</el-button>
     </div>
@@ -173,6 +173,28 @@ function escapeHtml(value) {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.objective-import-btn.el-button {
+  min-width: 112px;
+  color: #fff;
+  border-color: #9b86d0;
+  background-color: #9b86d0;
+}
+
+.objective-import-btn.el-button:hover,
+.objective-import-btn.el-button:focus {
+  color: #fff;
+  border-color: #8b74c7;
+  background-color: #8b74c7;
+}
+
+.objective-import-btn.el-button.is-loading,
+.objective-import-btn.el-button.is-disabled {
+  color: #fff;
+  border-color: #b6a7df;
+  background-color: #b6a7df;
+}
+
 /* 操作列按钮：对齐学生管理、教学班级管理风格 */
 :deep(.operation-column .cell) {
   display: flex;

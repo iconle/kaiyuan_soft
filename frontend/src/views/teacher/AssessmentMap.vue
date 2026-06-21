@@ -4,7 +4,7 @@
       <h3>考核点细分与映射</h3>
       <el-button @click="downloadTemplate" :loading="downloading">下载模板</el-button>
       <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
-        <el-button type="primary" plain :loading="importing">导入考核点</el-button>
+        <el-button type="primary" plain class="import-action-btn" :loading="importing">导入考核点</el-button>
       </el-upload>
       <el-button type="primary" @click="showDialog()">新增考核点</el-button>
       <span v-if="weightSum !== null" :style="{color: weightSum === 100 ? 'var(--el-color-success)' : 'var(--el-color-danger)', fontSize: '14px', fontWeight:'bold'}">
@@ -201,6 +201,26 @@ function escapeHtml(value) {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.import-action-btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  border-color: #806bbf !important;
+  box-shadow: 0 8px 18px rgba(128, 107, 191, 0.24);
+}
+
+.import-action-btn:hover,
+.import-action-btn:focus {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #a895d4, #735ab8) !important;
+  border-color: #735ab8 !important;
+}
+
+:deep(.import-action-btn.is-loading),
+:deep(.import-action-btn.is-disabled) {
+  color: #ffffff !important;
+}
+
 /* 操作列按钮：对齐课程目标、学生管理等页面风格 */
 :deep(.operation-column .cell) {
   display: flex;

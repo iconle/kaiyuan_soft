@@ -46,6 +46,9 @@ public class DictService {
     }
 
     public void deleteCollege(Long id) {
+        if (collegeMapper.selectById(id) == null) {
+            throw new BizException("学院不存在");
+        }
         collegeMapper.deleteById(id);
     }
 

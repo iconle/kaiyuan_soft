@@ -204,7 +204,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  listColleges, createCollege, updateCollege,
+  listColleges, createCollege, updateCollege, deleteCollege,
   listMajors, createMajor, updateMajor,
   listSemesters, createSemester, deleteSemester
 } from '../../api/admin'
@@ -247,7 +247,7 @@ async function handleCollegeSubmit() {
 
 async function handleDeleteCollege(row) {
   await ElMessageBox.confirm(`确定删除学院「${row.name}」？`, '提示', { type: 'warning' })
-  // TODO: call delete API
+  await deleteCollege(row.id)
   ElMessage.success('已删除')
   loadColleges()
 }

@@ -25,6 +25,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,8 @@ public class TeachingClassImportService {
                 cell.setCellValue(TEMPLATE_HEADERS[i]);
                 cell.setCellStyle(headerStyle);
             }
+            sheet.createFreezePane(0, 1);
+            sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, TEMPLATE_HEADERS.length - 1));
 
             Row sample = sheet.createRow(1);
             sample.createCell(0).setCellValue("数据结构-2025秋-1班");

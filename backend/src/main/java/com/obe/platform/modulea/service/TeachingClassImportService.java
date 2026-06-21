@@ -180,7 +180,14 @@ public class TeachingClassImportService {
             throw new BizException("上传文件为空，请选择教学班级导入Excel文件。");
         }
         String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".xlsx")) {
+        if (filename == null || filename.isBlank()) {
+            throw new BizException("上传文件缺少文件名，请重新选择教学班级导入模板文件。");
+        }
+        String lowerFilename = filename.toLowerCase();
+        if (lowerFilename.endsWith(".xls")) {
+            throw new BizException("不支持.xls旧版Excel格式，请下载教学班级导入模板并保存为.xlsx后上传。");
+        }
+        if (!lowerFilename.endsWith(".xlsx")) {
             throw new BizException("仅支持.xlsx格式文件，请下载教学班级导入模板后填写。");
         }
     }

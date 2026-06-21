@@ -13,7 +13,7 @@
         accept=".xlsx"
         :disabled="status === 'LOCKED'"
       >
-        <el-button type="primary" plain :loading="importing" :disabled="status === 'LOCKED'">导入成绩</el-button>
+        <el-button type="primary" plain class="import-action-btn" :loading="importing" :disabled="status === 'LOCKED'">导入成绩</el-button>
       </el-upload>
       <StatusTag v-if="status" :status="status" />
     </div>
@@ -250,6 +250,26 @@ function escapeHtml(value) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+
+.import-action-btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  border-color: #806bbf !important;
+  box-shadow: 0 8px 18px rgba(128, 107, 191, 0.24);
+}
+
+.import-action-btn:hover,
+.import-action-btn:focus {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #a895d4, #735ab8) !important;
+  border-color: #735ab8 !important;
+}
+
+:deep(.import-action-btn.is-loading),
+:deep(.import-action-btn.is-disabled) {
+  color: #ffffff !important;
+}
+
 /* 成绩输入框上下调节按钮：浅紫色 */
 :deep(.score-import-table .score-number-input .el-input-number__increase),
 :deep(.score-import-table .score-number-input .el-input-number__decrease) {

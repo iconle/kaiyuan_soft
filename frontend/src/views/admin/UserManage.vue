@@ -54,7 +54,7 @@
         <el-table-column
           label="操作"
           fixed="right"
-          width="280"
+          width="360"
           align="center"
           class-name="operation-column"
         >
@@ -78,13 +78,27 @@
 
               <el-button
                 size="small"
-                type="danger"
-                class="action-btn disable-btn"
-                @click="handleDisable(row)"
-                :disabled="row.status === 0 || isCurrentUser(row)"
-                :title="isCurrentUser(row) ? '不能禁用当前登录用户' : ''"
+                :type="row.status === 1 ? 'danger' : 'success'"
+                :class="[
+                  'action-btn',
+                  row.status === 1 ? 'disable-btn' : 'enable-btn'
+                ]"
+                @click="handleToggleStatus(row)"
+                :disabled="row.status === 1 && isCurrentUser(row)"
+                :title="row.status === 1 && isCurrentUser(row) ? '不能禁用当前登录用户' : ''"
               >
-                禁用
+                {{ row.status === 1 ? '禁用' : '启用' }}
+              </el-button>
+
+              <el-button
+                size="small"
+                type="danger"
+                class="action-btn delete-btn"
+                @click="handleDelete(row)"
+                :disabled="isCurrentUser(row)"
+                :title="isCurrentUser(row) ? '不能删除当前登录用户' : ''"
+              >
+                删除
               </el-button>
             </div>
           </template>
@@ -130,7 +144,7 @@
 <script setup>
 import { computed, ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listUsers, createUser, updateUser, disableUser, resetPassword, listRoles } from '../../api/admin'
+import { listUsers, createUser, updateUser, disableUser, enableUser, deleteUser, resetPassword, listRoles } from '../../api/admin'
 import { listColleges } from '../../api/admin'
 import { useUserStore } from '../../stores/user'
 
@@ -229,14 +243,31 @@ async function handleSubmit() {
   loadUsers()
 }
 
-async function handleDisable(row) {
-  if (isCurrentUser(row)) {
+async function handleToggleStatus(row) {
+  if (row.status === 1 && isCurrentUser(row)) {
     ElMessage.warning('不能禁用当前登录用户')
     return
   }
-  await ElMessageBox.confirm(`确定禁用用户 ${row.realName}？`, '提示', { type: 'warning' })
-  await disableUser(row.id)
-  ElMessage.success('已禁用')
+  if (row.status === 1) {
+    await ElMessageBox.confirm(`确定禁用用户 ${row.realName}？`, '提示', { type: 'warning' })
+    await disableUser(row.id)
+    ElMessage.success('已禁用')
+  } else {
+    await ElMessageBox.confirm(`确定启用用户 ${row.realName}？`, '提示', { type: 'warning' })
+    await enableUser(row.id)
+    ElMessage.success('已启用')
+  }
+  loadUsers()
+}
+
+async function handleDelete(row) {
+  if (isCurrentUser(row)) {
+    ElMessage.warning('不能删除当前登录用户')
+    return
+  }
+  await ElMessageBox.confirm(`确定删除用户 ${row.realName}？删除后不可恢复。`, '提示', { type: 'warning' })
+  await deleteUser(row.id)
+  ElMessage.success('已删除')
   loadUsers()
 }
 
@@ -425,5 +456,31 @@ async function handleResetPwd(row) {
   border-color: #f6d4d7;
   background-color: #f6d4d7;
   opacity: 0.65;
+}
+
+/* 启用：绿色 */
+.enable-btn {
+  color: #3f8f5f;
+  border-color: #b9dfc7;
+  background-color: #f0fbf4;
+}
+
+.enable-btn:hover {
+  color: #2f7a4e;
+  border-color: #91cfa8;
+  background-color: #e3f8ea;
+}
+
+/* 删除：红色 */
+.delete-btn {
+  color: #fff;
+  border-color: #d95f68;
+  background-color: #d95f68;
+}
+
+.delete-btn:hover {
+  color: #fff;
+  border-color: #c84c55;
+  background-color: #c84c55;
 }
 </style>

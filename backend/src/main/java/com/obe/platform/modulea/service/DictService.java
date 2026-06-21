@@ -49,6 +49,15 @@ public class DictService {
         if (collegeMapper.selectById(id) == null) {
             throw new BizException("学院不存在");
         }
+        if (majorMapper.selectCount(new LambdaQueryWrapper<SysMajor>().eq(SysMajor::getCollegeId, id)) > 0) {
+            throw new BizException("该学院下存在专业，请先删除或调整专业后再删除学院");
+        }
+        if (studentMapper.selectCount(new LambdaQueryWrapper<Student>().eq(Student::getCollegeId, id)) > 0) {
+            throw new BizException("该学院下存在学生，请先调整学生所属学院后再删除学院");
+        }
+        if (userMapper.selectCount(new LambdaQueryWrapper<SysUser>().eq(SysUser::getCollegeId, id)) > 0) {
+            throw new BizException("该学院下存在用户，请先调整用户所属学院后再删除学院");
+        }
         collegeMapper.deleteById(id);
     }
 

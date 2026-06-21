@@ -62,6 +62,13 @@ public class UserController {
         return Result.ok();
     }
 
+    @PutMapping("/{id}/enable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result<Void> enable(@PathVariable Long id) {
+        userService.enableUser(id);
+        return Result.ok();
+    }
+
     @PutMapping("/{id}/reset-password")
     @PreAuthorize("hasRole('ADMIN')")
     public Result<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> body) {

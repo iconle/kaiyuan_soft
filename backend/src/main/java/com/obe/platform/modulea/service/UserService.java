@@ -118,4 +118,13 @@ public class UserService {
         user.setStatus(0);
         userMapper.updateById(user);
     }
+
+    public void enableUser(Long id) {
+        SysUser user = userMapper.selectById(id);
+        if (user == null) {
+            throw new BizException("用户不存在");
+        }
+        user.setStatus(1);
+        userMapper.updateById(user);
+    }
 }

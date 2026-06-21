@@ -41,7 +41,9 @@ public class UserService {
 
         // Load role codes and names
         List<Long> roleIds = result.getRecords().stream().map(SysUser::getRoleId).distinct().toList();
-        Map<Long, SysRole> roleMap = roleMapper.selectBatchIds(roleIds).stream()
+        Map<Long, SysRole> roleMap = roleIds.isEmpty()
+                ? Map.of()
+                : roleMapper.selectBatchIds(roleIds).stream()
                 .collect(Collectors.toMap(SysRole::getId, r -> r));
 
         result.getRecords().forEach(u -> {

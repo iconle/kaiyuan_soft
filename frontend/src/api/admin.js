@@ -21,6 +21,14 @@ export function disableUser(id) {
   return request.delete(`/api/admin/users/${id}`)
 }
 
+export function enableUser(id) {
+  return request.put(`/api/admin/users/${id}/enable`)
+}
+
+export function deleteUser(id) {
+  return request.delete(`/api/admin/users/${id}/remove`)
+}
+
 export function resetPassword(id, password) {
   return request.put(`/api/admin/users/${id}/reset-password`, { password })
 }

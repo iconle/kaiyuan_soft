@@ -12,7 +12,7 @@
     <div class="content-card">
       <el-table :data="objectives" border stripe v-loading="loading">
         <el-table-column prop="objNo" label="编号" width="80" />
-        <el-table-column prop="dimension" label="维度" width="80" />
+        <el-table-column prop="dimension" label="维度" width="120" class-name="dimension-column" />
         <el-table-column prop="description" label="目标描述" />
 
         <el-table-column
@@ -173,6 +173,11 @@ function escapeHtml(value) {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+:deep(.dimension-column .cell) {
+  white-space: nowrap;
+}
+
 /* 操作列按钮：对齐学生管理、教学班级管理风格 */
 :deep(.operation-column .cell) {
   display: flex;

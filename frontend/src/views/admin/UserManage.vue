@@ -18,17 +18,18 @@
 
       <el-table
         :data="users"
+        :key="users.length"
         border
         stripe
         v-loading="loading"
         class="user-table"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="username" label="用户名" width="140" />
         <el-table-column
           prop="realName"
           label="姓名"
-          width="220"
+          min-width="120"
           class-name="name-column"
         />
         <el-table-column
@@ -50,7 +51,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" min-width="160" />
+        <el-table-column label="创建时间" min-width="120">
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column
           label="操作"
           fixed="right"
@@ -216,6 +221,11 @@ function isCurrentUser(row) {
   return currentUserId.value != null && String(row.id) === String(currentUserId.value)
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '-'
+  return dateStr.split('T')[0]
+}
+
 function showCreateDialog() {
   isEdit.value = false
   editingId.value = null
@@ -308,14 +318,14 @@ async function handleResetPwd(row) {
 
 :deep(.name-column .cell) {
   line-height: 1.6;
-  word-break: keep-all;
   white-space: nowrap;
+  overflow: visible;
 }
 /* 用户管理表格优化 */
 .user-table {
   width: 100%;
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 :deep(.user-table .el-table__header th) {

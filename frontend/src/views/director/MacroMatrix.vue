@@ -5,6 +5,8 @@
       <el-select v-model="currentMajorId" placeholder="选择专业" style="width:220px" @change="loadData">
         <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
       </el-select>
+      <el-button :loading="downloading" :disabled="!currentMajorId" @click="handleDownloadTemplate">下载模板</el-button>
+      <el-button type="primary" :disabled="!currentMajorId" @click="openImportDialog">课程支撑导入</el-button>
       <div style="flex:1" />
       <span class="hint" v-if="indicators.length > 0">所有指标点列合计必须为 1.00</span>
       <el-button v-if="indicators.length > 0" @click="handleAddRow">添加课程支撑</el-button>
@@ -73,13 +75,33 @@
         <el-button type="primary" @click="handleAddSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 课程支撑导入对话框 -->
+    <el-dialog v-model="importDialogVisible" title="课程支撑导入" width="520px">
+      <div class="import-tip">
+        请先点击「下载模板」获取标准模板，按格式填写后再上传。<br />
+        仅支持 .xlsx 文件，<b>表头不可修改</b>，否则将无法导入。导入会整体替换当前专业的课程支撑关系。
+      </div>
+      <el-upload
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="customUpload"
+        accept=".xlsx"
+        :disabled="importing"
+      >
+        <el-button type="primary" :loading="importing">选择文件并导入</el-button>
+        <template #tip>
+          <div class="upload-tip">仅支持 .xlsx 格式，校验通过后才会写入数据库。</div>
+        </template>
+      </el-upload>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted,h } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getMacroMatrix, updateMacroMatrix } from '../../api/director'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getMacroMatrix, updateMacroMatrix, downloadMacroMatrixTemplate, importMacroMatrix } from '../../api/director'
 import { listGradReqs } from '../../api/director'
 import { listMajors } from '../../api/admin'
 import { listCourses } from '../../api/academic'
@@ -92,6 +114,10 @@ const indicators = ref([])
 const matrixData = ref([]) // raw MacroSupportMatrix[]
 const addDialogVisible = ref(false)
 const addForm = reactive({ courseId: null, supportLevel: 'H', indicatorIds: [] })
+
+const importing = ref(false)
+const downloading = ref(false)
+const importDialogVisible = ref(false)
 
 const matrixRows = computed(() => {
   const courseMap = new Map()
@@ -196,6 +222,73 @@ function cellClassName({ row, columnIndex }) {
 
 function highlightRC() {}
 function clearHighlight() {}
+
+function openImportDialog() {
+  if (!currentMajorId.value) { ElMessage.warning('请先选择专业'); return }
+  importDialogVisible.value = true
+}
+
+async function handleDownloadTemplate() {
+  if (!currentMajorId.value) { ElMessage.warning('请先选择专业'); return }
+  downloading.value = true
+  try {
+    const blob = await downloadMacroMatrixTemplate(currentMajorId.value)
+    // 后端业务异常以 HTTP 200 + JSON 返回，blob 需判别后展示错误
+    if (blob && blob.type && blob.type.includes('json')) {
+      let msg = '下载失败'
+      try { msg = JSON.parse(await blob.text()).message || msg } catch (_) {}
+      ElMessage.error(msg)
+      return
+    }
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = '课程支撑导入模板.xlsx'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('模板已开始下载')
+  } catch (_) {
+    /* 网络错误已由拦截器提示 */
+  } finally {
+    downloading.value = false
+  }
+}
+
+function beforeUpload(file) {
+  const ok = !!file.name && file.name.toLowerCase().endsWith('.xlsx')
+  if (!ok) ElMessage.error('仅支持 .xlsx 格式文件，请先下载标准模板')
+  return ok
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+async function customUpload(opt) {
+  const file = opt.file
+  importing.value = true
+  try {
+    const res = await importMacroMatrix(currentMajorId.value, file)
+    ElMessage.success(`成功导入 ${res.data} 条课程支撑`)
+    importDialogVisible.value = false
+    await loadData()
+  } catch (e) {
+    const msg = e && e.message ? e.message : '导入失败'
+    // 后端逐行列出问题，换行展示，便于用户对照修改
+    ElMessageBox.alert(escapeHtml(msg).replace(/\n/g, '<br/>'), '导入失败', {
+      dangerouslyUseHTMLString: true,
+      confirmButtonText: '知道了',
+      type: 'error'
+    })
+  } finally {
+    importing.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -207,6 +300,23 @@ function clearHighlight() {}
 .indicator-header { font-size: var(--text-xs); text-align: center; }
 .hint { color: var(--text-secondary); font-size: 13px; }
 :deep(.nowrap-column .cell) { white-space: nowrap; }
+
+.import-tip {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6f42c1;
+  background: rgba(128, 107, 191, 0.08);
+  border: 1px solid rgba(128, 107, 191, 0.16);
+}
+
+.upload-tip {
+  margin-top: 8px;
+  color: var(--text-secondary, #909399);
+  font-size: 12px;
+}
 /* 列合计行：只控制字体颜色和粗细 */
 :deep(.matrix-table .el-table__footer-wrapper td) {
   text-align: center;

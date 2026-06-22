@@ -59,6 +59,23 @@ export function getSupportedIndicators(courseId) {
   return request.get(`/api/macro-matrix/course/${courseId}/supported-indicators`)
 }
 
+// 课程支撑（宏观支撑矩阵）批量导入
+export function downloadMacroMatrixTemplate(majorId) {
+  return request.get('/api/macro-matrix/template', {
+    params: { majorId },
+    responseType: 'blob'
+  })
+}
+
+export function importMacroMatrix(majorId, file) {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post('/api/macro-matrix/import', form, {
+    params: { majorId },
+    skipErrorMessage: true
+  })
+}
+
 // 全局计算
 export function getDashboard(majorId) {
   return request.get('/api/global/dashboard', { params: { majorId } })

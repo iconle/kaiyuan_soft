@@ -10,19 +10,23 @@ export const useUserStore = defineStore('user', () => {
   const roleCode = ref(localStorage.getItem('roleCode') || '')
   const roleName = ref(localStorage.getItem('roleName') || '')
 
-  function setLogin(data) {
-    token.value = data.token
+  function setUserInfo(data) {
     userId.value = data.userId
     username.value = data.username
     realName.value = data.realName
     roleCode.value = data.roleCode
     roleName.value = data.roleName
-    localStorage.setItem('token', data.token)
     localStorage.setItem('userId', String(data.userId))
     localStorage.setItem('username', data.username)
     localStorage.setItem('realName', data.realName)
     localStorage.setItem('roleCode', data.roleCode)
     localStorage.setItem('roleName', data.roleName)
+  }
+
+  function setLogin(data) {
+    token.value = data.token
+    localStorage.setItem('token', data.token)
+    setUserInfo(data)
   }
 
   function logout() {
@@ -40,5 +44,5 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('roleName')
   }
 
-  return { token, userId, username, realName, roleCode, roleName, setLogin, logout }
+  return { token, userId, username, realName, roleCode, roleName, setLogin, setUserInfo, logout }
 })

@@ -82,5 +82,8 @@ export function getRadarData(majorId, semesterId) {
 }
 
 export function downloadMajorExcel(majorId, semesterId) {
-  return request.get('/api/reports/major/excel', { params: { majorId, semesterId } }, { responseType: 'blob' })
+  return request.get('/api/reports/major/excel', {
+    params: { majorId, semesterId },
+    responseType: 'blob'
+  })
 }

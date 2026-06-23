@@ -35,3 +35,4 @@ backend/target/
 # 如果 deploy/ 下的文件是构建产物，可以考虑不提交
 # deploy/works/course-oss/frontend/assets/
 # deploy/works/course-oss/backend/*.jar
+deploy/works/course-oss/frontend/assets/

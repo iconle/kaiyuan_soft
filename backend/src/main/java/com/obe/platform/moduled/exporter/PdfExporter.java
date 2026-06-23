@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.math.RoundingMode;
 
 public class PdfExporter {
 
@@ -101,8 +102,8 @@ public class PdfExporter {
                 writer.writeLine("暂无课程目标达成度数据", 10, MARGIN + 20);
             } else {
                 for (CourseObjectiveResult item : objectiveResults) {
-                    writer.writeLine(item.objectiveNo() + "  达成度: " + format(item.achievement())
-                            + "  " + safe(item.description()), 10, MARGIN + 20);
+                    writer.writeLine(item.objectiveNo() + "  达成度: " + formatAchievement(item.achievement())
+                        + "  " + safe(item.description()), 10, MARGIN + 20);;
                 }
             }
             writer.blank();
@@ -112,8 +113,8 @@ public class PdfExporter {
                 writer.writeLine("暂无指标点达成度数据", 10, MARGIN + 20);
             } else {
                 for (CourseIndicatorResult item : indicatorResults) {
-                    writer.writeLine(item.indicatorNo() + "  达成度: " + format(item.achievement())
-                            + "  " + safe(item.content()), 10, MARGIN + 20);
+                    writer.writeLine(item.indicatorNo() + "  达成度: " + formatAchievement(item.achievement())
+                        + "  " + safe(item.content()), 10, MARGIN + 20);
                 }
             }
             writer.blank();
@@ -125,8 +126,8 @@ public class PdfExporter {
                 for (CourseAssessmentResult item : assessmentResults) {
                     writer.writeLine(safe(item.assessmentName())
                             + "  目标: " + safe(item.objectiveNos())
-                            + "  满分: " + format(item.maxScore())
-                            + "  平均分: " + format(item.averageScore())
+                            + "  满分: " + formatScore(item.maxScore())
+                            + "  平均分: " + formatScore(item.averageScore())
                             + "  人数: " + item.scoreCount(), 10, MARGIN + 20);
                 }
             }
@@ -158,7 +159,13 @@ public class PdfExporter {
         }
     }
 
-    private static String format(BigDecimal value) {
+
+
+    private static String formatAchievement(BigDecimal value) {
+        return value != null ? value.setScale(4, RoundingMode.HALF_UP).toPlainString() : "-";
+    }
+
+    private static String formatScore(BigDecimal value) {
         return value != null ? value.stripTrailingZeros().toPlainString() : "-";
     }
 

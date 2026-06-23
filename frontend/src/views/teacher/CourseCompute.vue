@@ -274,15 +274,15 @@
         <div style="margin-top:16px; padding:12px; background:#f5f7fa; border-radius:4px">
           <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:16px">
             <div style="text-align:center">
-              <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ objectiveStats.avg.toFixed(3) }}</div>
+              <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ formatAchievement(objectiveStats.avg) }}</div>
               <div style="color:#909399; font-size:12px">平均达成度</div>
             </div>
             <div style="text-align:center">
-              <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ objectiveStats.max.toFixed(3) }}</div>
+              <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ formatAchievement(objectiveStats.max) }}</div>
               <div style="color:#909399; font-size:12px">最高达成度</div>
             </div>
             <div style="text-align:center">
-              <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ objectiveStats.min.toFixed(3) }}</div>
+              <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ formatAchievement(objectiveStats.min) }}</div>
               <div style="color:#909399; font-size:12px">最低达成度</div>
             </div>
             <div style="text-align:center">
@@ -312,15 +312,15 @@
         <div style="margin-top:16px; padding:12px; background:#f5f7fa; border-radius:4px">
           <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:16px">
             <div style="text-align:center">
-              <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ indicatorStats.avg.toFixed(3) }}</div>
+              <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ formatAchievement(indicatorStats.avg) }}</div>
               <div style="color:#909399; font-size:12px">平均达成度</div>
             </div>
             <div style="text-align:center">
-              <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ indicatorStats.max.toFixed(3) }}</div>
+              <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ formatAchievement(indicatorStats.max) }}</div>
               <div style="color:#909399; font-size:12px">最高达成度</div>
             </div>
             <div style="text-align:center">
-              <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ indicatorStats.min.toFixed(3) }}</div>
+              <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ formatAchievement(indicatorStats.min) }}</div>
               <div style="color:#909399; font-size:12px">最低达成度</div>
             </div>
             <div style="text-align:center">
@@ -572,7 +572,7 @@ function renderObjectiveRadar(chart, data) {
       trigger: 'item',
       formatter: (params) => {
         return `${params.name}<br/>${data.map(d =>
-          `${d.name}: ${d.value.toFixed(3)}`
+          `${d.name}: ${d.value.toFixed(4)}`
         ).join('<br/>')}`
       }
     },
@@ -618,7 +618,7 @@ function renderIndicatorRadar(chart, data) {
       trigger: 'item',
       formatter: (params) => {
         return `${params.name}<br/>${data.map(d =>
-          `${d.name}: ${d.value.toFixed(3)}`
+          `${d.name}: ${d.value.toFixed(4)}`
         ).join('<br/>')}`
       }
     },
@@ -667,7 +667,7 @@ function renderObjectiveBar(chart, data) {
       axisPointer: { type: 'shadow' },
       formatter: (params) => {
         const val = params[0].value
-        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+        return `${params[0].name}<br/>达成度: ${val.toFixed(4)}<br/>状态: ${getStatusText(val)}`
       }
     },
     grid: {
@@ -701,7 +701,7 @@ function renderObjectiveBar(chart, data) {
       label: {
         show: true,
         position: 'top',
-        formatter: (params) => params.value.toFixed(3),
+        formatter: (params) => params.value.toFixed(4),
         fontSize: 11
       }
     }]
@@ -717,7 +717,7 @@ function renderIndicatorBar(chart, data) {
       axisPointer: { type: 'shadow' },
       formatter: (params) => {
         const val = params[0].value
-        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+        return `${params[0].name}<br/>达成度: ${val.toFixed(4)}<br/>状态: ${getStatusText(val)}`
       }
     },
     grid: {
@@ -751,7 +751,7 @@ function renderIndicatorBar(chart, data) {
       label: {
         show: true,
         position: 'top',
-        formatter: (params) => params.value.toFixed(3),
+        formatter: (params) => params.value.toFixed(4),
         fontSize: 11
       }
     }]
@@ -766,7 +766,7 @@ function renderObjectiveLine(chart, data) {
       trigger: 'axis',
       formatter: (params) => {
         const val = params[0].value
-        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+        return `${params[0].name}<br/>达成度: ${val.toFixed(4)}<br/>状态: ${getStatusText(val)}`
       }
     },
     grid: {
@@ -823,7 +823,7 @@ function renderIndicatorLine(chart, data) {
       trigger: 'axis',
       formatter: (params) => {
         const val = params[0].value
-        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+        return `${params[0].name}<br/>达成度: ${val.toFixed(4)}<br/>状态: ${getStatusText(val)}`
       }
     },
     grid: {

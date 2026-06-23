@@ -39,11 +39,13 @@ public class CourseExcelExporter {
 
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle dataStyle = createDataStyle(workbook);
+            CellStyle decimalStyle = createDecimalStyle(workbook);
 
-            writeSummarySheet(workbook, headerStyle, dataStyle, courseName, className, calcTime,
+            writeSummarySheet(workbook, headerStyle, dataStyle, decimalStyle, courseName, className, calcTime,
                     objectiveResults, indicatorResults, assessmentResults);
-            writeObjectiveSheet(workbook, headerStyle, dataStyle, objectiveResults);
-            writeIndicatorSheet(workbook, headerStyle, dataStyle, indicatorResults);
+            writeObjectiveSheet(workbook, headerStyle, dataStyle, decimalStyle, objectiveResults);
+            writeIndicatorSheet(workbook, headerStyle, dataStyle, decimalStyle, indicatorResults);
+
             writeAssessmentSheet(workbook, headerStyle, dataStyle, assessmentResults);
             writeStudentScoreSheet(workbook, headerStyle, dataStyle, studentScoreDetails);
 
@@ -54,10 +56,12 @@ public class CourseExcelExporter {
         }
     }
 
+
     private static void writeSummarySheet(
             Workbook workbook,
             CellStyle headerStyle,
             CellStyle dataStyle,
+            CellStyle decimalStyle,
             String courseName,
             String className,
             LocalDateTime calcTime,
@@ -78,7 +82,7 @@ public class CourseExcelExporter {
                 objectiveResults.stream()
                         .map(item -> new Object[]{item.objectiveNo(), item.achievement()})
                         .toList(),
-                headerStyle, dataStyle);
+                headerStyle, dataStyle, decimalStyle, "达成度");
         rowIndex++;
 
         rowIndex = writeSectionTitle(sheet, rowIndex, "课程级指标点达成度", headerStyle);
@@ -87,7 +91,7 @@ public class CourseExcelExporter {
                 indicatorResults.stream()
                         .map(item -> new Object[]{item.indicatorNo(), item.achievement()})
                         .toList(),
-                headerStyle, dataStyle);
+                headerStyle, dataStyle, decimalStyle, "达成度");
         rowIndex++;
 
         writeSectionTitle(sheet, rowIndex, "考核点均分", headerStyle);
@@ -111,8 +115,10 @@ public class CourseExcelExporter {
             Workbook workbook,
             CellStyle headerStyle,
             CellStyle dataStyle,
+            CellStyle decimalStyle,
             List<CourseObjectiveResult> objectiveResults) {
         Sheet sheet = workbook.createSheet("课程目标达成度");
+
         writeRows(sheet, 0,
                 new String[]{"目标编号", "维度", "目标描述", "达成度"},
                 objectiveResults.stream()
@@ -123,7 +129,8 @@ public class CourseExcelExporter {
                                 item.achievement()
                         })
                         .toList(),
-                headerStyle, dataStyle);
+                headerStyle, dataStyle, decimalStyle, "达成度");
+
         autoSize(sheet, 4);
     }
 
@@ -131,8 +138,10 @@ public class CourseExcelExporter {
             Workbook workbook,
             CellStyle headerStyle,
             CellStyle dataStyle,
+            CellStyle decimalStyle,
             List<CourseIndicatorResult> indicatorResults) {
         Sheet sheet = workbook.createSheet("指标点达成度");
+
         writeRows(sheet, 0,
                 new String[]{"指标点编号", "指标点内容", "达成度"},
                 indicatorResults.stream()
@@ -142,7 +151,8 @@ public class CourseExcelExporter {
                                 item.achievement()
                         })
                         .toList(),
-                headerStyle, dataStyle);
+                headerStyle, dataStyle, decimalStyle, "达成度");
+
         autoSize(sheet, 3);
     }
 
@@ -212,13 +222,26 @@ public class CourseExcelExporter {
         return rowIndex + 1;
     }
 
+
+    private static int writeRows(
+        Sheet sheet,
+        int rowIndex,
+        String[] headers,
+        List<Object[]> rows,
+        CellStyle headerStyle,
+        CellStyle dataStyle) {
+    return writeRows(sheet, rowIndex, headers, rows, headerStyle, dataStyle, null);
+    }
+
     private static int writeRows(
             Sheet sheet,
             int rowIndex,
             String[] headers,
             List<Object[]> rows,
             CellStyle headerStyle,
-            CellStyle dataStyle) {
+            CellStyle dataStyle,
+            CellStyle decimalStyle,
+            String... decimalHeaders) {
         Row headerRow = sheet.createRow(rowIndex++);
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
@@ -231,10 +254,28 @@ public class CourseExcelExporter {
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = row.createCell(i);
                 setValue(cell, i < values.length ? values[i] : null);
-                cell.setCellStyle(dataStyle);
+
+                if (decimalStyle != null && isDecimalHeader(headers[i], decimalHeaders)) {
+                    cell.setCellStyle(decimalStyle);
+                } else {
+                    cell.setCellStyle(dataStyle);
+                }
             }
         }
         return rowIndex;
+    }
+
+    private static boolean isDecimalHeader(String header, String... decimalHeaders) {
+        if (header == null || decimalHeaders == null) {
+            return false;
+        }
+
+        for (String decimalHeader : decimalHeaders) {
+            if (header.equals(decimalHeader)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void setValue(Cell cell, Object value) {
@@ -271,7 +312,11 @@ public class CourseExcelExporter {
         applyBorder(style);
         return style;
     }
-
+    private static CellStyle createDecimalStyle(Workbook workbook) {
+        CellStyle style = createDataStyle(workbook);
+        style.setDataFormat(workbook.createDataFormat().getFormat("0.0000"));
+        return style;
+    }
     private static void applyBorder(CellStyle style) {
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);

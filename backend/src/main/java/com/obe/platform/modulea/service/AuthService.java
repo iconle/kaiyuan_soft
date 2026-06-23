@@ -2,6 +2,7 @@ package com.obe.platform.modulea.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.obe.platform.common.BizException;
+import com.obe.platform.modulea.dto.CurrentUserResponse;
 import com.obe.platform.modulea.dto.LoginRequest;
 import com.obe.platform.modulea.dto.LoginResponse;
 import com.obe.platform.modulea.dto.PasswordChangeRequest;
@@ -53,6 +54,25 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userMapper.updateById(user);
+    }
+
+    public CurrentUserResponse getCurrentUser() {
+        Long userId = getCurrentUserId();
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BizException(401, "当前用户不存在或登录已失效");
+        }
+        if (!Integer.valueOf(1).equals(user.getStatus())) {
+            throw new BizException(403, "账号已被禁用");
+        }
+
+        SysRole role = roleMapper.selectById(user.getRoleId());
+        if (role == null) {
+            throw new BizException("用户角色不存在");
+        }
+
+        return new CurrentUserResponse(user.getId(), user.getUsername(),
+                user.getRealName(), role.getRoleCode(), role.getRoleName());
     }
 
     public Long getCurrentUserId() {

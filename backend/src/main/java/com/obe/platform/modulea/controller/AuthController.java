@@ -1,6 +1,7 @@
 package com.obe.platform.modulea.controller;
 
 import com.obe.platform.common.Result;
+import com.obe.platform.modulea.dto.CurrentUserResponse;
 import com.obe.platform.modulea.dto.LoginRequest;
 import com.obe.platform.modulea.dto.LoginResponse;
 import com.obe.platform.modulea.dto.PasswordChangeRequest;
@@ -28,8 +29,7 @@ public class AuthController {
     }
 
     @GetMapping("/info")
-    public Result<LoginResponse> getCurrentUser() {
-        Long userId = authService.getCurrentUserId();
-        return Result.ok(null); // TODO: return current user info
+    public Result<CurrentUserResponse> getCurrentUser() {
+        return Result.ok(authService.getCurrentUser());
     }
 }

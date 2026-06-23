@@ -20,6 +20,7 @@ import com.obe.platform.modulec.mapper.CourseAchievementMapper;
 import com.obe.platform.modulec.mapper.ObjAchievementMapper;
 import com.obe.platform.modulec.mapper.ScoreSheetMapper;
 import com.obe.platform.modulec.mapper.StudentScoreMapper;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -284,7 +285,7 @@ public class CourseCalcService {
 
     public record CalcResult(Map<Long, BigDecimal> objectiveAchievements,
                               Map<Long, BigDecimal> courseAchievements,
-                              LocalDateTime calcTime,
+                              @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime calcTime,
                               Map<Long, String> objectiveLabels,
                               Map<Long, String> indicatorLabels) {}
 }

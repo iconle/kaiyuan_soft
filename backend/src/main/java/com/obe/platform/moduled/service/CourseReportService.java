@@ -20,6 +20,7 @@ import com.obe.platform.modulec.mapper.ObjAchievementMapper;
 import com.obe.platform.modulec.service.ScoreService;
 import com.obe.platform.moduled.exporter.CourseExcelExporter;
 import com.obe.platform.moduled.exporter.PdfExporter;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -247,7 +248,7 @@ public class CourseReportService {
     public record CourseReportData(
             String courseName,
             String className,
-            LocalDateTime calcTime,
+            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime calcTime,
             List<CourseObjectiveResult> objectiveResults,
             List<CourseIndicatorResult> indicatorResults,
             List<CourseAssessmentResult> assessmentResults,

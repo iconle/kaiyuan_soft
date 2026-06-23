@@ -19,6 +19,7 @@ import com.obe.platform.modulec.entity.ScoreSheet;
 import com.obe.platform.modulec.mapper.CourseAchievementMapper;
 import com.obe.platform.modulec.mapper.MajorAchievementMapper;
 import com.obe.platform.modulec.mapper.ScoreSheetMapper;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -239,8 +240,10 @@ public class GlobalCalcService {
                                  List<Long> incompleteClassIds, List<CourseStatus> courseStatuses) {
         public record CourseStatus(Long courseId, String courseName, Long classId,
                                     String className, String status, String teacherName,
-                                    String semesterName, LocalDateTime lockedAt) {}
+                                    String semesterName,
+                                    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime lockedAt) {}
     }
 
-    public record MajorCalcResult(Map<Long, BigDecimal> achievements, LocalDateTime calcTime) {}
+    public record MajorCalcResult(Map<Long, BigDecimal> achievements,
+                                  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime calcTime) {}
 }

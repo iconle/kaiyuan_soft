@@ -65,7 +65,7 @@
         >
           <template #default="{ row }">
             <span :class="['gk-pill', `is-${getAchievementType(row.achievement)}`]">
-              {{ row.achievement.toFixed(3) }}
+              {{ row.achievement.toFixed(4) }}
             </span>
           </template>
         </el-table-column>
@@ -120,15 +120,15 @@
       <div style="margin-top:16px; padding:12px; background:#f5f7fa; border-radius:4px">
         <div style="display:flex; justify-content:space-around; flex-wrap:wrap; gap:16px">
           <div style="text-align:center">
-            <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ stats.avg.toFixed(3) }}</div>
+            <div style="font-size:24px; font-weight:bold; color:#67C23A">{{ stats.avg.toFixed(4) }}</div>
             <div style="color:#909399; font-size:12px">平均达成度</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ stats.max.toFixed(3) }}</div>
+            <div style="font-size:24px; font-weight:bold; color:#409EFF">{{ stats.max.toFixed(4) }}</div>
             <div style="color:#909399; font-size:12px">最高达成度</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ stats.min.toFixed(3) }}</div>
+            <div style="font-size:24px; font-weight:bold; color:#E6A23C">{{ stats.min.toFixed(4) }}</div>
             <div style="color:#909399; font-size:12px">最低达成度</div>
           </div>
           <div style="text-align:center">
@@ -302,7 +302,7 @@ function renderRadarChart(chart, indicators, values) {
       trigger: 'item',
       formatter: (params) => {
         return `${params.name}<br/>${indicators.map((ind, i) =>
-          `${ind}: ${values[i].toFixed(3)}`
+          `${ind}: ${values[i].toFixed(4)}`
         ).join('<br/>')}`
       }
     },
@@ -356,7 +356,7 @@ function renderBarChart(chart, indicators, values) {
       axisPointer: { type: 'shadow' },
       formatter: (params) => {
         const val = params[0].value
-        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+        return `${params[0].name}<br/>达成度: ${val.toFixed(4)}<br/>状态: ${getStatusText(val)}`
       }
     },
     grid: {
@@ -393,7 +393,7 @@ function renderBarChart(chart, indicators, values) {
       label: {
         show: true,
         position: 'top',
-        formatter: (params) => params.value.toFixed(3),
+        formatter: (params) => params.value.toFixed(4),
         fontSize: 11
       }
     }]
@@ -413,7 +413,7 @@ function renderLineChart(chart, indicators, values) {
       trigger: 'axis',
       formatter: (params) => {
         const val = params[0].value
-        return `${params[0].name}<br/>达成度: ${val.toFixed(3)}<br/>状态: ${getStatusText(val)}`
+        return `${params[0].name}<br/>达成度: ${val.toFixed(4)}<br/>状态: ${getStatusText(val)}`
       }
     },
     grid: {

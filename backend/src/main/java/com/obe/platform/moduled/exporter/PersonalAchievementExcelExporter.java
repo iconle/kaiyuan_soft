@@ -31,9 +31,10 @@ public final class PersonalAchievementExcelExporter {
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle dataStyle = createDataStyle(workbook);
+            CellStyle numericStyle = createNumericStyle(workbook);
 
-            writeSummarySheet(workbook, details, indicatorLabels, headerStyle, dataStyle);
-            writeObjectiveSheet(workbook, details, objectiveLabels, headerStyle, dataStyle);
+            writeSummarySheet(workbook, details, indicatorLabels, headerStyle, dataStyle, numericStyle);
+            writeObjectiveSheet(workbook, details, objectiveLabels, headerStyle, dataStyle, numericStyle);
 
             workbook.write(output);
             return output.toByteArray();
@@ -47,7 +48,8 @@ public final class PersonalAchievementExcelExporter {
             List<StudentAchievementDetail> details,
             Map<Long, String> indicatorLabels,
             CellStyle headerStyle,
-            CellStyle dataStyle) {
+            CellStyle dataStyle,
+            CellStyle numericStyle) {
         Sheet sheet = workbook.createSheet("个人达成度汇总");
         Row header = sheet.createRow(0);
         writeCell(header, 0, "学号", headerStyle);
@@ -64,14 +66,14 @@ public final class PersonalAchievementExcelExporter {
             Row row = sheet.createRow(rowIndex++);
             writeCell(row, 0, detail.studentNo(), dataStyle);
             writeCell(row, 1, detail.studentName(), dataStyle);
-            writeCell(row, 2, detail.overallAchievement(), dataStyle);
+            writeNumericCell(row, 2, detail.overallAchievement(), numericStyle);
             column = 3;
             for (Long indicatorId : indicatorLabels.keySet()) {
-                writeCell(
+                writeNumericCell(
                         row,
                         column++,
                         detail.indicatorAchievements().getOrDefault(indicatorId, BigDecimal.ZERO),
-                        dataStyle);
+                        numericStyle);
             }
         }
         autoSize(sheet, 3 + indicatorLabels.size());
@@ -83,7 +85,8 @@ public final class PersonalAchievementExcelExporter {
             List<StudentAchievementDetail> details,
             Map<Long, String> objectiveLabels,
             CellStyle headerStyle,
-            CellStyle dataStyle) {
+            CellStyle dataStyle,
+            CellStyle numericStyle) {
         Sheet sheet = workbook.createSheet("课程目标明细");
         Row header = sheet.createRow(0);
         String[] headers = {"学号", "姓名", "课程目标", "达成度"};
@@ -98,11 +101,11 @@ public final class PersonalAchievementExcelExporter {
                 writeCell(row, 0, detail.studentNo(), dataStyle);
                 writeCell(row, 1, detail.studentName(), dataStyle);
                 writeCell(row, 2, objective.getValue(), dataStyle);
-                writeCell(
+                writeNumericCell(
                         row,
                         3,
                         detail.objectiveAchievements().getOrDefault(objective.getKey(), BigDecimal.ZERO),
-                        dataStyle);
+                        numericStyle);
             }
         }
         autoSize(sheet, headers.length);
@@ -143,5 +146,17 @@ public final class PersonalAchievementExcelExporter {
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         return style;
+    }
+
+    private static CellStyle createNumericStyle(Workbook workbook) {
+        CellStyle style = createDataStyle(workbook);
+        style.setDataFormat(workbook.createDataFormat().getFormat("0.0000"));
+        return style;
+    }
+
+    private static void writeNumericCell(Row row, int column, BigDecimal value, CellStyle style) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(value != null ? value.doubleValue() : 0);
+        cell.setCellStyle(style);
     }
 }

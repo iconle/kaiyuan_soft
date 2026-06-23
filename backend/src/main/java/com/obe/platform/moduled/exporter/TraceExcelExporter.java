@@ -34,6 +34,7 @@ public class TraceExcelExporter {
             Sheet summarySheet = workbook.createSheet("专业级达成度汇总");
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle dataStyle = createDataStyle(workbook);
+            CellStyle numericStyle = createNumericStyle(workbook);
 
             Row headerRow = summarySheet.createRow(0);
             headerRow.createCell(0).setCellValue("指标点");
@@ -47,7 +48,7 @@ public class TraceExcelExporter {
                 row.createCell(0).setCellValue(e.getKey());
                 row.createCell(1).setCellValue(e.getValue().doubleValue());
                 row.getCell(0).setCellStyle(dataStyle);
-                row.getCell(1).setCellStyle(dataStyle);
+                row.getCell(1).setCellStyle(numericStyle);
             }
 
             // Per-indicator drill-down sheets
@@ -74,9 +75,17 @@ public class TraceExcelExporter {
                     row.createCell(6).setCellValue(tr.assessmentName());
                     row.createCell(7).setCellValue(tr.maxScore() != null ? tr.maxScore().doubleValue() : 0);
                     row.createCell(8).setCellValue(tr.avgScore() != null ? tr.avgScore().doubleValue() : 0);
-                    for (int i = 0; i < colHeaders.length; i++) {
-                        row.getCell(i).setCellStyle(dataStyle);
-                    }
+
+                    // Apply styles: numericStyle for numeric columns, dataStyle for text columns
+                    row.getCell(0).setCellStyle(dataStyle);
+                    row.getCell(1).setCellStyle(numericStyle);
+                    row.getCell(2).setCellStyle(numericStyle);
+                    row.getCell(3).setCellStyle(dataStyle);
+                    row.getCell(4).setCellStyle(numericStyle);
+                    row.getCell(5).setCellStyle(numericStyle);
+                    row.getCell(6).setCellStyle(dataStyle);
+                    row.getCell(7).setCellStyle(numericStyle);
+                    row.getCell(8).setCellStyle(numericStyle);
                 }
 
                 // Auto-size columns
@@ -112,6 +121,13 @@ public class TraceExcelExporter {
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private static CellStyle createNumericStyle(Workbook wb) {
+        CellStyle style = createDataStyle(wb);
+        DataFormat format = wb.createDataFormat();
+        style.setDataFormat(format.getFormat("0.0000"));
         return style;
     }
 

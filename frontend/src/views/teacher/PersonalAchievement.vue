@@ -23,7 +23,7 @@
       </div>
       <div class="summary-item">
         <span>平均达成度</span>
-        <strong>{{ averageAchievement.toFixed(3) }}</strong>
+        <strong>{{ averageAchievement.toFixed(4) }}</strong>
       </div>
       <div class="summary-item">
         <span>达标人数</span>
@@ -286,7 +286,7 @@ function toDetailRows(values = {}, labels = {}, fallback) {
 }
 
 function formatAchievement(value) {
-  return Number(value || 0).toFixed(3)
+  return Number(value || 0).toFixed(4)
 }
 function achievementPercent(value) {
   const num = Number(value || 0)

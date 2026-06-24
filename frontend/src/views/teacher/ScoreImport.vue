@@ -21,11 +21,15 @@
     <el-alert v-if="status === 'LOCKED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
       成绩单已锁定，无法修改。如需勘误请联系教务管理员解锁。
     </el-alert>
+    <el-alert v-else-if="!loading && assessments.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
+      暂无考核点数据，请先在「考核点设置」中创建考核点。
+    </el-alert>
     <el-alert v-else-if="!loading && assessments.length > 0 && selectedAssessmentId && questions.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
 
     <div v-if="selectedAssessmentId" class="content-card">
+      <el-empty v-if="!loading && scoreRows.length === 0" description="暂无学生数据，请先为学生选课" />
       <div class="section-title">考核点: {{ currentAssessment?.name || '' }}
         <span style="font-size:13px;color:var(--text-secondary);margin-left:8px">满分: {{ currentAssessment?.maxScore || '-' }}</span>
       </div>
@@ -121,9 +125,22 @@ async function loadAll() {
   loading.value = true
   try {
     const [scoreRes, statusRes, assessRes, objRes] = await Promise.all([
-      getScores(classId.value), getScoreStatus(classId.value),
-      listAssessments(classId.value),
-      request.get(`/api/classes/${classId.value}/objectives`)
+      getScores(classId.value).catch(err => {
+        console.error('获取成绩失败:', err)
+        return { data: { rows: [], status: '' } }
+      }),
+      getScoreStatus(classId.value).catch(err => {
+        console.error('获取状态失败:', err)
+        return { data: { status: '' } }
+      }),
+      listAssessments(classId.value).catch(err => {
+        console.error('获取考核点失败:', err)
+        return { data: [] }
+      }),
+      request.get(`/api/classes/${classId.value}/objectives`).catch(err => {
+        console.error('获取目标失败:', err)
+        return { data: [] }
+      })
     ])
     assessments.value = assessRes.data || []
     allObjectives.value = objRes.data || []
@@ -131,6 +148,9 @@ async function loadAll() {
     status.value = statusRes.data?.status || scoreRes.data?.status || ''
     if (assessments.value.length > 0 && !selectedAssessmentId.value) selectedAssessmentId.value = assessments.value[0].id
     if (selectedAssessmentId.value) await loadQuestions()
+  } catch (err) {
+    console.error('加载失败:', err)
+    ElMessage.error('加载数据失败，请刷新页面重试')
   } finally { loading.value = false }
 }
 
@@ -138,8 +158,16 @@ async function loadQuestions() {
   if (!selectedAssessmentId.value) return
   try {
     const res = await request.get(`/api/assessments/${selectedAssessmentId.value}/questions`)
+      .catch(err => {
+        console.error('获取题目失败:', err)
+        return { data: [] }
+      })
     questions.value = res.data || []
     const sRes = await getScores(classId.value)
+      .catch(err => {
+        console.error('获取成绩失败:', err)
+        return { data: { rows: [] } }
+      })
     scoreRows.value = sRes.data?.rows || []
     edits.value = {}
   } catch { questions.value = [] }
@@ -197,22 +225,30 @@ const hasEdits = computed(() => editCount.value > 0)
 
 async function saveAll() {
   let saved = 0
+  let failed = 0
   for (const [key, score] of Object.entries(edits.value)) {
     if (key.startsWith('q_')) {
       const [, studentId, questionId] = key.split('_')
       try {
         await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
         saved++
-      } catch { /* skip */ }
+      } catch { failed++ }
     } else if (key.startsWith('a_')) {
       const [, studentId, assessId] = key.split('_')
       try {
         await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
         saved++
-      } catch { /* skip */ }
+      } catch { failed++ }
     }
   }
-  if (saved > 0) { ElMessage.success(`已保存 ${saved} 条`); edits.value = {}; loadQuestions() }
+  if (saved > 0) {
+    const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
+    ElMessage.success(msg)
+    edits.value = {}
+    await loadQuestions()
+  } else if (failed > 0) {
+    ElMessage.error('保存失败，请重试')
+  }
 }
 
 async function downloadTemplate() {
@@ -232,9 +268,15 @@ async function uploadFile({ file }) {
   try {
     await uploadScores(classId.value, form)
     ElMessage.success('成绩导入成功')
-    await loadAll()
+    // Wait a bit before reloading to ensure backend has processed
+    await new Promise(resolve => setTimeout(resolve, 300))
+    await loadAll().catch(err => {
+      console.error('导入后刷新数据失败:', err)
+      ElMessage.warning('成绩导入成功，但刷新数据失败，请手动刷新页面')
+    })
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
+    console.error('导入失败:', error)
+    ElMessageBox.alert(escapeHtml(error?.response?.data?.message || error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
       dangerouslyUseHTMLString: true, type: 'error'
     })
   } finally { importing.value = false }

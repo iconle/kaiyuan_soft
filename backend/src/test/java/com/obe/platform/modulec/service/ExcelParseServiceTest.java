@@ -6,6 +6,7 @@ import com.obe.platform.modulea.mapper.StudentMapper;
 import com.obe.platform.moduleb.entity.AssessmentPoint;
 import com.obe.platform.moduleb.entity.CourseOutline;
 import com.obe.platform.moduleb.mapper.AssessmentPointMapper;
+import com.obe.platform.moduleb.mapper.AssessmentQuestionMapper;
 import com.obe.platform.moduleb.mapper.CourseOutlineMapper;
 import com.obe.platform.modulec.entity.ScoreSheet;
 import com.obe.platform.modulec.mapper.ScoreSheetMapper;
@@ -32,6 +33,7 @@ class ExcelParseServiceTest {
     @Mock private ScoreSheetMapper scoreSheetMapper;
     @Mock private CourseOutlineMapper outlineMapper;
     @Mock private AssessmentPointMapper assessmentPointMapper;
+    @Mock private AssessmentQuestionMapper questionMapper;
     @Mock private ClassStudentMapper classStudentMapper;
     @Mock private StudentMapper studentMapper;
 
@@ -41,7 +43,7 @@ class ExcelParseServiceTest {
     void setUp() {
         service = new ExcelParseService(
                 scoreSheetMapper, outlineMapper, assessmentPointMapper,
-                classStudentMapper, studentMapper);
+                questionMapper, classStudentMapper, studentMapper);
     }
 
     @Test

@@ -6,8 +6,10 @@ import com.obe.platform.modulea.entity.Student;
 import com.obe.platform.modulea.mapper.ClassStudentMapper;
 import com.obe.platform.modulea.mapper.StudentMapper;
 import com.obe.platform.moduleb.entity.AssessmentPoint;
+import com.obe.platform.moduleb.entity.AssessmentQuestion;
 import com.obe.platform.moduleb.entity.CourseOutline;
 import com.obe.platform.moduleb.mapper.AssessmentPointMapper;
+import com.obe.platform.moduleb.mapper.AssessmentQuestionMapper;
 import com.obe.platform.moduleb.mapper.CourseOutlineMapper;
 import com.obe.platform.modulec.entity.ScoreSheet;
 import com.obe.platform.modulec.entity.StudentScore;
@@ -21,11 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,13 +33,15 @@ public class ExcelParseService {
     private final ScoreSheetMapper scoreSheetMapper;
     private final CourseOutlineMapper outlineMapper;
     private final AssessmentPointMapper assessmentPointMapper;
+    private final AssessmentQuestionMapper questionMapper;
     private final ClassStudentMapper classStudentMapper;
     private final StudentMapper studentMapper;
 
     /**
      * Parse an uploaded Excel score file and return the list of StudentScore records.
-     * The first two columns map to 学号 (studentNo) and 姓名 (name), then assessment scores.
-     * Rows 0-1 are headers and are skipped. Data rows start at row 2.
+     * Supports two formats:
+     * 1. Legacy single-sheet format with assessment-level scores
+     * 2. Multi-sheet format with assessment sheets containing question-level or assessment-level scores
      *
      * @param file    the uploaded Excel file
      * @param sheetId the ScoreSheet ID
@@ -72,7 +72,21 @@ public class ExcelParseService {
                         .eq(AssessmentPoint::getOutlineId, outline.getId())
                         .orderByAsc(AssessmentPoint::getSortOrder));
 
-        // Build student lookup: studentNo → studentId
+        // Build assessment lookup: name -> assessment point
+        Map<String, AssessmentPoint> assessmentNameMap = assessmentPoints.stream()
+                .collect(Collectors.toMap(AssessmentPoint::getName, ap -> ap, (a, b) -> a));
+
+        // Build question lookup: assessmentId -> list of questions
+        Map<Long, List<AssessmentQuestion>> questionsMap = assessmentPoints.stream()
+                .collect(Collectors.toMap(
+                        AssessmentPoint::getId,
+                        ap -> questionMapper.selectList(
+                                new LambdaQueryWrapper<AssessmentQuestion>()
+                                        .eq(AssessmentQuestion::getAssessmentId, ap.getId())
+                                        .orderByAsc(AssessmentQuestion::getSortOrder))
+                ));
+
+        // Build student lookup: studentNo -> studentId
         List<ClassStudent> classStudents = classStudentMapper.selectList(
                 new LambdaQueryWrapper<ClassStudent>()
                         .eq(ClassStudent::getClassId, scoreSheet.getClassId()));
@@ -80,6 +94,8 @@ public class ExcelParseService {
         List<Student> students = studentMapper.selectBatchIds(studentIds);
         Map<String, Long> studentNoToId = students.stream()
                 .collect(Collectors.toMap(Student::getStudentNo, Student::getId));
+        Map<Long, Student> studentMap = students.stream()
+                .collect(Collectors.toMap(Student::getId, s -> s));
 
         List<StudentScore> result = new ArrayList<>();
         List<String> errors = new ArrayList<>();
@@ -88,61 +104,30 @@ public class ExcelParseService {
         try (InputStream is = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(is)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
-            validateHeaders(sheet, assessmentPoints);
+            // Check if it's the new multi-sheet format
+            if (workbook.getNumberOfSheets() > 1 || workbook.getSheetName(0).equals(assessmentPoints.get(0).getName())) {
+                // Parse multi-sheet format - one sheet per assessment point
+                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                    Sheet sheet = workbook.getSheetAt(i);
+                    String sheetName = sheet.getSheetName();
 
-            for (int r = 2; r <= sheet.getLastRowNum(); r++) {
-                Row row = sheet.getRow(r);
-                if (row == null) continue;
+                    // Find the assessment point by name
+                    AssessmentPoint ap = assessmentPoints.stream()
+                            .filter(a -> a.getName().equals(sheetName))
+                            .findFirst()
+                            .orElse(null);
 
-                String studentNo = getCellString(row.getCell(0));
-                if (studentNo == null || studentNo.isBlank()) continue;
-                studentNo = studentNo.trim();
-
-                Long studentId = studentNoToId.get(studentNo);
-                if (studentId == null) {
-                    errors.add("第" + (r + 1) + "行：学号「" + studentNo + "」不在本教学班名单中");
-                    continue;
-                }
-                if (!importedStudents.add(studentNo)) {
-                    errors.add("第" + (r + 1) + "行：学号「" + studentNo + "」在文件中重复");
-                    continue;
-                }
-
-                List<StudentScore> rowScores = new ArrayList<>();
-                for (int i = 0; i < assessmentPoints.size(); i++) {
-                    AssessmentPoint ap = assessmentPoints.get(i);
-                    Cell cell = row.getCell(2 + i);
-
-                    String scoreText = getCellString(cell);
-                    if (scoreText == null || scoreText.isBlank()) {
-                        errors.add("第" + (r + 1) + "行：考核点「" + ap.getName() + "」成绩不能为空");
-                        continue;
+                    if (ap != null) {
+                        List<AssessmentQuestion> questions = questionsMap.getOrDefault(ap.getId(), List.of());
+                        parseAssessmentSheet(sheet, ap, questions, studentNoToId,
+                                studentMap, sheetId, importedStudents, result, errors);
                     }
-                    BigDecimal score;
-                    try {
-                        score = new BigDecimal(scoreText.trim());
-                    } catch (NumberFormatException exception) {
-                        errors.add("第" + (r + 1) + "行：考核点「" + ap.getName()
-                                + "」成绩必须为数字，实际为「" + scoreText + "」");
-                        continue;
-                    }
-
-                    if (score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(ap.getMaxScore()) > 0) {
-                        errors.add("第" + (r + 1) + "行：学号「" + studentNo + "」在考核点「"
-                                + ap.getName() + "」的得分必须在0至" + ap.getMaxScore()
-                                + "之间，实际为" + score);
-                        continue;
-                    }
-
-                    StudentScore ss = new StudentScore();
-                    ss.setSheetId(sheetId);
-                    ss.setStudentId(studentId);
-                    ss.setAssessmentId(ap.getId());
-                    ss.setScore(score);
-                    rowScores.add(ss);
                 }
-                result.addAll(rowScores);
+            } else {
+                // Parse legacy single-sheet format
+                Sheet sheet = workbook.getSheetAt(0);
+                parseLegacySheet(sheet, assessmentPoints, studentNoToId,
+                        studentMap, sheetId, importedStudents, result, errors);
             }
 
         } catch (BizException e) {
@@ -161,7 +146,141 @@ public class ExcelParseService {
         return result;
     }
 
-    private void validateHeaders(Sheet sheet, List<AssessmentPoint> assessmentPoints) {
+    /**
+     * Parse the legacy single-sheet format with assessment-level scores.
+     */
+    private void parseLegacySheet(Sheet sheet, List<AssessmentPoint> assessmentPoints,
+                                   Map<String, Long> studentNoToId, Map<Long, Student> studentMap,
+                                   Long sheetId, Set<String> importedStudents,
+                                   List<StudentScore> result, List<String> errors) {
+        validateLegacyHeaders(sheet, assessmentPoints);
+
+        for (int r = 2; r <= sheet.getLastRowNum(); r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) continue;
+
+            String studentNo = getCellString(row.getCell(0));
+            if (studentNo == null || studentNo.isBlank()) continue;
+            studentNo = studentNo.trim();
+
+            Long studentId = studentNoToId.get(studentNo);
+            if (studentId == null) {
+                errors.add("第" + (r + 1) + "行：学号「" + studentNo + "」不在本教学班名单中");
+                continue;
+            }
+
+            for (int i = 0; i < assessmentPoints.size(); i++) {
+                AssessmentPoint ap = assessmentPoints.get(i);
+                Cell cell = row.getCell(2 + i);
+
+                String scoreText = getCellString(cell);
+                if (scoreText != null && !scoreText.isBlank()) {
+                    try {
+                        BigDecimal score = new BigDecimal(scoreText.trim());
+                        validateScore(score, ap.getMaxScore(), studentNo, ap.getName(), r + 1, errors);
+                        if (score.compareTo(BigDecimal.ZERO) >= 0 && score.compareTo(ap.getMaxScore()) <= 0) {
+                            StudentScore ss = new StudentScore();
+                            ss.setSheetId(sheetId);
+                            ss.setStudentId(studentId);
+                            ss.setAssessmentId(ap.getId());
+                            ss.setQuestionId(null);
+                            ss.setScore(score);
+                            result.add(ss);
+                        }
+                    } catch (NumberFormatException e) {
+                        errors.add("第" + (r + 1) + "行：考核点「" + ap.getName()
+                                + "」成绩必须为数字，实际为「" + scoreText + "」");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Parse an assessment sheet.
+     * If the sheet has questions, parse question-level scores.
+     * If no questions, parse assessment-level score.
+     */
+    private void parseAssessmentSheet(Sheet sheet, AssessmentPoint ap, List<AssessmentQuestion> questions,
+                                       Map<String, Long> studentNoToId, Map<Long, Student> studentMap,
+                                       Long sheetId, Set<String> importedStudents,
+                                       List<StudentScore> result, List<String> errors) {
+        for (int r = 2; r <= sheet.getLastRowNum(); r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) continue;
+
+            String studentNo = getCellString(row.getCell(0));
+            if (studentNo == null || studentNo.isBlank()) continue;
+            studentNo = studentNo.trim();
+
+            Long studentId = studentNoToId.get(studentNo);
+            if (studentId == null) {
+                errors.add(ap.getName() + "第" + (r + 1) + "行：学号「" + studentNo + "」不在本教学班名单中");
+                continue;
+            }
+
+            // If no questions, parse assessment-level score from column 2
+            if (questions == null || questions.isEmpty()) {
+                Cell cell = row.getCell(2);
+                String scoreText = getCellString(cell);
+                if (scoreText != null && !scoreText.isBlank()) {
+                    try {
+                        BigDecimal score = new BigDecimal(scoreText.trim());
+                        if (score.compareTo(BigDecimal.ZERO) >= 0 && score.compareTo(ap.getMaxScore()) <= 0) {
+                            StudentScore ss = new StudentScore();
+                            ss.setSheetId(sheetId);
+                            ss.setStudentId(studentId);
+                            ss.setAssessmentId(ap.getId());
+                            ss.setQuestionId(null);
+                            ss.setScore(score);
+                            result.add(ss);
+                        }
+                    } catch (NumberFormatException e) {
+                        errors.add(ap.getName() + "第" + (r + 1) + "行：成绩必须为数字，实际为「" + scoreText + "」");
+                    }
+                }
+            } else {
+                // Parse question-level scores
+                for (int i = 0; i < questions.size(); i++) {
+                    AssessmentQuestion q = questions.get(i);
+                    Cell cell = row.getCell(2 + i);
+
+                    String scoreText = getCellString(cell);
+                    if (scoreText == null || scoreText.isBlank()) {
+                        // Skip if empty - user can fill in later
+                        continue;
+                    }
+
+                    try {
+                        BigDecimal score = new BigDecimal(scoreText.trim());
+                        validateScore(score, q.getMaxScore(), studentNo, q.getName(), r + 1, errors);
+                        if (score.compareTo(BigDecimal.ZERO) >= 0 && score.compareTo(q.getMaxScore()) <= 0) {
+                            StudentScore ss = new StudentScore();
+                            ss.setSheetId(sheetId);
+                            ss.setStudentId(studentId);
+                            ss.setAssessmentId(ap.getId());
+                            ss.setQuestionId(q.getId());
+                            ss.setScore(score);
+                            result.add(ss);
+                        }
+                    } catch (NumberFormatException e) {
+                        errors.add(ap.getName() + "第" + (r + 1) + "行：题目「" + q.getName()
+                                + "」成绩必须为数字，实际为「" + scoreText + "」");
+                    }
+                }
+            }
+        }
+    }
+
+    private void validateScore(BigDecimal score, BigDecimal maxScore, String studentNo,
+                                String itemName, int row, List<String> errors) {
+        if (score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(maxScore) > 0) {
+            errors.add("第" + row + "行：学号「" + studentNo + "」在「"
+                    + itemName + "」的得分必须在0至" + maxScore + "之间，实际为" + score);
+        }
+    }
+
+    private void validateLegacyHeaders(Sheet sheet, List<AssessmentPoint> assessmentPoints) {
         Row header = sheet.getRow(0);
         Row subHeader = sheet.getRow(1);
         List<String> expected = new ArrayList<>();

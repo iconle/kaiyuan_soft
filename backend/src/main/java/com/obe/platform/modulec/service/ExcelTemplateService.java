@@ -7,8 +7,10 @@ import com.obe.platform.modulea.entity.Student;
 import com.obe.platform.modulea.mapper.ClassStudentMapper;
 import com.obe.platform.modulea.mapper.StudentMapper;
 import com.obe.platform.moduleb.entity.AssessmentPoint;
+import com.obe.platform.moduleb.entity.AssessmentQuestion;
 import com.obe.platform.moduleb.entity.CourseOutline;
 import com.obe.platform.moduleb.mapper.AssessmentPointMapper;
+import com.obe.platform.moduleb.mapper.AssessmentQuestionMapper;
 import com.obe.platform.moduleb.mapper.CourseOutlineMapper;
 import com.obe.platform.modulec.entity.ScoreSheet;
 import com.obe.platform.modulec.mapper.ScoreSheetMapper;
@@ -29,18 +31,19 @@ public class ExcelTemplateService {
     private final ScoreSheetMapper scoreSheetMapper;
     private final CourseOutlineMapper outlineMapper;
     private final AssessmentPointMapper assessmentPointMapper;
+    private final AssessmentQuestionMapper questionMapper;
     private final ClassStudentMapper classStudentMapper;
     private final StudentMapper studentMapper;
 
     /**
      * Generate a score-entry Excel template for the given teaching class.
      * <p>
-     * The workbook layout:
-     * - Row 0: Header row with column names (学号, 姓名, [assessment point names...])
-     * - Row 1: Sub-header row with max scores for each assessment point
-     * - Row 2+: One row per enrolled student with student number and name pre-filled
+     * The workbook contains one sheet per assessment point named "考核点名称" containing its questions.
      * <p>
-     * The first two columns are frozen.
+     * Each sheet layout:
+     * - Row 0: Header row with column names (学号, 姓名, [题目列表...], 总成绩)
+     * - Row 1: Sub-header row with max scores
+     * - Row 2+: One row per enrolled student
      *
      * @param classId the teaching class ID
      * @return byte array of the Excel file
@@ -57,7 +60,7 @@ public class ExcelTemplateService {
             scoreSheetMapper.insert(sheet);
         }
 
-        // 2. Query assessment points
+        // 2. Query assessment points with their questions
         CourseOutline outline = outlineMapper.selectOne(
                 new LambdaQueryWrapper<CourseOutline>()
                         .eq(CourseOutline::getClassId, classId));
@@ -71,7 +74,17 @@ public class ExcelTemplateService {
             assessmentPoints = List.of();
         }
 
-        // 3. Query enrolled students
+        // 3. Query questions for each assessment point
+        Map<Long, List<AssessmentQuestion>> questionsMap = assessmentPoints.stream()
+                .collect(Collectors.toMap(
+                        AssessmentPoint::getId,
+                        ap -> questionMapper.selectList(
+                                new LambdaQueryWrapper<AssessmentQuestion>()
+                                        .eq(AssessmentQuestion::getAssessmentId, ap.getId())
+                                        .orderByAsc(AssessmentQuestion::getSortOrder))
+                ));
+
+        // 4. Query enrolled students
         List<ClassStudent> classStudents = classStudentMapper.selectList(
                 new LambdaQueryWrapper<ClassStudent>()
                         .eq(ClassStudent::getClassId, classId));
@@ -86,127 +99,17 @@ public class ExcelTemplateService {
         Map<Long, Student> studentMap = students.stream()
                 .collect(Collectors.toMap(Student::getId, s -> s));
 
-        // 4. Build the Excel workbook
+        // 5. Build the Excel workbook
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            int totalColumns = 2 + assessmentPoints.size(); // 学号 + 姓名 + assessment points
-
-            // Write the workbook manually using EasyExcel's underlying POI API
-            // to have full control over the layout (merged header, sub-header, frozen panes)
             Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
-            Sheet excelSheet = workbook.createSheet("成绩录入");
 
-            // Create styles
-            CellStyle headerStyle = workbook.createCellStyle();
-            Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerFont.setFontHeightInPoints((short) 12);
-            headerStyle.setFont(headerFont);
-            headerStyle.setAlignment(HorizontalAlignment.CENTER);
-            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            headerStyle.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            headerStyle.setBorderBottom(BorderStyle.THIN);
-            headerStyle.setBorderTop(BorderStyle.THIN);
-            headerStyle.setBorderLeft(BorderStyle.THIN);
-            headerStyle.setBorderRight(BorderStyle.THIN);
-
-            CellStyle subHeaderStyle = workbook.createCellStyle();
-            Font subHeaderFont = workbook.createFont();
-            subHeaderFont.setFontHeightInPoints((short) 10);
-            subHeaderFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
-            subHeaderStyle.setFont(subHeaderFont);
-            subHeaderStyle.setAlignment(HorizontalAlignment.CENTER);
-            subHeaderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            subHeaderStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
-            subHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            subHeaderStyle.setBorderBottom(BorderStyle.THIN);
-            subHeaderStyle.setBorderTop(BorderStyle.THIN);
-            subHeaderStyle.setBorderLeft(BorderStyle.THIN);
-            subHeaderStyle.setBorderRight(BorderStyle.THIN);
-
-            CellStyle dataStyle = workbook.createCellStyle();
-            dataStyle.setBorderBottom(BorderStyle.THIN);
-            dataStyle.setBorderTop(BorderStyle.THIN);
-            dataStyle.setBorderLeft(BorderStyle.THIN);
-            dataStyle.setBorderRight(BorderStyle.THIN);
-
-            CellStyle numberStyle = workbook.createCellStyle();
-            numberStyle.setBorderBottom(BorderStyle.THIN);
-            numberStyle.setBorderTop(BorderStyle.THIN);
-            numberStyle.setBorderLeft(BorderStyle.THIN);
-            numberStyle.setBorderRight(BorderStyle.THIN);
-            numberStyle.setAlignment(HorizontalAlignment.CENTER);
-
-            // Row 0: Header row
-            Row headerRow = excelSheet.createRow(0);
-            Cell h0 = headerRow.createCell(0);
-            h0.setCellValue("学号");
-            h0.setCellStyle(headerStyle);
-            Cell h1 = headerRow.createCell(1);
-            h1.setCellValue("姓名");
-            h1.setCellStyle(headerStyle);
-
-            for (int i = 0; i < assessmentPoints.size(); i++) {
-                AssessmentPoint ap = assessmentPoints.get(i);
-                Cell cell = headerRow.createCell(2 + i);
-                cell.setCellValue(ap.getName());
-                cell.setCellStyle(headerStyle);
+            // Create individual sheets for each assessment point
+            for (AssessmentPoint ap : assessmentPoints) {
+                List<AssessmentQuestion> questions = questionsMap.get(ap.getId());
+                // Always create a sheet for each assessment point
+                createAssessmentSheet(workbook, ap, questions != null ? questions : List.of(),
+                        classStudents, studentMap);
             }
-
-            // Row 1: Sub-header row (max scores)
-            Row subHeaderRow = excelSheet.createRow(1);
-            Cell sh0 = subHeaderRow.createCell(0);
-            sh0.setCellValue("");
-            sh0.setCellStyle(subHeaderStyle);
-            Cell sh1 = subHeaderRow.createCell(1);
-            sh1.setCellValue("");
-            sh1.setCellStyle(subHeaderStyle);
-
-            for (int i = 0; i < assessmentPoints.size(); i++) {
-                AssessmentPoint ap = assessmentPoints.get(i);
-                Cell cell = subHeaderRow.createCell(2 + i);
-                if (ap.getMaxScore() != null) {
-                    cell.setCellValue("满分: " + ap.getMaxScore().toPlainString());
-                } else {
-                    cell.setCellValue("");
-                }
-                cell.setCellStyle(subHeaderStyle);
-            }
-
-            // Data rows: one per student
-            int rowIndex = 2;
-            for (ClassStudent cs : classStudents) {
-                Student student = studentMap.get(cs.getStudentId());
-                if (student == null) {
-                    continue;
-                }
-                Row dataRow = excelSheet.createRow(rowIndex++);
-
-                Cell c0 = dataRow.createCell(0);
-                c0.setCellValue(student.getStudentNo());
-                c0.setCellStyle(dataStyle);
-
-                Cell c1 = dataRow.createCell(1);
-                c1.setCellValue(student.getName());
-                c1.setCellStyle(dataStyle);
-
-                // Leave assessment columns empty for score entry
-                for (int i = 0; i < assessmentPoints.size(); i++) {
-                    Cell cell = dataRow.createCell(2 + i);
-                    cell.setCellStyle(numberStyle);
-                }
-            }
-
-            // Auto-size columns
-            for (int i = 0; i < totalColumns; i++) {
-                excelSheet.autoSizeColumn(i);
-                // Add a little extra width for readability
-                int currentWidth = excelSheet.getColumnWidth(i);
-                excelSheet.setColumnWidth(i, currentWidth + 500);
-            }
-
-            // Freeze first two columns and the first two header rows
-            excelSheet.createFreezePane(2, 2);
 
             workbook.write(out);
             workbook.close();
@@ -214,5 +117,192 @@ public class ExcelTemplateService {
         } catch (Exception e) {
             throw new BizException("生成Excel模板失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * Create a sheet for a single assessment point.
+     * If the assessment has questions, create question-level columns.
+     * If no questions, create a single assessment-level column.
+     */
+    private void createAssessmentSheet(Workbook workbook, AssessmentPoint ap,
+                                       List<AssessmentQuestion> questions,
+                                       List<ClassStudent> classStudents, Map<Long, Student> studentMap) {
+        // Use assessment point name as sheet name (sanitize for Excel)
+        String sheetName = sanitizeSheetName(ap.getName());
+        Sheet excelSheet = workbook.createSheet(sheetName);
+
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle subHeaderStyle = createSubHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        CellStyle numberStyle = createNumberStyle(workbook);
+
+        // Row 0: Header row
+        Row headerRow = excelSheet.createRow(0);
+        createHeaderCell(headerRow, 0, "学号", headerStyle);
+        createHeaderCell(headerRow, 1, "姓名", headerStyle);
+
+        if (questions.isEmpty()) {
+            // No questions - single assessment-level column
+            createHeaderCell(headerRow, 2, "成绩", headerStyle);
+
+            // Row 1: Sub-header with max score
+            Row subHeaderRow = excelSheet.createRow(1);
+            createSubHeaderCell(subHeaderRow, 0, "", subHeaderStyle);
+            createSubHeaderCell(subHeaderRow, 1, "", subHeaderStyle);
+            String maxValue = ap.getMaxScore() != null ? "满分: " + ap.getMaxScore().toPlainString() : "";
+            createSubHeaderCell(subHeaderRow, 2, maxValue, subHeaderStyle);
+
+            // Data rows
+            int rowIndex = 2;
+            for (ClassStudent cs : classStudents) {
+                Student student = studentMap.get(cs.getStudentId());
+                if (student == null) continue;
+
+                Row dataRow = excelSheet.createRow(rowIndex++);
+                createDataCell(dataRow, 0, student.getStudentNo(), dataStyle);
+                createDataCell(dataRow, 1, student.getName(), dataStyle);
+                createNumberCell(dataRow, 2, numberStyle);
+            }
+
+            autoSizeColumns(excelSheet, 3);
+        } else {
+            // Has questions - show question columns
+            for (int i = 0; i < questions.size(); i++) {
+                AssessmentQuestion q = questions.get(i);
+                createHeaderCell(headerRow, 2 + i, q.getName(), headerStyle);
+            }
+            // Add a total column
+            createHeaderCell(headerRow, 2 + questions.size(), "总成绩", headerStyle);
+
+            // Row 1: Sub-header row (max scores)
+            Row subHeaderRow = excelSheet.createRow(1);
+            createSubHeaderCell(subHeaderRow, 0, "", subHeaderStyle);
+            createSubHeaderCell(subHeaderRow, 1, "", subHeaderStyle);
+
+            for (int i = 0; i < questions.size(); i++) {
+                AssessmentQuestion q = questions.get(i);
+                String maxValue = q.getMaxScore() != null ? "满分: " + q.getMaxScore().toPlainString() : "";
+                createSubHeaderCell(subHeaderRow, 2 + i, maxValue, subHeaderStyle);
+            }
+            createSubHeaderCell(subHeaderRow, 2 + questions.size(), "", subHeaderStyle);
+
+            // Data rows: one per student
+            int rowIndex = 2;
+            for (ClassStudent cs : classStudents) {
+                Student student = studentMap.get(cs.getStudentId());
+                if (student == null) continue;
+
+                Row dataRow = excelSheet.createRow(rowIndex++);
+                createDataCell(dataRow, 0, student.getStudentNo(), dataStyle);
+                createDataCell(dataRow, 1, student.getName(), dataStyle);
+
+                for (int i = 0; i < questions.size(); i++) {
+                    createNumberCell(dataRow, 2 + i, numberStyle);
+                }
+                // Total column (read-only, formula would be set by user)
+                createDataCell(dataRow, 2 + questions.size(), "", dataStyle);
+            }
+
+            autoSizeColumns(excelSheet, 3 + questions.size());
+        }
+
+        excelSheet.createFreezePane(2, 2);
+    }
+
+    private CellStyle createHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 12);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createSubHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontHeightInPoints((short) 10);
+        font.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createDataStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createNumberStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        return style;
+    }
+
+    private void createHeaderCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value);
+        cell.setCellStyle(style);
+    }
+
+    private void createSubHeaderCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value);
+        cell.setCellStyle(style);
+    }
+
+    private void createDataCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value);
+        cell.setCellStyle(style);
+    }
+
+    private void createNumberCell(Row row, int col, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellStyle(style);
+    }
+
+    private void autoSizeColumns(Sheet sheet, int columnCount) {
+        for (int i = 0; i < columnCount; i++) {
+            sheet.autoSizeColumn(i);
+            int currentWidth = sheet.getColumnWidth(i);
+            sheet.setColumnWidth(i, Math.min(currentWidth + 500, 8000));
+        }
+    }
+
+    /**
+     * Sanitize sheet name to be valid for Excel (max 31 chars, no special chars).
+     */
+    private String sanitizeSheetName(String name) {
+        // Remove invalid characters: []:*?/\'
+        String sanitized = name.replaceAll("[:\\[\\]\\*\\?\\/\\\\']", "");
+        // Truncate to 31 characters
+        if (sanitized.length() > 31) {
+            sanitized = sanitized.substring(0, 31);
+        }
+        return sanitized.isEmpty() ? "考核点" : sanitized;
     }
 }

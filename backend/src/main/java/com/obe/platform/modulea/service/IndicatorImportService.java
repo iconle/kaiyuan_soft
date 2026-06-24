@@ -38,7 +38,7 @@ public class IndicatorImportService {
     private final IndicatorMapper indicatorMapper;
 
     /** 模板表头，顺序与列名固定，导入时必须完全一致 */
-    private static final String[] HEADERS = {"毕业要求编号", "毕业要求标题", "指标点编号", "指标点描述"};
+    private static final String[] HEADERS = {"毕业要求编号", "毕业要求标题", "指标点描述"};
     private static final String SHEET_NAME = "指标点导入";
 
     /**
@@ -70,7 +70,7 @@ public class IndicatorImportService {
                 c.setCellStyle(headerStyle);
             }
 
-            // 预填每个毕业要求一行（指标点列留空），方便用户对照填写
+            // 预填每个毕业要求一行（指标点描述列留空），方便用户对照填写
             int rowIdx = 1;
             for (GradRequirement req : requirements) {
                 Row row = sheet.createRow(rowIdx++);
@@ -81,7 +81,6 @@ public class IndicatorImportService {
                 if (req.getTitle() != null) c1.setCellValue(req.getTitle());
                 c1.setCellStyle(hintStyle);
                 row.createCell(2).setCellStyle(dataStyle);
-                row.createCell(3).setCellStyle(dataStyle);
             }
             // 追加若干空白行
             for (int k = 0; k < 3; k++) {
@@ -93,8 +92,7 @@ public class IndicatorImportService {
 
             sheet.setColumnWidth(0, 16 * 256);
             sheet.setColumnWidth(1, 32 * 256);
-            sheet.setColumnWidth(2, 14 * 256);
-            sheet.setColumnWidth(3, 60 * 256);
+            sheet.setColumnWidth(2, 60 * 256);
             sheet.createFreezePane(0, 1);
 
             // 说明 sheet
@@ -104,8 +102,8 @@ public class IndicatorImportService {
                     "1. 请勿修改第一行表头，列顺序与列名必须与模板完全一致，否则导入将报错。",
                     "2. 「毕业要求编号」必须填写当前专业中已存在的毕业要求编号（参见已预填行）。",
                     "3. 「毕业要求标题」仅作提示，可留空，不影响导入。",
-                    "4. 「指标点编号」必填，例如 3-1、3-2，且不能与已有指标点重复。",
-                    "5. 「指标点描述」必填。",
+                    "4. 「指标点描述」必填。",
+                    "5. 指标点编号将自动生成，格式为：毕业要求编号-序号（如 3-1、3-2...）。",
                     "6. 完全空白的行会被自动跳过。"
             };
             for (int i = 0; i < lines.length; i++) {
@@ -151,20 +149,8 @@ public class IndicatorImportService {
         String validReqNos = reqNoToId.keySet().stream()
                 .sorted().map(String::valueOf).collect(Collectors.joining("、"));
 
-        // 已存在指标点（gradReqId + 归一化编号）用于查重
-        Set<String> existingKeys = new HashSet<>();
-        if (!reqNoToId.isEmpty()) {
-            List<Indicator> existing = indicatorMapper.selectList(
-                    new LambdaQueryWrapper<Indicator>()
-                            .in(Indicator::getGradReqId, reqNoToId.values()));
-            for (Indicator ind : existing) {
-                existingKeys.add(ind.getGradReqId() + "|" + normalize(ind.getIndicatorNo()));
-            }
-        }
-
         List<String> errors = new ArrayList<>();
         List<Indicator> toInsert = new ArrayList<>();
-        Set<String> fileKeys = new HashSet<>();
 
         try (InputStream is = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(is)) {
@@ -199,16 +185,11 @@ public class IndicatorImportService {
                 int dispRow = r + 1; // Excel 显示行号（含表头）
 
                 String reqNoStr = getCellString(row.getCell(0)).trim();
-                String indicatorNo = getCellString(row.getCell(2)).trim();
-                String content = getCellString(row.getCell(3)).trim();
+                String content = getCellString(row.getCell(2)).trim();
 
                 // 完全空白行：跳过
-                if (reqNoStr.isEmpty() && indicatorNo.isEmpty() && content.isEmpty()) continue;
+                if (reqNoStr.isEmpty() && content.isEmpty()) continue;
 
-                if (indicatorNo.isEmpty()) {
-                    errors.add("第" + dispRow + "行：「指标点编号」不能为空");
-                    continue;
-                }
                 if (content.isEmpty()) {
                     errors.add("第" + dispRow + "行：「指标点描述」不能为空");
                     continue;
@@ -232,15 +213,8 @@ public class IndicatorImportService {
                     continue;
                 }
 
-                String key = gradReqId + "|" + normalize(indicatorNo);
-                if (existingKeys.contains(key)) {
-                    errors.add("第" + dispRow + "行：指标点编号「" + indicatorNo + "」已存在，请勿重复导入");
-                    continue;
-                }
-                if (!fileKeys.add(key)) {
-                    errors.add("第" + dispRow + "行：指标点编号「" + indicatorNo + "」在本文件中重复出现");
-                    continue;
-                }
+                // 自动生成指标点编号
+                String indicatorNo = generateNextIndicatorNo(gradReqId, reqNo);
 
                 Indicator ind = new Indicator();
                 ind.setGradReqId(gradReqId);
@@ -269,11 +243,6 @@ public class IndicatorImportService {
         return toInsert.size();
     }
 
-    /** 编号归一化：去空格 + 小写，用于查重比对 */
-    private String normalize(String s) {
-        return s == null ? "" : s.trim().toLowerCase();
-    }
-
     private String getCellString(Cell cell) {
         if (cell == null) return "";
         return switch (cell.getCellType()) {
@@ -292,6 +261,33 @@ public class IndicatorImportService {
             }
             default -> "";
         };
+    }
+
+    /**
+     * 生成下一个指标点编号
+     * 格式：毕业要求编号-序号，如 3-1, 3-2, 3-3...
+     */
+    private String generateNextIndicatorNo(Long gradReqId, Integer reqNo) {
+        List<Indicator> existing = indicatorMapper.selectList(
+                new LambdaQueryWrapper<Indicator>()
+                        .eq(Indicator::getGradReqId, gradReqId));
+
+        int maxSeq = 0;
+        for (Indicator ind : existing) {
+            String no = ind.getIndicatorNo();
+            if (no != null && no.startsWith(reqNo + "-")) {
+                try {
+                    String seqStr = no.substring((reqNo + "-").length());
+                    int seq = Integer.parseInt(seqStr);
+                    if (seq > maxSeq) {
+                        maxSeq = seq;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // 忽略格式不正确的编号
+                }
+            }
+        }
+        return reqNo + "-" + (maxSeq + 1);
     }
 
     private CellStyle buildHeaderStyle(Workbook wb) {

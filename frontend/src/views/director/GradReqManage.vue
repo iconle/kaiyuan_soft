@@ -182,8 +182,9 @@
     <!-- 指标点对话框 -->
     <el-dialog v-model="indicatorDialogVisible" :title="editingIndicator ? '编辑指标点' : '新增指标点'" width="480px">
       <el-form :model="indicatorForm" label-width="80px">
-        <el-form-item label="编号" required>
-          <el-input v-model="indicatorForm.indicatorNo" placeholder="如 3-1" />
+        <el-form-item label="编号">
+          <el-tag v-if="!editingIndicator" type="info">自动生成</el-tag>
+          <el-tag v-else type="info">{{ indicatorForm.indicatorNo }}</el-tag>
         </el-form-item>
         <el-form-item label="描述" required>
           <el-input v-model="indicatorForm.content" type="textarea" :rows="3" />

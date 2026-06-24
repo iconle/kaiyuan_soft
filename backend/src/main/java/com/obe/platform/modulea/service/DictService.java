@@ -169,10 +169,13 @@ public class DictService {
     /** Remove a student from a class */
     @Transactional
     public void removeClassStudent(Long classId, Long studentId) {
-        classStudentMapper.delete(
+        int rows = classStudentMapper.delete(
                 new LambdaQueryWrapper<ClassStudent>()
                         .eq(ClassStudent::getClassId, classId)
                         .eq(ClassStudent::getStudentId, studentId));
+        if (rows == 0) {
+            throw new BizException("移除失败：学生不在该教学班级中或已被移除");
+        }
     }
 
     // ========== 行政班级 ==========

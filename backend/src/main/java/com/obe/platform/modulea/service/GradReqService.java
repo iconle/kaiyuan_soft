@@ -68,7 +68,40 @@ public class GradReqService {
             throw new BizException("毕业要求不存在");
         }
         indicator.setGradReqId(gradReqId);
+
+        // 自动生成指标点编号
+        if (indicator.getIndicatorNo() == null || indicator.getIndicatorNo().isBlank()) {
+            indicator.setIndicatorNo(generateNextIndicatorNo(gradReqId, existing.getReqNo()));
+        }
+
         indicatorMapper.insert(indicator);
+    }
+
+    /**
+     * 生成下一个指标点编号
+     * 格式：毕业要求编号-序号，如 3-1, 3-2, 3-3...
+     */
+    private String generateNextIndicatorNo(Long gradReqId, Integer reqNo) {
+        List<Indicator> existing = indicatorMapper.selectList(
+                new LambdaQueryWrapper<Indicator>()
+                        .eq(Indicator::getGradReqId, gradReqId));
+
+        int maxSeq = 0;
+        for (Indicator ind : existing) {
+            String no = ind.getIndicatorNo();
+            if (no != null && no.startsWith(reqNo + "-")) {
+                try {
+                    String seqStr = no.substring((reqNo + "-").length());
+                    int seq = Integer.parseInt(seqStr);
+                    if (seq > maxSeq) {
+                        maxSeq = seq;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // 忽略格式不正确的编号
+                }
+            }
+        }
+        return reqNo + "-" + (maxSeq + 1);
     }
 
     @Transactional

@@ -172,6 +172,16 @@
               >
                 {{ achievementTagText(item.achievement) }}
               </el-tag>
+
+              <el-button
+                size="small"
+                type="primary"
+                link
+                class="personal-detail-btn"
+                @click.stop="openPersonalDialog('objective', item)"
+              >
+                学生明细
+              </el-button>
             </div>
 
             <el-progress
@@ -227,7 +237,7 @@
           >
             <div class="achievement-item-top">
               <div class="achievement-name">
-                {{ item.indicatorId }}
+                {{ item.indicatorNo }}
               </div>
 
               <div class="achievement-value">
@@ -242,6 +252,16 @@
               >
                 {{ achievementTagText(item.achievement) }}
               </el-tag>
+
+              <el-button
+                size="small"
+                type="primary"
+                link
+                class="personal-detail-btn"
+                @click.stop="openPersonalDialog('indicator', item)"
+              >
+                学生明细
+              </el-button>
             </div>
 
             <el-progress
@@ -338,6 +358,39 @@
       <el-button @click="downloadPdf">导出 PDF 报告</el-button>
       <el-button @click="downloadExcel">导出 Excel 报告</el-button>
     </div>
+
+    <el-dialog
+      v-model="personalDialogVisible"
+      :title="personalDialogTitle"
+      width="720px"
+    >
+      <el-table
+        v-loading="personalLoading"
+        :data="personalRows"
+        border
+        stripe
+        size="small"
+      >
+        <el-table-column prop="studentNo" label="学号" width="180" align="center" />
+        <el-table-column prop="studentName" label="姓名" min-width="160" align="center" />
+        <el-table-column label="个人达成度" width="160" align="center">
+          <template #default="{ row }">
+            {{ formatAchievement(row.achievement) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag
+              size="small"
+              effect="light"
+              :type="achievementTagType(row.achievement)"
+            >
+              {{ achievementTagText(row.achievement) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -348,7 +401,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 import {
   getScoreStatus, triggerCourseCompute, getCourseComputeResults,
-  downloadCoursePdf, downloadCourseExcel
+  downloadCoursePdf, downloadCourseExcel,
+  listObjectivePersonalAchievements, listIndicatorPersonalAchievements
 } from '../../api/teacher'
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
@@ -373,6 +427,10 @@ const indicatorChartType = ref('radar')
 const objectiveChartInstance = ref(null)
 const indicatorChartInstance = ref(null)
 const sortAsc = ref(false)
+const personalDialogVisible = ref(false)
+const personalDialogTitle = ref('')
+const personalLoading = ref(false)
+const personalRows = ref([])
 
 const hasPendingRequest = computed(() => myRequests.value.some(r => r.status === 'PENDING'))
 
@@ -424,14 +482,18 @@ const hasResults = computed(() =>
 const objectiveData = computed(() => {
   const labels = results.objectiveLabels || {}
   return Object.entries(results.objectiveAchievements || {}).map(([id, val]) => ({
-    objectiveNo: labels[id] || `目标${id}`, achievement: val
+    objectiveId: id,
+    objectiveNo: labels[id] || `目标${id}`,
+    achievement: val
   }))
 })
 
 const indicatorData = computed(() => {
   const labels = results.indicatorLabels || {}
   return Object.entries(results.courseAchievements || {}).map(([id, val]) => ({
-    indicatorId: labels[id] || `指标点${id}`, achievement: val
+    indicatorId: id,
+    indicatorNo: labels[id] || `指标点${id}`,
+    achievement: val
   }))
 })
 function formatAchievement(value) {
@@ -488,6 +550,22 @@ async function handleCompute() {
     loadData()
   } catch { /* handled */ }
   finally { computing.value = false }
+}
+
+async function openPersonalDialog(type, item) {
+  personalDialogVisible.value = true
+  personalLoading.value = true
+  personalRows.value = []
+  personalDialogTitle.value = type === 'objective'
+    ? `${item.objectiveNo} 学生个人达成度`
+    : `${item.indicatorNo} 学生个人达成度`
+  try {
+    const res = type === 'objective'
+      ? await listObjectivePersonalAchievements(classId.value, item.objectiveId)
+      : await listIndicatorPersonalAchievements(classId.value, item.indicatorId)
+    personalRows.value = res.data || []
+  } catch { /* handled */ }
+  finally { personalLoading.value = false }
 }
 
 async function downloadPdf() {
@@ -1117,11 +1195,15 @@ const indicatorStats = computed(() => {
 }
 
 .achievement-status-tag {
-  margin-left: auto;
   border-radius: 999px;
   font-weight: 600;
   min-width: 64px;
   text-align: center;
+}
+
+.personal-detail-btn {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .achievement-progress {

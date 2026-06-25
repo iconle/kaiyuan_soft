@@ -481,6 +481,39 @@ INSERT INTO `obj_achievement` VALUES (59, 2, 6, 0.8900, '2026-05-24 14:42:02');
 INSERT INTO `obj_achievement` VALUES (60, 2, 7, 0.9000, '2026-05-24 14:42:02');
 
 -- ----------------------------
+-- Table structure for personal_achievement
+-- ----------------------------
+DROP TABLE IF EXISTS `personal_achievement`;
+CREATE TABLE `personal_achievement`  (
+  `id` bigint(0) NOT NULL AUTO_INCREMENT,
+  `student_id` bigint(0) NOT NULL COMMENT '学生',
+  `class_id` bigint(0) NULL DEFAULT NULL COMMENT '教学班级，目标级/课程级个人达成度使用',
+  `major_id` bigint(0) NULL DEFAULT NULL COMMENT '专业，第三级个人达成度使用',
+  `semester_id` bigint(0) NULL DEFAULT NULL COMMENT '学年学期，第三级个人达成度使用',
+  `scope_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '达成度层级: OBJECTIVE/COURSE/MAJOR',
+  `objective_id` bigint(0) NULL DEFAULT NULL COMMENT '课程目标，OBJECTIVE层级使用',
+  `indicator_id` bigint(0) NULL DEFAULT NULL COMMENT '毕业要求指标点，COURSE/MAJOR层级使用',
+  `achievement` decimal(6, 4) NOT NULL COMMENT '学生个人达成度',
+  `calc_time` datetime(0) NOT NULL COMMENT '计算时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_pa_class_scope_student`(`class_id`, `scope_type`, `student_id`) USING BTREE,
+  INDEX `idx_pa_major_scope_student`(`major_id`, `semester_id`, `scope_type`, `student_id`) USING BTREE,
+  INDEX `idx_pa_objective`(`objective_id`) USING BTREE,
+  INDEX `idx_pa_indicator`(`indicator_id`) USING BTREE,
+  INDEX `idx_pa_student`(`student_id`) USING BTREE,
+  CONSTRAINT `fk_pa_class` FOREIGN KEY (`class_id`) REFERENCES `teaching_class` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_pa_indicator` FOREIGN KEY (`indicator_id`) REFERENCES `indicator` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_pa_major` FOREIGN KEY (`major_id`) REFERENCES `sys_major` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_pa_objective` FOREIGN KEY (`objective_id`) REFERENCES `course_objective` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_pa_semester` FOREIGN KEY (`semester_id`) REFERENCES `sys_dict_semester` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_pa_student` FOREIGN KEY (`student_id`) REFERENCES `student` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '学生个人达成度结果表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of personal_achievement
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for objective_indicator_weight
 -- ----------------------------
 DROP TABLE IF EXISTS `objective_indicator_weight`;

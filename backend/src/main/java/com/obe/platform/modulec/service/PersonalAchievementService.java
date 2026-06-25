@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.obe.platform.common.BizException;
 import com.obe.platform.engine.Level1Calculator;
 import com.obe.platform.engine.Level2Calculator;
+import com.obe.platform.engine.Level3Calculator;
 import com.obe.platform.modulea.entity.ClassStudent;
 import com.obe.platform.modulea.entity.Indicator;
 import com.obe.platform.modulea.entity.Student;
@@ -24,8 +25,10 @@ import com.obe.platform.moduleb.mapper.CourseObjectiveMapper;
 import com.obe.platform.moduleb.mapper.CourseOutlineMapper;
 import com.obe.platform.moduleb.mapper.ObjectiveIndicatorWeightMapper;
 import com.obe.platform.moduleb.mapper.QuestionObjectiveMapper;
+import com.obe.platform.modulec.entity.PersonalAchievement;
 import com.obe.platform.modulec.entity.ScoreSheet;
 import com.obe.platform.modulec.entity.StudentScore;
+import com.obe.platform.modulec.mapper.PersonalAchievementMapper;
 import com.obe.platform.modulec.mapper.ScoreSheetMapper;
 import com.obe.platform.modulec.mapper.StudentScoreMapper;
 import com.obe.platform.moduled.exporter.PersonalAchievementExcelExporter;
@@ -34,12 +37,15 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,6 +53,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PersonalAchievementService {
+
+    public static final String SCOPE_OBJECTIVE = "OBJECTIVE";
+    public static final String SCOPE_COURSE = "COURSE";
+    public static final String SCOPE_MAJOR = "MAJOR";
 
     private final ScoreSheetMapper scoreSheetMapper;
     private final StudentScoreMapper studentScoreMapper;
@@ -60,32 +70,277 @@ public class PersonalAchievementService {
     private final ClassStudentMapper classStudentMapper;
     private final StudentMapper studentMapper;
     private final IndicatorMapper indicatorMapper;
+    private final PersonalAchievementMapper personalAchievementMapper;
 
     public List<StudentAchievementSummary> list(Long classId) {
-        CalculationContext context = loadContext(classId);
-        return context.students().stream()
-                .map(student -> toSummary(calculateStudent(context, student)))
+        return getClassDetails(classId).stream()
+                .map(this::toSummary)
                 .toList();
     }
 
     public StudentAchievementDetail getDetail(Long classId, Long studentId) {
-        CalculationContext context = loadContext(classId);
-        Student student = context.students().stream()
-                .filter(item -> item.getId().equals(studentId))
+        return getClassDetails(classId).stream()
+                .filter(item -> item.studentId().equals(studentId))
                 .findFirst()
                 .orElseThrow(() -> new BizException("该学生不在当前教学班中"));
-        return calculateStudent(context, student);
+    }
+
+    public List<StudentPointAchievement> listObjectiveStudents(Long classId, Long objectiveId) {
+        List<PersonalAchievement> rows = personalAchievementMapper.selectList(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getClassId, classId)
+                        .eq(PersonalAchievement::getScopeType, SCOPE_OBJECTIVE)
+                        .eq(PersonalAchievement::getObjectiveId, objectiveId));
+        if (!rows.isEmpty()) {
+            return toStudentPointRows(rows);
+        }
+        return buildPointRowsFromDetails(
+                calculateClassDetails(classId),
+                detail -> detail.objectiveAchievements().getOrDefault(objectiveId, zero()));
+    }
+
+    public List<StudentPointAchievement> listCourseIndicatorStudents(Long classId, Long indicatorId) {
+        List<PersonalAchievement> rows = personalAchievementMapper.selectList(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getClassId, classId)
+                        .eq(PersonalAchievement::getScopeType, SCOPE_COURSE)
+                        .eq(PersonalAchievement::getIndicatorId, indicatorId));
+        if (!rows.isEmpty()) {
+            return toStudentPointRows(rows);
+        }
+        return buildPointRowsFromDetails(
+                calculateClassDetails(classId),
+                detail -> detail.indicatorAchievements().getOrDefault(indicatorId, zero()));
+    }
+
+    public List<StudentPointAchievement> listMajorIndicatorStudents(
+            Long majorId,
+            Long semesterId,
+            Long indicatorId) {
+        List<PersonalAchievement> rows = personalAchievementMapper.selectList(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getMajorId, majorId)
+                        .eq(PersonalAchievement::getSemesterId, semesterId)
+                        .eq(PersonalAchievement::getScopeType, SCOPE_MAJOR)
+                        .eq(PersonalAchievement::getIndicatorId, indicatorId));
+        return toStudentPointRows(rows);
     }
 
     public byte[] exportExcel(Long classId) {
+        List<StudentAchievementDetail> details = getClassDetails(classId);
+        Map<Long, String> objectiveLabels = details.isEmpty()
+                ? Map.of()
+                : details.get(0).objectiveLabels();
+        Map<Long, String> indicatorLabels = details.isEmpty()
+                ? Map.of()
+                : details.get(0).indicatorLabels();
+        return PersonalAchievementExcelExporter.generate(details, objectiveLabels, indicatorLabels);
+    }
+
+    public void persistClassAchievements(Long classId, LocalDateTime calcTime) {
+        List<StudentAchievementDetail> details = calculateClassDetails(classId);
+        clearClassAchievements(classId);
+        for (StudentAchievementDetail detail : details) {
+            for (Map.Entry<Long, BigDecimal> entry : detail.objectiveAchievements().entrySet()) {
+                insertPersonalAchievement(
+                        detail.studentId(),
+                        classId,
+                        null,
+                        null,
+                        SCOPE_OBJECTIVE,
+                        entry.getKey(),
+                        null,
+                        entry.getValue(),
+                        calcTime);
+            }
+            for (Map.Entry<Long, BigDecimal> entry : detail.indicatorAchievements().entrySet()) {
+                insertPersonalAchievement(
+                        detail.studentId(),
+                        classId,
+                        null,
+                        null,
+                        SCOPE_COURSE,
+                        null,
+                        entry.getKey(),
+                        entry.getValue(),
+                        calcTime);
+            }
+        }
+    }
+
+    public void clearClassAchievements(Long classId) {
+        personalAchievementMapper.delete(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getClassId, classId)
+                        .in(PersonalAchievement::getScopeType, List.of(SCOPE_OBJECTIVE, SCOPE_COURSE)));
+    }
+
+    public void persistMajorAchievements(
+            Long majorId,
+            Long semesterId,
+            Collection<Long> classIds,
+            List<Level3Calculator.MacroWeightRecord> weightRecords,
+            LocalDateTime calcTime) {
+        List<Long> classIdList = classIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (classIdList.isEmpty() || weightRecords.isEmpty()) {
+            clearMajorAchievements(majorId, semesterId);
+            return;
+        }
+
+        for (Long classId : classIdList) {
+            if (!hasCoursePersonalRows(classId)) {
+                persistClassAchievements(classId, calcTime);
+            }
+        }
+
+        List<PersonalAchievement> rows = personalAchievementMapper.selectList(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getScopeType, SCOPE_COURSE)
+                        .in(PersonalAchievement::getClassId, classIdList));
+
+        Map<Long, Map<Long, Map<Long, BigDecimal>>> byStudent = new LinkedHashMap<>();
+        for (PersonalAchievement row : rows) {
+            if (row.getStudentId() == null || row.getClassId() == null || row.getIndicatorId() == null) {
+                continue;
+            }
+            byStudent.computeIfAbsent(row.getStudentId(), key -> new LinkedHashMap<>())
+                    .computeIfAbsent(row.getClassId(), key -> new LinkedHashMap<>())
+                    .put(row.getIndicatorId(), row.getAchievement());
+        }
+
+        clearMajorAchievements(majorId, semesterId);
+        for (Map.Entry<Long, Map<Long, Map<Long, BigDecimal>>> entry : byStudent.entrySet()) {
+            Map<Long, BigDecimal> achievements = Level3Calculator.calcMajorAchievement(
+                    entry.getValue(),
+                    weightRecords);
+            for (Map.Entry<Long, BigDecimal> achievement : achievements.entrySet()) {
+                insertPersonalAchievement(
+                        entry.getKey(),
+                        null,
+                        majorId,
+                        semesterId,
+                        SCOPE_MAJOR,
+                        null,
+                        achievement.getKey(),
+                        achievement.getValue(),
+                        calcTime);
+            }
+        }
+    }
+
+    private void clearMajorAchievements(Long majorId, Long semesterId) {
+        personalAchievementMapper.delete(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getMajorId, majorId)
+                        .eq(PersonalAchievement::getSemesterId, semesterId)
+                        .eq(PersonalAchievement::getScopeType, SCOPE_MAJOR));
+    }
+
+    private boolean hasCoursePersonalRows(Long classId) {
+        Long count = personalAchievementMapper.selectCount(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getClassId, classId)
+                        .eq(PersonalAchievement::getScopeType, SCOPE_COURSE));
+        return count != null && count > 0;
+    }
+
+    private List<StudentAchievementDetail> getClassDetails(Long classId) {
+        List<StudentAchievementDetail> persisted = listPersistedClassDetails(classId);
+        if (!persisted.isEmpty()) {
+            return persisted;
+        }
+        return calculateClassDetails(classId);
+    }
+
+    public List<StudentAchievementDetail> calculateClassDetails(Long classId) {
         CalculationContext context = loadContext(classId);
-        List<StudentAchievementDetail> details = context.students().stream()
+        return context.students().stream()
                 .map(student -> calculateStudent(context, student))
                 .toList();
-        return PersonalAchievementExcelExporter.generate(
-                details,
-                context.objectiveLabels(),
-                context.indicatorLabels());
+    }
+
+    private List<StudentAchievementDetail> listPersistedClassDetails(Long classId) {
+        List<PersonalAchievement> rows = personalAchievementMapper.selectList(
+                new LambdaQueryWrapper<PersonalAchievement>()
+                        .eq(PersonalAchievement::getClassId, classId)
+                        .in(PersonalAchievement::getScopeType, List.of(SCOPE_OBJECTIVE, SCOPE_COURSE)));
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> objectiveIds = rows.stream()
+                .map(PersonalAchievement::getObjectiveId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<Long> indicatorIds = rows.stream()
+                .map(PersonalAchievement::getIndicatorId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> objectiveLabels = buildObjectiveLabels(objectiveIds);
+        Map<Long, String> indicatorLabels = buildIndicatorLabels(indicatorIds);
+
+        List<Student> students = loadClassStudents(classId);
+        if (students.isEmpty()) {
+            Set<Long> studentIds = rows.stream()
+                    .map(PersonalAchievement::getStudentId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            students = loadStudentsByIds(studentIds);
+        }
+
+        Map<Long, List<PersonalAchievement>> rowsByStudent = rows.stream()
+                .filter(row -> row.getStudentId() != null)
+                .collect(Collectors.groupingBy(
+                        PersonalAchievement::getStudentId,
+                        LinkedHashMap::new,
+                        Collectors.toList()));
+
+        List<StudentAchievementDetail> details = new ArrayList<>();
+        for (Student student : students) {
+            List<PersonalAchievement> studentRows = rowsByStudent.getOrDefault(student.getId(), List.of());
+            Map<Long, BigDecimal> objectiveAchievements = buildOrderedAchievements(
+                    studentRows,
+                    SCOPE_OBJECTIVE,
+                    objectiveLabels.keySet(),
+                    PersonalAchievement::getObjectiveId);
+            Map<Long, BigDecimal> indicatorAchievements = buildOrderedAchievements(
+                    studentRows,
+                    SCOPE_COURSE,
+                    indicatorLabels.keySet(),
+                    PersonalAchievement::getIndicatorId);
+            details.add(new StudentAchievementDetail(
+                    student.getId(),
+                    student.getStudentNo(),
+                    student.getName(),
+                    average(indicatorAchievements.values()),
+                    objectiveAchievements,
+                    indicatorAchievements,
+                    objectiveLabels,
+                    indicatorLabels));
+        }
+        return details;
+    }
+
+    private Map<Long, BigDecimal> buildOrderedAchievements(
+            List<PersonalAchievement> rows,
+            String scopeType,
+            Collection<Long> orderedIds,
+            Function<PersonalAchievement, Long> idGetter) {
+        Map<Long, BigDecimal> rowMap = rows.stream()
+                .filter(row -> scopeType.equals(row.getScopeType()))
+                .filter(row -> idGetter.apply(row) != null)
+                .collect(Collectors.toMap(
+                        idGetter,
+                        PersonalAchievement::getAchievement,
+                        (left, right) -> left));
+        Map<Long, BigDecimal> ordered = new LinkedHashMap<>();
+        for (Long id : orderedIds) {
+            ordered.put(id, rowMap.getOrDefault(id, zero()));
+        }
+        return ordered;
     }
 
     private StudentAchievementDetail calculateStudent(CalculationContext context, Student student) {
@@ -117,9 +372,9 @@ public class PersonalAchievementService {
         context.indicatorLabels().keySet().forEach(indicatorId ->
                 orderedIndicatorAchievements.put(
                         indicatorId,
-                        indicatorAchievements.getOrDefault(indicatorId, BigDecimal.ZERO)));
+                        indicatorAchievements.getOrDefault(indicatorId, zero())));
 
-        BigDecimal overallAchievement = average(orderedIndicatorAchievements.values().stream().toList());
+        BigDecimal overallAchievement = average(orderedIndicatorAchievements.values());
         return new StudentAchievementDetail(
                 student.getId(),
                 student.getStudentNo(),
@@ -195,17 +450,7 @@ public class PersonalAchievementService {
                         weight.getWeight()))
                 .toList();
 
-        List<ClassStudent> classStudents = classStudentMapper.selectList(
-                new LambdaQueryWrapper<ClassStudent>().eq(ClassStudent::getClassId, classId));
-        List<Long> studentIds = classStudents.stream().map(ClassStudent::getStudentId).toList();
-        List<Student> students = studentIds.isEmpty()
-                ? List.of()
-                : studentMapper.selectBatchIds(studentIds).stream()
-                        .sorted(Comparator.comparing(
-                                Student::getStudentNo,
-                                Comparator.nullsLast(String::compareTo)))
-                        .toList();
-
+        List<Student> students = loadClassStudents(classId);
         List<StudentScore> scores = studentScoreMapper.selectList(
                 new LambdaQueryWrapper<StudentScore>().eq(StudentScore::getSheetId, sheet.getId()));
 
@@ -219,21 +464,7 @@ public class PersonalAchievementService {
         Set<Long> indicatorIds = weights.stream()
                 .map(ObjectiveIndicatorWeight::getIndicatorId)
                 .collect(Collectors.toSet());
-        Map<Long, Indicator> indicatorMap = indicatorIds.isEmpty()
-                ? Map.of()
-                : indicatorMapper.selectBatchIds(indicatorIds).stream()
-                        .collect(Collectors.toMap(Indicator::getId, Function.identity()));
-        Map<Long, String> indicatorLabels = weights.stream()
-                .map(ObjectiveIndicatorWeight::getIndicatorId)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        id -> indicatorMap.containsKey(id)
-                                ? indicatorMap.get(id).getIndicatorNo()
-                                : String.valueOf(id),
-                        (left, right) -> left,
-                        LinkedHashMap::new));
+        Map<Long, String> indicatorLabels = buildIndicatorLabels(indicatorIds);
 
         return new CalculationContext(
                 students,
@@ -246,6 +477,59 @@ public class PersonalAchievementService {
                 weightRecords,
                 objectiveLabels,
                 indicatorLabels);
+    }
+
+    private List<Student> loadClassStudents(Long classId) {
+        List<ClassStudent> classStudents = classStudentMapper.selectList(
+                new LambdaQueryWrapper<ClassStudent>().eq(ClassStudent::getClassId, classId));
+        Set<Long> studentIds = classStudents.stream()
+                .map(ClassStudent::getStudentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        return loadStudentsByIds(studentIds);
+    }
+
+    private List<Student> loadStudentsByIds(Collection<Long> studentIds) {
+        if (studentIds.isEmpty()) {
+            return List.of();
+        }
+        return studentMapper.selectBatchIds(studentIds).stream()
+                .sorted(Comparator.comparing(
+                        Student::getStudentNo,
+                        Comparator.nullsLast(String::compareTo)))
+                .toList();
+    }
+
+    private Map<Long, String> buildObjectiveLabels(Collection<Long> objectiveIds) {
+        if (objectiveIds.isEmpty()) {
+            return Map.of();
+        }
+        return objectiveMapper.selectBatchIds(objectiveIds).stream()
+                .sorted(Comparator.comparing(
+                        CourseObjective::getObjNo,
+                        Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.toMap(
+                        CourseObjective::getId,
+                        CourseObjective::getObjNo,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+    }
+
+    private Map<Long, String> buildIndicatorLabels(Collection<Long> indicatorIds) {
+        if (indicatorIds.isEmpty()) {
+            return Map.of();
+        }
+        return indicatorMapper.selectBatchIds(indicatorIds).stream()
+                .sorted(Comparator.comparing(
+                        Indicator::getIndicatorNo,
+                        Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.toMap(
+                        Indicator::getId,
+                        indicator -> indicator.getIndicatorNo() == null
+                                ? String.valueOf(indicator.getId())
+                                : indicator.getIndicatorNo(),
+                        (left, right) -> left,
+                        LinkedHashMap::new));
     }
 
     private Map<Long, List<Long>> buildAssessmentObjectiveMap(
@@ -283,6 +567,71 @@ public class PersonalAchievementService {
         return result;
     }
 
+    private List<StudentPointAchievement> toStudentPointRows(List<PersonalAchievement> rows) {
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> studentIds = rows.stream()
+                .map(PersonalAchievement::getStudentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Student> studentMap = loadStudentsByIds(studentIds).stream()
+                .collect(Collectors.toMap(Student::getId, Function.identity()));
+        return rows.stream()
+                .map(row -> {
+                    Student student = studentMap.get(row.getStudentId());
+                    return new StudentPointAchievement(
+                            row.getStudentId(),
+                            student == null ? null : student.getStudentNo(),
+                            student == null ? null : student.getName(),
+                            row.getAchievement());
+                })
+                .sorted(pointComparator())
+                .toList();
+    }
+
+    private List<StudentPointAchievement> buildPointRowsFromDetails(
+            List<StudentAchievementDetail> details,
+            Function<StudentAchievementDetail, BigDecimal> achievementGetter) {
+        return details.stream()
+                .map(detail -> new StudentPointAchievement(
+                        detail.studentId(),
+                        detail.studentNo(),
+                        detail.studentName(),
+                        achievementGetter.apply(detail)))
+                .sorted(pointComparator())
+                .toList();
+    }
+
+    private Comparator<StudentPointAchievement> pointComparator() {
+        return Comparator.comparing(
+                StudentPointAchievement::studentNo,
+                Comparator.nullsLast(String::compareTo));
+    }
+
+    private void insertPersonalAchievement(
+            Long studentId,
+            Long classId,
+            Long majorId,
+            Long semesterId,
+            String scopeType,
+            Long objectiveId,
+            Long indicatorId,
+            BigDecimal achievement,
+            LocalDateTime calcTime) {
+        PersonalAchievement row = new PersonalAchievement();
+        row.setStudentId(studentId);
+        row.setClassId(classId);
+        row.setMajorId(majorId);
+        row.setSemesterId(semesterId);
+        row.setScopeType(scopeType);
+        row.setObjectiveId(objectiveId);
+        row.setIndicatorId(indicatorId);
+        row.setAchievement(achievement == null ? zero() : achievement);
+        row.setCalcTime(calcTime);
+        personalAchievementMapper.insert(row);
+    }
+
     private StudentAchievementSummary toSummary(StudentAchievementDetail detail) {
         return new StudentAchievementSummary(
                 detail.studentId(),
@@ -292,12 +641,16 @@ public class PersonalAchievementService {
                 detail.indicatorAchievements());
     }
 
-    private BigDecimal average(List<BigDecimal> values) {
+    private BigDecimal average(Collection<BigDecimal> values) {
         if (values.isEmpty()) {
-            return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
+            return zero();
         }
         BigDecimal sum = values.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         return sum.divide(BigDecimal.valueOf(values.size()), 4, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal zero() {
+        return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
     }
 
     public record StudentAchievementSummary(
@@ -317,6 +670,13 @@ public class PersonalAchievementService {
             Map<Long, BigDecimal> indicatorAchievements,
             Map<Long, String> objectiveLabels,
             Map<Long, String> indicatorLabels) {
+    }
+
+    public record StudentPointAchievement(
+            Long studentId,
+            String studentNo,
+            String studentName,
+            BigDecimal achievement) {
     }
 
     private record CalculationContext(

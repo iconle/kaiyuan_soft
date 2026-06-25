@@ -30,6 +30,22 @@ public class PersonalAchievementController {
         return Result.ok(personalAchievementService.list(classId));
     }
 
+    @GetMapping("/objectives/{objectiveId}/students")
+    @PreAuthorize("hasAnyRole('TEACHER','ACADEMIC','DIRECTOR')")
+    public Result<List<PersonalAchievementService.StudentPointAchievement>> objectiveStudents(
+            @PathVariable Long classId,
+            @PathVariable Long objectiveId) {
+        return Result.ok(personalAchievementService.listObjectiveStudents(classId, objectiveId));
+    }
+
+    @GetMapping("/indicators/{indicatorId}/students")
+    @PreAuthorize("hasAnyRole('TEACHER','ACADEMIC','DIRECTOR')")
+    public Result<List<PersonalAchievementService.StudentPointAchievement>> indicatorStudents(
+            @PathVariable Long classId,
+            @PathVariable Long indicatorId) {
+        return Result.ok(personalAchievementService.listCourseIndicatorStudents(classId, indicatorId));
+    }
+
     @GetMapping("/{studentId}")
     @PreAuthorize("hasAnyRole('TEACHER','ACADEMIC','DIRECTOR')")
     public Result<PersonalAchievementService.StudentAchievementDetail> detail(

@@ -126,6 +126,14 @@ export function getPersonalAchievement(classId, studentId) {
   return request.get(`/api/classes/${classId}/personal-achievements/${studentId}`)
 }
 
+export function listObjectivePersonalAchievements(classId, objectiveId) {
+  return request.get(`/api/classes/${classId}/personal-achievements/objectives/${objectiveId}/students`)
+}
+
+export function listIndicatorPersonalAchievements(classId, indicatorId) {
+  return request.get(`/api/classes/${classId}/personal-achievements/indicators/${indicatorId}/students`)
+}
+
 export function downloadPersonalAchievements(classId) {
   return request.get(`/api/classes/${classId}/personal-achievements/excel`, {
     responseType: 'blob'

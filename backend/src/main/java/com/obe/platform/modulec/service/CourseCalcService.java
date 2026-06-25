@@ -49,6 +49,7 @@ public class CourseCalcService {
     private final com.obe.platform.moduleb.mapper.AssessmentObjectiveMapper assessmentObjectiveMapper;
     private final com.obe.platform.moduleb.mapper.AssessmentQuestionMapper assessmentQuestionMapper;
     private final com.obe.platform.moduleb.mapper.QuestionObjectiveMapper questionObjectiveMapper;
+    private final PersonalAchievementService personalAchievementService;
 
     /**
      * Execute Phase 1 (Level 1 + Level 2) calculation for a given teaching class.
@@ -188,6 +189,7 @@ public class CourseCalcService {
                 new LambdaQueryWrapper<ObjAchievement>().eq(ObjAchievement::getClassId, classId));
         courseAchievementMapper.delete(
                 new LambdaQueryWrapper<CourseAchievement>().eq(CourseAchievement::getClassId, classId));
+        personalAchievementService.clearClassAchievements(classId);
 
         // Insert objective achievements
         for (Map.Entry<Long, BigDecimal> e : objAchievements.entrySet()) {
@@ -208,6 +210,8 @@ public class CourseCalcService {
             ca.setCalcTime(now);
             courseAchievementMapper.insert(ca);
         }
+
+        personalAchievementService.persistClassAchievements(classId, now);
 
         // 13. Lock the score sheet
         sheet.setStatus("LOCKED");
@@ -275,6 +279,7 @@ public class CourseCalcService {
                 new LambdaQueryWrapper<ObjAchievement>().eq(ObjAchievement::getClassId, sheet.getClassId()));
         courseAchievementMapper.delete(
                 new LambdaQueryWrapper<CourseAchievement>().eq(CourseAchievement::getClassId, sheet.getClassId()));
+        personalAchievementService.clearClassAchievements(sheet.getClassId());
 
         // Unlock
         sheet.setStatus("IMPORTED");

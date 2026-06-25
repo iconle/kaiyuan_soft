@@ -65,7 +65,7 @@
         >
           <template #default="{ row }">
             <span :class="['gk-pill', `is-${getAchievementType(row.achievement)}`]">
-              {{ row.achievement.toFixed(4) }}
+              {{ formatAchievement(row.achievement) }}
             </span>
           </template>
         </el-table-column>
@@ -84,6 +84,24 @@
             >
               {{ getStatusText(row.achievement) }}
             </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          label="学生明细"
+          width="140"
+          align="center"
+          class-name="detail-column"
+        >
+          <template #default="{ row }">
+            <el-button
+              size="small"
+              type="primary"
+              link
+              @click="openMajorPersonalDialog(row)"
+            >
+              查看
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -140,6 +158,39 @@
         </div>
       </div>
     </el-card>
+
+    <el-dialog
+      v-model="personalDialogVisible"
+      :title="personalDialogTitle"
+      width="720px"
+    >
+      <el-table
+        v-loading="personalLoading"
+        :data="personalRows"
+        border
+        stripe
+        size="small"
+      >
+        <el-table-column prop="studentNo" label="学号" width="180" align="center" />
+        <el-table-column prop="studentName" label="姓名" min-width="160" align="center" />
+        <el-table-column label="个人达成度" width="160" align="center">
+          <template #default="{ row }">
+            {{ formatAchievement(row.achievement) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag
+              size="small"
+              effect="light"
+              :type="getAchievementType(row.achievement)"
+            >
+              {{ getStatusText(row.achievement) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -148,7 +199,7 @@ import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getDashboard, triggerGlobalCompute, getGlobalResults,
-  getRadarData, downloadMajorExcel
+  getRadarData, downloadMajorExcel, listMajorPersonalAchievements
 } from '../../api/director'
 import { listMajors } from '../../api/admin'
 import { listGradReqs } from '../../api/director'
@@ -164,6 +215,10 @@ const indicatorLabels = ref({})
 const chartType = ref('radar')
 const chartInstance = ref(null)
 const sortAsc = ref(false)
+const personalDialogVisible = ref(false)
+const personalDialogTitle = ref('')
+const personalLoading = ref(false)
+const personalRows = ref([])
 
 const dashboard = reactive({
   allReady: false, lockedCount: 0, totalCount: 0,
@@ -234,7 +289,9 @@ const hasResults = computed(() => Object.keys(results.value).length > 0)
 
 const resultData = computed(() => {
   return Object.entries(results.value).map(([id, val]) => ({
-    indicatorNo: indicatorLabels.value[id] || id, achievement: val
+    indicatorId: id,
+    indicatorNo: indicatorLabels.value[id] || id,
+    achievement: val
   }))
 })
 
@@ -473,6 +530,25 @@ function getAchievementType(value) {
   return 'danger'
 }
 
+function formatAchievement(value) {
+  const num = Number(value)
+  if (Number.isNaN(num)) return '-'
+  return num.toFixed(4)
+}
+
+async function openMajorPersonalDialog(row) {
+  if (!selectedMajorId.value) return
+  personalDialogVisible.value = true
+  personalLoading.value = true
+  personalDialogTitle.value = `${row.indicatorNo} 学生个人达成度`
+  personalRows.value = []
+  try {
+    const res = await listMajorPersonalAchievements(selectedMajorId.value, 1, row.indicatorId)
+    personalRows.value = res.data || []
+  } catch { /* handled */ }
+  finally { personalLoading.value = false }
+}
+
 function getStatusColor(value) {
   if (value >= 0.7) return '#67C23A'
   if (value >= 0.65) return '#E6A23C'
@@ -570,7 +646,8 @@ async function downloadExcel() {
 
 :deep(.index-column .cell),
 :deep(.gk-column .cell),
-:deep(.status-column .cell) {
+:deep(.status-column .cell),
+:deep(.detail-column .cell) {
   display: flex;
   align-items: center;
   justify-content: center;

@@ -41,6 +41,7 @@ public class GlobalCalcService {
     private final CourseMapper courseMapper;
     private final SysUserMapper userMapper;
     private final SysDictSemesterMapper semesterMapper;
+    private final PersonalAchievementService personalAchievementService;
 
     /**
      * Check the readiness status of all courses that support the given major.
@@ -216,6 +217,15 @@ public class GlobalCalcService {
             ma.setTriggeredBy(operator);
             majorAchievementMapper.insert(ma);
         }
+
+        personalAchievementService.persistMajorAchievements(
+                majorId,
+                semesterId,
+                dashboard.courseStatuses().stream()
+                        .map(DashboardData.CourseStatus::classId)
+                        .toList(),
+                weightRecords,
+                now);
 
         return new MajorCalcResult(majorAchievements, now);
     }

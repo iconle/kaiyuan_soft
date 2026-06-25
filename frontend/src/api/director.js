@@ -72,6 +72,12 @@ export function getGlobalResults(majorId, semesterId) {
   return request.get('/api/global/results', { params: { majorId, semesterId } })
 }
 
+export function listMajorPersonalAchievements(majorId, semesterId, indicatorId) {
+  return request.get('/api/global/personal-achievements', {
+    params: { majorId, semesterId, indicatorId }
+  })
+}
+
 // 报表
 export function getMajorReport(majorId, semesterId) {
   return request.get('/api/reports/major', { params: { majorId, semesterId } })

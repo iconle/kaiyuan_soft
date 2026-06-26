@@ -10,7 +10,7 @@
     </div>
 
     <div class="content-card">
-      <el-table :data="objectives" border stripe v-loading="loading">
+      <el-table :data="objectives" border stripe v-loading="loading" empty-text="暂无课程目标，请先新增或导入">
         <el-table-column prop="objNo" label="编号" width="80" />
         <el-table-column prop="dimension" label="维度" width="80" />
         <el-table-column prop="description" label="目标描述" />

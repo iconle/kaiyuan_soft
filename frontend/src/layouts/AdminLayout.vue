@@ -149,8 +149,6 @@ onMounted(async () => {
   }
 })
 
-function loadTeacherClasses() {}
-
 function switchTeacherClass(classId) {
   activeClassId.value = classId
   localStorage.setItem('activeClassId', String(classId))

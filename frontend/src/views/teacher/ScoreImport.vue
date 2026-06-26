@@ -125,22 +125,10 @@ async function loadAll() {
   loading.value = true
   try {
     const [scoreRes, statusRes, assessRes, objRes] = await Promise.all([
-      getScores(classId.value).catch(err => {
-        console.error('获取成绩失败:', err)
-        return { data: { rows: [], status: '' } }
-      }),
-      getScoreStatus(classId.value).catch(err => {
-        console.error('获取状态失败:', err)
-        return { data: { status: '' } }
-      }),
-      listAssessments(classId.value).catch(err => {
-        console.error('获取考核点失败:', err)
-        return { data: [] }
-      }),
-      request.get(`/api/classes/${classId.value}/objectives`).catch(err => {
-        console.error('获取目标失败:', err)
-        return { data: [] }
-      })
+      getScores(classId.value).catch(() => ({ data: { rows: [], status: '' } })),
+      getScoreStatus(classId.value).catch(() => ({ data: { status: '' } })),
+      listAssessments(classId.value).catch(() => ({ data: [] })),
+      request.get(`/api/classes/${classId.value}/objectives`).catch(() => ({ data: [] }))
     ])
     assessments.value = assessRes.data || []
     allObjectives.value = objRes.data || []
@@ -149,7 +137,6 @@ async function loadAll() {
     if (assessments.value.length > 0 && !selectedAssessmentId.value) selectedAssessmentId.value = assessments.value[0].id
     if (selectedAssessmentId.value) await loadQuestions()
   } catch (err) {
-    console.error('加载失败:', err)
     ElMessage.error('加载数据失败，请刷新页面重试')
   } finally { loading.value = false }
 }
@@ -158,16 +145,10 @@ async function loadQuestions() {
   if (!selectedAssessmentId.value) return
   try {
     const res = await request.get(`/api/assessments/${selectedAssessmentId.value}/questions`)
-      .catch(err => {
-        console.error('获取题目失败:', err)
-        return { data: [] }
-      })
+      .catch(() => ({ data: [] }))
     questions.value = res.data || []
     const sRes = await getScores(classId.value)
-      .catch(err => {
-        console.error('获取成绩失败:', err)
-        return { data: { rows: [] } }
-      })
+      .catch(() => ({ data: { rows: [] } }))
     scoreRows.value = sRes.data?.rows || []
     edits.value = {}
   } catch { questions.value = [] }
@@ -270,12 +251,10 @@ async function uploadFile({ file }) {
     ElMessage.success('成绩导入成功')
     // Wait a bit before reloading to ensure backend has processed
     await new Promise(resolve => setTimeout(resolve, 300))
-    await loadAll().catch(err => {
-      console.error('导入后刷新数据失败:', err)
+    await loadAll().catch(() => {
       ElMessage.warning('成绩导入成功，但刷新数据失败，请手动刷新页面')
     })
   } catch (error) {
-    console.error('导入失败:', error)
     ElMessageBox.alert(escapeHtml(error?.response?.data?.message || error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
       dangerouslyUseHTMLString: true, type: 'error'
     })

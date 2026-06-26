@@ -196,6 +196,7 @@ const filterCourseId = ref(null)
 const filterSemesterId = ref(null)
 const templateDownloading = ref(false)
 const importing = ref(false)
+const availTable = ref(null) 
 
 const dialogVisible = ref(false)
 const editing = ref(null)

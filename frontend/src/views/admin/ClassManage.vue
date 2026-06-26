@@ -25,7 +25,7 @@
       </div>
 
       <el-table :data="classes" border stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column type="index" label="ID" width="60" :index="indexMethod" />
         <el-table-column prop="className" label="班级名称" min-width="180" />
         <el-table-column prop="majorName" label="所属专业" min-width="160" />
         <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
@@ -167,6 +167,10 @@ async function loadData() {
     classes.value = res.data?.records || []
     total.value = res.data?.total || 0
   } finally { loading.value = false }
+}
+
+function indexMethod(i) {
+  return (page.value - 1) * size.value + i + 1
 }
 
 async function handleDownloadTemplate() {

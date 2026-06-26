@@ -25,7 +25,7 @@
       </div>
 
       <el-table :data="students" border stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="55" />
+        <el-table-column type="index" label="ID" width="55" :index="indexMethod" />
         <el-table-column prop="studentNo" label="学号" width="130" />
         <el-table-column prop="name" label="姓名" width="110" />
         <el-table-column prop="collegeName" label="学院" width="220" class-name="nowrap-column" />
@@ -189,6 +189,10 @@ function onCollegeChange() {
 function onSearch() {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => loadData(), 300)
+}
+
+function indexMethod(i) {
+  return (page.value - 1) * size.value + i + 1
 }
 
 async function loadData() {

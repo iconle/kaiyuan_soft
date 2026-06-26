@@ -34,7 +34,7 @@
       </div>
 
       <el-table class="wide-class-table" :data="classes" border stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column type="index" label="ID" width="60" :index="indexMethod" />
         <el-table-column prop="className" label="班级名称" min-width="260" class-name="nowrap-column" />
         <el-table-column prop="courseName" label="所属课程" min-width="260" class-name="nowrap-column" />
         <el-table-column prop="teacherName" label="主讲教师" min-width="130" class-name="nowrap-column" />
@@ -300,6 +300,10 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+function indexMethod(i) {
+  return (page.value - 1) * size.value + i + 1
 }
 
 function showDialog(row) {

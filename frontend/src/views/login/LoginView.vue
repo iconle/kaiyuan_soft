@@ -95,7 +95,28 @@ async function handleLogin() {
     const res = await login(form)
     userStore.setLogin(res.data)
     localStorage.setItem('roleCode', res.data.roleCode)
+    // 清理上一用户残留的班级选择,避免跨用户数据泄露
+    localStorage.removeItem('activeClassId')
     ElMessage.success('登录成功')
+
+    // TEACHER 角色需要先拿到自己的班级列表才能确定首页,避免误跳到不属于自己的班级
+    if (res.data.roleCode === 'TEACHER') {
+      try {
+        const { default: request } = await import('../../utils/request')
+        const classRes = await request.get('/api/teaching-classes/my-classes')
+        const classes = classRes.data || []
+        if (classes.length > 0) {
+          const firstId = String(classes[0].id)
+          localStorage.setItem('activeClassId', firstId)
+          router.push(`/teacher/${firstId}/objectives`)
+          return
+        }
+        ElMessage.warning('您当前未任教任何教学班级,请联系教务管理员分配班级')
+      } catch {
+        // 接口失败时 fallback 到默认 route
+      }
+    }
+
     router.push(getHomeRoute(res.data.roleCode))
   } catch (e) {
     // error handled by interceptor

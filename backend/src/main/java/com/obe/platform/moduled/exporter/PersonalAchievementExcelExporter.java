@@ -15,10 +15,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 
 public final class PersonalAchievementExcelExporter {
+
+    /** 达标阈值，与前端 CourseCompute 页面 achievementTagText 的判定口径一致（>= 0.7 达标） */
+    private static final BigDecimal PASS_THRESHOLD = new BigDecimal("0.7");
 
     private PersonalAchievementExcelExporter() {
     }
@@ -50,6 +54,7 @@ public final class PersonalAchievementExcelExporter {
             CellStyle headerStyle,
             CellStyle dataStyle,
             CellStyle numericStyle) {
+        CellStyle redNumericStyle = createRedNumericStyle(workbook);
         Sheet sheet = workbook.createSheet("个人达成度汇总");
         Row header = sheet.createRow(0);
         writeCell(header, 0, "学号", headerStyle);
@@ -61,21 +66,57 @@ public final class PersonalAchievementExcelExporter {
             writeCell(header, column++, label, headerStyle);
         }
 
+        // 累计综合达成度总和与未达标人数（综合达成度 < 0.7 视为未达标）
+        BigDecimal overallSum = BigDecimal.ZERO;
+        int totalCount = 0;
+        int notPassCount = 0;
+
         int rowIndex = 1;
         for (StudentAchievementDetail detail : details) {
             Row row = sheet.createRow(rowIndex++);
             writeCell(row, 0, detail.studentNo(), dataStyle);
             writeCell(row, 1, detail.studentName(), dataStyle);
-            writeNumericCell(row, 2, detail.overallAchievement(), numericStyle);
+            writeNumericCell(row, 2, detail.overallAchievement(), numericStyle, redNumericStyle);
             column = 3;
             for (Long indicatorId : indicatorLabels.keySet()) {
                 writeNumericCell(
                         row,
                         column++,
                         detail.indicatorAchievements().getOrDefault(indicatorId, BigDecimal.ZERO),
-                        numericStyle);
+                        numericStyle,
+                        redNumericStyle);
+            }
+
+            BigDecimal overall = detail.overallAchievement();
+            if (overall != null) {
+                totalCount++;
+                overallSum = overallSum.add(overall);
+                if (overall.compareTo(PASS_THRESHOLD) < 0) notPassCount++;
             }
         }
+
+        // 末行汇总：综合达成度平均值 + 未达标人数
+        Font boldFont = workbook.createFont();
+        boldFont.setBold(true);
+        CellStyle summaryStyle = createDataStyle(workbook);
+        summaryStyle.setFont(boldFont);
+        CellStyle summaryNumericStyle = createNumericStyle(workbook);
+        summaryNumericStyle.setFont(boldFont);
+
+        int lastColumn = 3 + Math.max(0, indicatorLabels.size() - 1);
+        Row summaryRow = sheet.createRow(rowIndex);
+        for (int c = 0; c <= lastColumn; c++) {
+            summaryRow.createCell(c).setCellStyle(summaryStyle);
+        }
+        summaryRow.getCell(0).setCellValue("综合达成度平均值");
+        BigDecimal overallAvg = totalCount > 0
+                ? overallSum.divide(BigDecimal.valueOf(totalCount), 4, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        Cell avgCell = summaryRow.getCell(2);
+        avgCell.setCellValue(overallAvg.doubleValue());
+        avgCell.setCellStyle(summaryNumericStyle);
+        summaryRow.getCell(3).setCellValue("未达标: " + notPassCount + " 人 / 共 " + totalCount + " 人");
+
         autoSize(sheet, 3 + indicatorLabels.size());
         sheet.createFreezePane(2, 1);
     }
@@ -87,6 +128,7 @@ public final class PersonalAchievementExcelExporter {
             CellStyle headerStyle,
             CellStyle dataStyle,
             CellStyle numericStyle) {
+        CellStyle redNumericStyle = createRedNumericStyle(workbook);
         Sheet sheet = workbook.createSheet("课程目标明细");
         Row header = sheet.createRow(0);
         String[] headers = {"学号", "姓名", "课程目标", "达成度"};
@@ -105,7 +147,8 @@ public final class PersonalAchievementExcelExporter {
                         row,
                         3,
                         detail.objectiveAchievements().getOrDefault(objective.getKey(), BigDecimal.ZERO),
-                        numericStyle);
+                        numericStyle,
+                        redNumericStyle);
             }
         }
         autoSize(sheet, headers.length);
@@ -154,9 +197,28 @@ public final class PersonalAchievementExcelExporter {
         return style;
     }
 
+    private static CellStyle createRedNumericStyle(Workbook workbook) {
+        CellStyle style = createNumericStyle(workbook);
+        Font font = workbook.createFont();
+        font.setColor(IndexedColors.RED.getIndex());
+        style.setFont(font);
+        return style;
+    }
+
     private static void writeNumericCell(Row row, int column, BigDecimal value, CellStyle style) {
         Cell cell = row.createCell(column);
         cell.setCellValue(value != null ? value.doubleValue() : 0);
         cell.setCellStyle(style);
+    }
+
+    /**
+     * 写入数值单元格，低于达标阈值（0.7）时使用红色样式，否则使用普通样式。
+     */
+    private static void writeNumericCell(Row row, int column, BigDecimal value,
+                                         CellStyle normalStyle, CellStyle redStyle) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(value != null ? value.doubleValue() : 0);
+        boolean belowThreshold = value != null && value.compareTo(PASS_THRESHOLD) < 0;
+        cell.setCellStyle(belowThreshold ? redStyle : normalStyle);
     }
 }

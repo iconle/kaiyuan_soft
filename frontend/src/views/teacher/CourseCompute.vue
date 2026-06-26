@@ -357,6 +357,7 @@
     <div v-if="hasResults" style="margin-top: 16px; display: flex; gap: 8px;">
       <el-button @click="downloadPdf">导出 PDF 报告</el-button>
       <el-button @click="downloadExcel">导出 Excel 报告</el-button>
+      <el-button @click="downloadPersonalAchievementExcel">导出学生个人达成度</el-button>
     </div>
 
     <el-dialog
@@ -401,7 +402,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 import {
   getScoreStatus, triggerCourseCompute, getCourseComputeResults,
-  downloadCoursePdf, downloadCourseExcel,
+  downloadCoursePdf, downloadCourseExcel, downloadPersonalAchievements,
   listObjectivePersonalAchievements, listIndicatorPersonalAchievements
 } from '../../api/teacher'
 import { useUserStore } from '../../stores/user'
@@ -576,6 +577,11 @@ async function downloadPdf() {
 async function downloadExcel() {
   const blob = await downloadCourseExcel(classId.value)
   downloadBlob(blob, `课程达成度报告_${classId.value}.xlsx`)
+}
+
+async function downloadPersonalAchievementExcel() {
+  const blob = await downloadPersonalAchievements(classId.value)
+  downloadBlob(blob, `学生个人达成度_${classId.value}.xlsx`)
 }
 
 function downloadBlob(blob, filename) {

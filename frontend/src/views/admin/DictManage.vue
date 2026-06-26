@@ -10,7 +10,7 @@
             <el-button type="primary" @click="showCollegeDialog()">新增学院</el-button>
           </div>
           <el-table :data="colleges" border stripe v-loading="collegeLoading">
-            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column type="index" label="ID" width="80" />
             <el-table-column prop="name" label="学院名称" />
 
 
@@ -67,7 +67,7 @@
             <el-button type="primary" @click="showMajorDialog()">新增专业</el-button>
           </div>
           <el-table :data="majors" border stripe v-loading="majorLoading">
-            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column type="index" label="ID" width="80" />
             <el-table-column prop="code" label="专业代码" width="140" />
             <el-table-column prop="name" label="专业名称" min-width="160" />
 
@@ -142,7 +142,7 @@
             v-loading="semesterLoading"
             class="semester-table"
           >
-            <el-table-column prop="id" label="ID" width="80" align="center" />
+            <el-table-column type="index" label="ID" width="80" align="center" />
             <el-table-column prop="academicYear" label="学年" width="150" align="center" />
             <el-table-column prop="semester" label="学期" width="120" align="center">
               <template #default="{ row }">

@@ -24,7 +24,7 @@
         v-loading="loading"
         class="user-table"
       >
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="index" label="ID" width="70" :index="indexMethod" />
         <el-table-column prop="username" label="用户名" width="140" />
         <el-table-column
           prop="realName"
@@ -192,6 +192,10 @@ async function loadUsers() {
   } finally {
     loading.value = false
   }
+}
+
+function indexMethod(i) {
+  return (search.page - 1) * search.size + i + 1
 }
 
 async function loadRoles() {

@@ -13,7 +13,7 @@
     </div>
 
     <div class="content-card">
-      <el-table :data="assessments" border stripe v-loading="loading">
+      <el-table :data="assessments" border stripe v-loading="loading" empty-text="暂无考核点，请先新增或导入">
         <el-table-column prop="sortOrder" label="序号" width="60" />
         <el-table-column prop="name" label="考核点名称" width="160" />
         <el-table-column prop="maxScore" label="满分" width="70" />

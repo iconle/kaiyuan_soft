@@ -189,7 +189,7 @@ public class CourseReportService {
                         row.studentNo(),
                         row.studentName(),
                         cell.assessmentName(),
-                        cell.score()));
+                        effectiveScore(cell)));
             }
         }
         return results;
@@ -215,9 +215,12 @@ public class CourseReportService {
         for (ScoreService.ScoreRow row : preview.rows()) {
             if (row.cells() == null) continue;
             for (ScoreService.ScoreCell cell : row.cells()) {
-                if (Objects.equals(cell.assessmentId(), assessmentId) && cell.score() != null) {
-                    total = total.add(cell.score());
-                    count++;
+                if (Objects.equals(cell.assessmentId(), assessmentId)) {
+                    BigDecimal score = effectiveScore(cell);
+                    if (score != null) {
+                        total = total.add(score);
+                        count++;
+                    }
                 }
             }
         }
@@ -225,6 +228,24 @@ public class CourseReportService {
         return new AverageScore(
                 total.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP),
                 count);
+    }
+
+    /**
+     * 计算某学生在某考核点上的有效得分。
+     * 题目级录入(questionScores 非空)时取各题目得分之和，与达成度计算(Level1Calculator)口径一致；
+     * 否则回落到考核点整体得分(cell.score)。
+     */
+    private BigDecimal effectiveScore(ScoreService.ScoreCell cell) {
+        if (cell == null) return null;
+        Map<Long, BigDecimal> questionScores = cell.questionScores();
+        if (questionScores != null && !questionScores.isEmpty()) {
+            BigDecimal sum = BigDecimal.ZERO;
+            for (BigDecimal s : questionScores.values()) {
+                if (s != null) sum = sum.add(s);
+            }
+            return sum;
+        }
+        return cell.score();
     }
 
     private Map<String, BigDecimal> objectiveResultMap(List<CourseObjectiveResult> objectiveResults) {

@@ -170,10 +170,18 @@ public class MajorReportService {
                                                 .eq(StudentScore::getSheetId, ss.getId())
                                                 .eq(StudentScore::getAssessmentId, ap.getId()));
                                 if (!scores.isEmpty()) {
-                                    avgScore = scores.stream()
-                                            .map(StudentScore::getScore)
-                                            .reduce(BigDecimal.ZERO, BigDecimal::add)
-                                            .divide(BigDecimal.valueOf(scores.size()), 2, RoundingMode.HALF_UP);
+                                    // 按学生汇总得分(题目级录入时为该生各题目得分之和)，再对有成绩的学生求平均
+                                    Map<Long, BigDecimal> byStudent = new LinkedHashMap<>();
+                                    for (StudentScore sc : scores) {
+                                        BigDecimal v = sc.getScore() == null ? BigDecimal.ZERO : sc.getScore();
+                                        byStudent.merge(sc.getStudentId(), v, BigDecimal::add);
+                                    }
+                                    BigDecimal total = BigDecimal.ZERO;
+                                    for (BigDecimal v : byStudent.values()) {
+                                        total = total.add(v);
+                                    }
+                                    avgScore = total.divide(
+                                            BigDecimal.valueOf(byStudent.size()), 2, RoundingMode.HALF_UP);
                                 }
                             }
 

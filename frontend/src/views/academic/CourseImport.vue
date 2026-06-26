@@ -51,7 +51,7 @@
             >
               教学班级
             </el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" type="danger" class="delete-course-btn" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -286,6 +286,20 @@ async function viewClassStudents(cls) {
   background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
   border-color: #806bbf !important;
   box-shadow: 0 6px 14px rgba(128, 107, 191, 0.24);
+}
+.delete-course-btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #ef9aa0, #e78087) !important;
+  border-color: #ef9aa0 !important;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.delete-course-btn:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #e78087, #d9676e) !important;
+  border-color: #e78087 !important;
+  box-shadow: 0 6px 14px rgba(231, 128, 135, 0.28);
 }
 :deep(.teaching-class-dialog) {
   border-radius: 26px;

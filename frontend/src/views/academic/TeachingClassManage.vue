@@ -196,6 +196,7 @@ const filterCourseId = ref(null)
 const filterSemesterId = ref(null)
 const templateDownloading = ref(false)
 const importing = ref(false)
+const availTable = ref(null) 
 
 const dialogVisible = ref(false)
 const editing = ref(null)
@@ -373,12 +374,12 @@ function onSelectionChange(rows) {
 }
 
 function selectAll() {
-  const table = document.querySelector('.el-table__body-wrapper table')
-  // Toggle all via the table ref
+  const table = availTable.value
+  if (!table) return
   if (selectedStuIds.value.length === availableStudents.value.length) {
-    selectedStuIds.value = []
+    table.clearSelection()
   } else {
-    selectedStuIds.value = availableStudents.value.map(s => s.id)
+    table.toggleAllSelection()
   }
 }
 

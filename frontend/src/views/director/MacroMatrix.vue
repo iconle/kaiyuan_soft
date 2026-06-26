@@ -90,6 +90,8 @@ const courses = ref([])
 const currentMajorId = ref(null)
 const indicators = ref([])
 const matrixData = ref([]) // raw MacroSupportMatrix[]
+const hoverRow = ref(null)
+const hoverColLabel = ref(null)
 const addDialogVisible = ref(false)
 const addForm = reactive({ courseId: null, supportLevel: 'H', indicatorIds: [] })
 
@@ -190,12 +192,26 @@ async function handleAddSubmit() {
 function cellClassName({ row, columnIndex }) {
   if (columnIndex === 0) return ''
   const ind = indicators.value[columnIndex - 1]
-  if (ind && row.cells[ind.id] !== undefined && row.cells[ind.id].weight > 0) return 'weight-cell'
-  return ''
+  const classes = []
+  if (ind && row.cells[ind.id] !== undefined && row.cells[ind.id].weight > 0) {
+    classes.push('weight-cell')
+  }
+  if (hoverRow.value && row === hoverRow.value) classes.push('highlight-row')
+  if (hoverColLabel.value && ind && hoverColLabel.value === ind.indicatorNo) {
+    classes.push('highlight-col')
+  }
+  return classes.join(' ')
 }
 
-function highlightRC() {}
-function clearHighlight() {}
+function highlightRC(row, column) {
+  hoverRow.value = row
+  hoverColLabel.value = column?.label || null
+}
+
+function clearHighlight() {
+  hoverRow.value = null
+  hoverColLabel.value = null
+}
 </script>
 
 <style scoped>
@@ -204,6 +220,13 @@ function clearHighlight() {}
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .matrix-wrapper { overflow-x: auto; max-width: 100%; }
 .matrix-table { width: 100%; }
+:deep(.matrix-table .el-table__row td.highlight-row),
+:deep(.matrix-table .el-table__row td.highlight-col) {
+  background-color: rgba(128, 107, 191, 0.12) !important;
+}
+:deep(.matrix-table .el-table__row td.highlight-row.highlight-col) {
+  background-color: rgba(128, 107, 191, 0.22) !important;
+}
 .indicator-header { font-size: var(--text-xs); text-align: center; }
 .hint { color: var(--text-secondary); font-size: 13px; }
 :deep(.nowrap-column .cell) { white-space: nowrap; }

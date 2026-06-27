@@ -20,26 +20,29 @@
                   @cell-mouse-enter="highlightRC" @cell-mouse-leave="clearHighlight">
           <el-table-column prop="courseName" label="课程" min-width="180" class-name="nowrap-column" />
           <el-table-column v-for="ind in indicators" :key="ind.id" :label="`${ind.indicatorNo}`"
-                           min-width="150" align="center">
+                           min-width="140" align="center">
             <template #header>
               <div class="indicator-header">{{ ind.indicatorNo }}</div>
             </template>
             <template #default="{ row }">
-              
-              <el-input-number
-                v-if="row.cells[ind.id] !== undefined"
-                v-model="row.cells[ind.id].weight"
-                :min="0"
-                :max="1"
-                :step="0.05"
-                :precision="2"
-                size="small"
-                class="macro-weight-input"
-                style="width: 110px"
-                @change="onWeightChange(row.courseId, ind.id, row.cells[ind.id].weight)"
-              />
-               
-              <span v-else>-</span>
+              <div class="macro-cell">
+                <el-checkbox
+                  :model-value="row.cells[ind.id] !== undefined"
+                  @change="(val) => onToggleSupport(row.courseId, ind.id, val)"
+                />
+                <el-input-number
+                  v-if="row.cells[ind.id] !== undefined"
+                  v-model="row.cells[ind.id].weight"
+                  :min="0"
+                  :max="1"
+                  :step="0.05"
+                  :precision="2"
+                  size="small"
+                  class="macro-weight-input"
+                  style="width: 110px"
+                  @change="onWeightChange(row.courseId, ind.id, row.cells[ind.id].weight)"
+                />
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -165,6 +168,20 @@ function onWeightChange(courseId, indicatorId, weight) {
   if (item) item.weight = weight
 }
 
+// 新勾选一个支撑关系时使用的默认权重
+const DEFAULT_SUPPORT_WEIGHT = 0.1
+
+function onToggleSupport(courseId, indicatorId, checked) {
+  const idx = matrixData.value.findIndex(m => m.courseId === courseId && m.indicatorId === indicatorId)
+  if (checked && idx === -1) {
+    // 勾选 = 建立支撑关系，出现可调整的数字
+    matrixData.value.push({ courseId, indicatorId, supportLevel: 'M', weight: DEFAULT_SUPPORT_WEIGHT })
+  } else if (!checked && idx !== -1) {
+    // 取消勾选 = 移除支撑关系
+    matrixData.value.splice(idx, 1)
+  }
+}
+
 async function handleSubmit() {
   if (!allColumnsValid.value) {
     ElMessage.error('存在指标点权重合计不为 1.00，请检查')
@@ -193,7 +210,7 @@ function cellClassName({ row, columnIndex }) {
   if (columnIndex === 0) return ''
   const ind = indicators.value[columnIndex - 1]
   const classes = []
-  if (ind && row.cells[ind.id] !== undefined && row.cells[ind.id].weight > 0) {
+  if (ind && row.cells[ind.id] !== undefined) {
     classes.push('weight-cell')
   }
   if (hoverRow.value && row === hoverRow.value) classes.push('highlight-row')
@@ -220,6 +237,18 @@ function clearHighlight() {
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .matrix-wrapper { overflow-x: auto; max-width: 100%; }
 .matrix-table { width: 100%; }
+/* 已勾选（存在支撑关系）的单元格：浅紫底色，便于一眼看出支撑分布 */
+:deep(.matrix-table .el-table__row td.weight-cell) {
+  background-color: rgba(128, 107, 191, 0.06) !important;
+}
+/* 单元格内部：复选框 + 数字纵向排列（分两行） */
+.macro-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
 :deep(.matrix-table .el-table__row td.highlight-row),
 :deep(.matrix-table .el-table__row td.highlight-col) {
   background-color: rgba(128, 107, 191, 0.12) !important;

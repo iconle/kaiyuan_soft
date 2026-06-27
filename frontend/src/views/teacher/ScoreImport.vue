@@ -36,6 +36,25 @@
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
 
+    <el-dialog v-model="requestDialogVisible" title="提交成绩勘误申请" width="500px">
+      <el-form label-width="80px">
+        <el-form-item label="勘误原因">
+          <el-input
+            v-model="unlockReason"
+            type="textarea"
+            :rows="4"
+            maxlength="200"
+            show-word-limit
+            placeholder="请说明需要修改的学生、考核点或题目，以及申请解锁的原因"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="requestDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="requesting" @click="handleRequestUnlock">提交申请</el-button>
+      </template>
+    </el-dialog>
+
     <div v-if="selectedAssessmentId" class="content-card">
       <el-empty v-if="!loading && scoreRows.length === 0" description="暂无学生数据，请先为学生选课" />
       <div class="section-title">考核点: {{ currentAssessment?.name || '' }}
@@ -110,7 +129,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores
+  getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores,
+  requestScoreUnlock
 } from '../../api/teacher'
 import StatusTag from '../../components/StatusTag.vue'
 import request from '../../utils/request'
@@ -128,6 +148,10 @@ const questions = ref([])
 const scoreRows = ref([])
 const edits = ref({})
 const importing = ref(false)
+const requesting = ref(false)
+const requestDialogVisible = ref(false)
+const unlockReason = ref('')
+const hasPendingRequest = ref(false)
 
 onMounted(async () => { if (classId.value) await loadAll() })
 
@@ -253,6 +277,27 @@ async function downloadTemplate() {
 
 function beforeUpload(file) {
   return validateExcelFile(file)
+}
+
+function showRequestDialog() {
+  unlockReason.value = ''
+  requestDialogVisible.value = true
+}
+
+async function handleRequestUnlock() {
+  const reason = unlockReason.value.trim()
+  if (!reason) {
+    ElMessage.warning('请填写勘误原因')
+    return
+  }
+  requesting.value = true
+  try {
+    await requestScoreUnlock(classId.value, reason)
+    ElMessage.success('勘误申请已提交，请等待审核')
+    hasPendingRequest.value = true
+    requestDialogVisible.value = false
+  } catch { /* handled */ }
+  finally { requesting.value = false }
 }
 
 async function uploadFile({ file }) {

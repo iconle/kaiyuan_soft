@@ -8,6 +8,10 @@ export function buildDatedFilename(parts, extension, date = new Date()) {
   return `${safeParts.join('-')}.${extension.replace(/^\./, '')}`
 }
 
+export function buildClassFilename(classId, type, extension) {
+  return buildDatedFilename([`教学班级${classId}`, type], extension)
+}
+
 export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob instanceof Blob ? blob : new Blob([blob]))
   const anchor = document.createElement('a')

@@ -103,7 +103,7 @@
           <el-table-column prop="semesterName" label="开课学期" min-width="180" />
           <el-table-column prop="lockedAt" label="锁定时间" min-width="180">
             <template #default="{ row }">
-              {{ formatDateTime(row.lockedAt) || '-' }}
+              {{ formatDateTime(row.lockedAt) }}
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">

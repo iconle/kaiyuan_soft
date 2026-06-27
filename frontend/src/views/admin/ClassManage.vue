@@ -126,6 +126,7 @@ import {
 } from '../../api/admin'
 import { listStudents } from '../../api/academic'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const classes = ref([])
@@ -178,7 +179,7 @@ async function handleDownloadTemplate() {
   templateDownloading.value = true
   try {
     const blob = await downloadAdminClassTemplate()
-    saveBlob(blob, '行政班级导入模板.xlsx')
+    downloadBlob(blob, buildDatedFilename(['行政班级', '导入模板'], 'xlsx'))
   } catch { /* handled */ }
   finally { templateDownloading.value = false }
 }
@@ -200,17 +201,6 @@ async function handleImportFile(uploadFile) {
   } finally {
     importing.value = false
   }
-}
-
-function saveBlob(blob, filename) {
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  window.URL.revokeObjectURL(url)
 }
 
 function showImportError(error) {

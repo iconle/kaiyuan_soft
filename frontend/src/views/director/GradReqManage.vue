@@ -219,11 +219,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listGradReqs, createGradReq, updateGradReq, deleteGradReq, addIndicator, updateIndicator, deleteIndicator, downloadIndicatorTemplate, importIndicators } from '../../api/director'
 import { listMajors } from '../../api/admin'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const requirements = ref([])
@@ -243,6 +244,7 @@ const indicatorForm = reactive({ indicatorNo: '', content: '' })
 const importing = ref(false)
 const downloading = ref(false)
 const importDialogVisible = ref(false)
+const currentMajorName = computed(() => majors.value.find(item => item.id === currentMajorId.value)?.name || `专业${currentMajorId.value}`)
 
 onMounted(async () => {
   const res = await listMajors({ page: 1, size: 100 })
@@ -327,14 +329,7 @@ async function handleDownloadTemplate() {
       ElMessage.error(msg)
       return
     }
-    const url = window.URL.createObjectURL(new Blob([blob]))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = '指标点导入模板.xlsx'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    window.URL.revokeObjectURL(url)
+    downloadBlob(blob, buildDatedFilename([currentMajorName.value, '指标点导入模板'], 'xlsx'))
     ElMessage.success('模板已开始下载')
   } catch (_) {
     /* 网络错误已由拦截器提示 */

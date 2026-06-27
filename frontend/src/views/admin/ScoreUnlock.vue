@@ -37,7 +37,6 @@
                   >
                     紧急解锁
                   </el-button>
-                  <span v-else class="operation-placeholder">-</span>
                 </div>
               </template>
             </el-table-column>

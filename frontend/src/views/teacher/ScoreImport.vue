@@ -204,6 +204,7 @@ onMounted(async () => { if (classId.value) await loadAll() })
 async function loadAll() {
   loading.value = true
   try {
+    myRequests.value = []
     const [scoreRes, statusRes, assessRes, objRes] = await Promise.all([
       getScores(classId.value).catch(() => ({ data: { rows: [], status: '' } })),
       getScoreStatus(classId.value).catch(() => ({ data: { status: '' } })),
@@ -357,7 +358,7 @@ async function handleRequestUnlock() {
 }
 
 function unlockStatusTagType(status) {
-  return status === 'PENDING' ? 'warning' : status === 'UNLOCKED' ? 'success' : status === 'APPROVED' ? 'primary' : 'danger'
+  return status === 'PENDING' ? 'warning' : status === 'UNLOCKED' ? 'success' : status === 'APPROVED' ? '' : 'danger'
 }
 
 function unlockStatusLabel(status) {
@@ -406,6 +407,21 @@ function escapeHtml(value) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+
+.unlock-request-card {
+  margin-bottom: var(--space-4);
+  border-color: rgba(128, 107, 191, 0.18);
+}
+
+:deep(.unlock-request-card .el-card__header) {
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+:deep(.unlock-request-card .el-card__body) {
+  padding: 12px 16px 16px;
+}
 
 .import-action-btn {
   color: #ffffff !important;

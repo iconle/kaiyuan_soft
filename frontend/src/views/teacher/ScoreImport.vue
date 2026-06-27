@@ -29,6 +29,15 @@
     <el-alert v-if="status === 'LOCKED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
       成绩单已锁定，无法继续导入或修改。如发现成绩录入有误，请点击「申请成绩勘误」提交说明，审批解锁后再修改。
     </el-alert>
+    <el-alert
+      v-if="status === 'LOCKED' && hasPendingRequest"
+      type="info"
+      show-icon
+      :closable="false"
+      style="margin-bottom:16px"
+    >
+      已提交勘误申请，当前等待审核。审核前可在下方申请记录中撤销后重新提交。
+    </el-alert>
     <el-alert v-else-if="!loading && assessments.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
       暂无考核点数据，请先在「考核点设置」中创建考核点。
     </el-alert>
@@ -54,6 +63,42 @@
         <el-button type="primary" :loading="requesting" @click="handleRequestUnlock">提交申请</el-button>
       </template>
     </el-dialog>
+
+    <el-card
+      v-if="myRequests.length > 0"
+      class="unlock-request-card"
+      shadow="never"
+    >
+      <template #header>
+        <span>我的勘误申请</span>
+      </template>
+      <el-table :data="myRequests" border stripe size="small">
+        <el-table-column prop="id" label="工单ID" width="80" align="center" />
+        <el-table-column prop="reason" label="勘误原因" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="createdAt" label="提交时间" width="190" align="center" />
+        <el-table-column label="状态" width="180" align="center">
+          <template #default="{ row }">
+            <el-tag :type="unlockStatusTagType(row.status)" size="small">
+              {{ unlockStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" align="center">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status === 'PENDING'"
+              type="danger"
+              size="small"
+              plain
+              @click="handleCancelRequest(row)"
+            >
+              撤销
+            </el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
     <div v-if="selectedAssessmentId" class="content-card">
       <el-empty v-if="!loading && scoreRows.length === 0" description="暂无学生数据，请先为学生选课" />
@@ -130,7 +175,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores,
-  requestScoreUnlock
+  requestScoreUnlock, listMyUnlockRequests, cancelUnlockRequest
 } from '../../api/teacher'
 import StatusTag from '../../components/StatusTag.vue'
 import request from '../../utils/request'
@@ -151,7 +196,8 @@ const importing = ref(false)
 const requesting = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
-const hasPendingRequest = ref(false)
+const myRequests = ref([])
+const hasPendingRequest = computed(() => myRequests.value.some(item => item.status === 'PENDING'))
 
 onMounted(async () => { if (classId.value) await loadAll() })
 
@@ -170,9 +216,19 @@ async function loadAll() {
     status.value = statusRes.data?.status || scoreRes.data?.status || ''
     if (assessments.value.length > 0 && !selectedAssessmentId.value) selectedAssessmentId.value = assessments.value[0].id
     if (selectedAssessmentId.value) await loadQuestions()
+    if (status.value === 'LOCKED') await loadMyRequests()
   } catch (err) {
     ElMessage.error('加载数据失败，请刷新页面重试')
   } finally { loading.value = false }
+}
+
+async function loadMyRequests() {
+  try {
+    const res = await listMyUnlockRequests(classId.value)
+    myRequests.value = res.data || []
+  } catch {
+    myRequests.value = []
+  }
 }
 
 async function loadQuestions() {
@@ -294,10 +350,33 @@ async function handleRequestUnlock() {
   try {
     await requestScoreUnlock(classId.value, reason)
     ElMessage.success('勘误申请已提交，请等待审核')
-    hasPendingRequest.value = true
     requestDialogVisible.value = false
+    await loadMyRequests()
   } catch { /* handled */ }
   finally { requesting.value = false }
+}
+
+function unlockStatusTagType(status) {
+  return status === 'PENDING' ? 'warning' : status === 'UNLOCKED' ? 'success' : status === 'APPROVED' ? 'primary' : 'danger'
+}
+
+function unlockStatusLabel(status) {
+  const labels = {
+    PENDING: '待审核',
+    APPROVED: '已同意，待解锁',
+    REJECTED: '已拒绝',
+    UNLOCKED: '已解锁'
+  }
+  return labels[status] || status || '-'
+}
+
+async function handleCancelRequest(row) {
+  await ElMessageBox.confirm('确定撤销该勘误申请？', '确认撤销', { type: 'warning' })
+  try {
+    await cancelUnlockRequest(classId.value, row.id)
+    ElMessage.success('勘误申请已撤销')
+    await loadMyRequests()
+  } catch { /* handled */ }
 }
 
 async function uploadFile({ file }) {

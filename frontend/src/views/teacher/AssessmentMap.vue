@@ -90,6 +90,7 @@ import {
   downloadAssessmentTemplate, importAssessments
 } from '../../api/teacher'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -161,7 +162,7 @@ async function handleDelete(row) {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    saveBlob(await downloadAssessmentTemplate(classId.value), '考核点导入模板.xlsx')
+    downloadBlob(await downloadAssessmentTemplate(classId.value), buildClassFilename(classId.value, '考核点导入模板', 'xlsx'))
   } finally { downloading.value = false }
 }
 
@@ -178,15 +179,6 @@ async function uploadFile({ file }) {
   } catch (error) {
     showExcelImportError(error)
   } finally { importing.value = false }
-}
-
-function saveBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
 }
 
 function escapeHtml(value) {

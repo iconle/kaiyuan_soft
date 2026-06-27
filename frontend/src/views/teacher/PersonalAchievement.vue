@@ -184,6 +184,7 @@ import {
   getPersonalAchievement,
   listPersonalAchievements
 } from '../../api/teacher'
+import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = computed(() => route.params.classId)
@@ -264,13 +265,7 @@ async function openDetail(row) {
 async function handleExport() {
   exporting.value = true
   try {
-    const blob = await downloadPersonalAchievements(classId.value)
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `个人达成度-${classId.value}.xlsx`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(classId.value, '个人达成度', 'xlsx'))
     ElMessage.success('个人达成度 Excel 已导出')
   } finally {
     exporting.value = false

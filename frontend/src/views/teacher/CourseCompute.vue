@@ -408,6 +408,7 @@ import {
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
 import * as echarts from 'echarts'
+import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -571,24 +572,17 @@ async function openPersonalDialog(type, item) {
 
 async function downloadPdf() {
   const blob = await downloadCoursePdf(classId.value)
-  downloadBlob(blob, `课程达成度报告_${classId.value}.pdf`)
+  downloadBlob(blob, buildClassFilename(classId.value, '课程达成度报告', 'pdf'))
 }
 
 async function downloadExcel() {
   const blob = await downloadCourseExcel(classId.value)
-  downloadBlob(blob, `课程达成度报告_${classId.value}.xlsx`)
+  downloadBlob(blob, buildClassFilename(classId.value, '课程达成度报告', 'xlsx'))
 }
 
 async function downloadPersonalAchievementExcel() {
   const blob = await downloadPersonalAchievements(classId.value)
-  downloadBlob(blob, `学生个人达成度_${classId.value}.xlsx`)
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = filename; a.click()
-  URL.revokeObjectURL(url)
+  downloadBlob(blob, buildClassFilename(classId.value, '学生个人达成度', 'xlsx'))
 }
 
 // Chart rendering functions

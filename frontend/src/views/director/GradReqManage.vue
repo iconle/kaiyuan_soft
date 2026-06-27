@@ -224,7 +224,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { listGradReqs, createGradReq, updateGradReq, deleteGradReq, addIndicator, updateIndicator, deleteIndicator, downloadIndicatorTemplate, importIndicators } from '../../api/director'
 import { listMajors } from '../../api/admin'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
-import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const requirements = ref([])
@@ -322,17 +322,10 @@ async function handleDownloadTemplate() {
   downloading.value = true
   try {
     const blob = await downloadIndicatorTemplate(currentMajorId.value)
-    // 后端业务异常以 HTTP 200 + JSON 返回，blob 需判别后展示错误
-    if (blob && blob.type && blob.type.includes('json')) {
-      let msg = '下载失败'
-      try { msg = JSON.parse(await blob.text()).message || msg } catch (_) {}
-      ElMessage.error(msg)
-      return
-    }
-    downloadBlob(blob, buildDatedFilename([currentMajorName.value, '指标点导入模板'], 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(blob), buildDatedFilename([currentMajorName.value, '指标点导入模板'], 'xlsx'))
     ElMessage.success('模板已开始下载')
-  } catch (_) {
-    /* 网络错误已由拦截器提示 */
+  } catch (error) {
+    showDownloadError(error)
   } finally {
     downloading.value = false
   }

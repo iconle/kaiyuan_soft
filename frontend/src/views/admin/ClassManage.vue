@@ -126,7 +126,7 @@ import {
 } from '../../api/admin'
 import { listStudents } from '../../api/academic'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
-import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const classes = ref([])
@@ -179,8 +179,10 @@ async function handleDownloadTemplate() {
   templateDownloading.value = true
   try {
     const blob = await downloadAdminClassTemplate()
-    downloadBlob(blob, buildDatedFilename(['行政班级', '导入模板'], 'xlsx'))
-  } catch { /* handled */ }
+    downloadBlob(await ensureDownloadBlob(blob), buildDatedFilename(['行政班级', '导入模板'], 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
+  }
   finally { templateDownloading.value = false }
 }
 

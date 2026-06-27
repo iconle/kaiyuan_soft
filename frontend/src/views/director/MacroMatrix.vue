@@ -108,7 +108,7 @@ import { getMacroMatrix, updateMacroMatrix, downloadMacroMatrixTemplate, importM
 import { listGradReqs } from '../../api/director'
 import { listMajors } from '../../api/admin'
 import { listCourses } from '../../api/academic'
-import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const majors = ref([])
@@ -243,17 +243,10 @@ async function handleDownloadTemplate() {
   downloading.value = true
   try {
     const blob = await downloadMacroMatrixTemplate(currentMajorId.value)
-    // 后端业务异常以 HTTP 200 + JSON 返回，blob 需判别后展示错误
-    if (blob && blob.type && blob.type.includes('json')) {
-      let msg = '下载失败'
-      try { msg = JSON.parse(await blob.text()).message || msg } catch (_) {}
-      ElMessage.error(msg)
-      return
-    }
-    downloadBlob(blob, buildDatedFilename([currentMajorName.value, '课程支撑矩阵导入模板'], 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(blob), buildDatedFilename([currentMajorName.value, '课程支撑矩阵导入模板'], 'xlsx'))
     ElMessage.success('模板已开始下载')
-  } catch (_) {
-    /* 网络错误已由拦截器提示 */
+  } catch (error) {
+    showDownloadError(error)
   } finally {
     downloading.value = false
   }

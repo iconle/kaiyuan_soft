@@ -138,7 +138,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { listStudents, createStudent, updateStudent, deleteStudent, listColleges, listMajors, listAdminClasses, downloadStudentTemplate, importStudentExcel } from '../../api/admin'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
-import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const students = ref([])
@@ -270,9 +270,9 @@ function handleExceed() {
 async function handleDownloadTemplate() {
   try {
     const res = await downloadStudentTemplate()
-    downloadBlob(new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), buildDatedFilename(['学生名单', '导入模板'], 'xlsx'))
-  } catch {
-    ElMessage.error('下载模板失败')
+    downloadBlob(await ensureDownloadBlob(res), buildDatedFilename(['学生名单', '导入模板'], 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
   }
 }
 

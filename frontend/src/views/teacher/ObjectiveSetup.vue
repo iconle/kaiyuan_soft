@@ -78,6 +78,7 @@ import {
   listObjectives, createObjective, updateObjective, deleteObjective,
   downloadObjectiveTemplate, importObjectives
 } from '../../api/teacher'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -133,9 +134,7 @@ async function downloadTemplate() {
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {
@@ -145,7 +144,7 @@ async function uploadFile({ file }) {
     ElMessage.success(`成功导入 ${res.data} 个课程目标`)
     loadObjectives()
   } catch (error) {
-    showImportError(error)
+    showExcelImportError(error)
   } finally { importing.value = false }
 }
 

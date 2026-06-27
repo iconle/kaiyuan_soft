@@ -1,3 +1,5 @@
+import { ElMessage } from 'element-plus'
+
 export function buildDatedFilename(parts, extension, date = new Date()) {
   const safeParts = parts
     .filter(part => part !== undefined && part !== null && String(part).trim() !== '')
@@ -29,6 +31,11 @@ export async function ensureDownloadBlob(blob) {
     throw new Error(payload?.message || payload?.msg || '模板下载失败，请稍后重试')
   }
   return blob
+}
+
+export function showDownloadError(error, fallback = '模板下载失败，请稍后重试') {
+  const message = error?.message || fallback
+  ElMessage.error(message)
 }
 
 export function sanitizeFilenamePart(value) {

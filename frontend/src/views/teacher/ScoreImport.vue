@@ -107,7 +107,7 @@ import {
 import StatusTag from '../../components/StatusTag.vue'
 import request from '../../utils/request'
 import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
-import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -237,8 +237,10 @@ async function saveAll() {
 async function downloadTemplate() {
   try {
     const assessmentName = currentAssessment.value?.name || '成绩'
-    downloadBlob(await downloadScoreTemplate(classId.value), buildClassFilename(classId.value, `${assessmentName}成绩模板`, 'xlsx'))
-  } catch { /* handled */ }
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(classId.value, `${assessmentName}成绩模板`, 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
+  }
 }
 
 function beforeUpload(file) {

@@ -183,6 +183,7 @@ import {
 } from '../../api/admin'
 import { listCourses, listSemesters } from '../../api/academic'
 import request from '../../utils/request'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
 
 const loading = ref(false)
 const classes = ref([])
@@ -256,10 +257,7 @@ async function handleImportFile(uploadFile) {
   if (importing.value) return
   const file = uploadFile?.raw
   if (!file) return
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    ElMessage.warning('仅支持上传 .xlsx 格式文件')
-    return
-  }
+  if (!validateExcelFile(file)) return
 
   importing.value = true
   try {
@@ -268,7 +266,7 @@ async function handleImportFile(uploadFile) {
     page.value = 1
     await loadData()
   } catch (error) {
-    showImportError(error)
+    showExcelImportError(error)
   } finally {
     importing.value = false
   }

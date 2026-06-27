@@ -137,6 +137,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { listStudents, createStudent, updateStudent, deleteStudent, listColleges, listMajors, listAdminClasses, downloadStudentTemplate, importStudentExcel } from '../../api/admin'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
 
 const loading = ref(false)
 const students = ref([])
@@ -253,6 +254,11 @@ function showImportDialog() {
 }
 
 function handleFileChange(file) {
+  if (!validateExcelFile(file.raw)) {
+    selectedFile.value = null
+    uploadRef.value?.clearFiles()
+    return
+  }
   selectedFile.value = file.raw
 }
 
@@ -281,6 +287,7 @@ async function handleImport() {
     ElMessage.warning('请选择要导入的文件')
     return
   }
+  if (!validateExcelFile(selectedFile.value)) return
 
   importing.value = true
   try {
@@ -289,8 +296,7 @@ async function handleImport() {
     importDialogVisible.value = false
     loadData()
   } catch (e) {
-    const errorMsg = e.response?.data?.msg || e.message || '导入失败'
-    ElMessage.error(errorMsg)
+    showExcelImportError(e)
   } finally {
     importing.value = false
   }

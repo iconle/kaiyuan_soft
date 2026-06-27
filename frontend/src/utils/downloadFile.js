@@ -23,12 +23,33 @@ export function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url)
 }
 
+export async function ensureDownloadBlob(blob) {
+  if (blob instanceof Blob && isJsonBlob(blob)) {
+    const payload = await parseBlobJson(blob)
+    throw new Error(payload?.message || payload?.msg || '模板下载失败，请稍后重试')
+  }
+  return blob
+}
+
 export function sanitizeFilenamePart(value) {
   return String(value)
     .trim()
     .replace(/[\\/:*?"<>|]/g, '')
     .replace(/\s+/g, '')
     .replace(/-+/g, '-')
+}
+
+function isJsonBlob(blob) {
+  const type = blob.type || ''
+  return type.includes('application/json') || type.includes('text/json')
+}
+
+async function parseBlobJson(blob) {
+  try {
+    return JSON.parse(await blob.text())
+  } catch {
+    return null
+  }
 }
 
 function formatDate(date) {

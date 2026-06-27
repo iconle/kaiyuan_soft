@@ -16,10 +16,18 @@
         <el-button type="primary" plain class="import-action-btn" :loading="importing" :disabled="status === 'LOCKED'">导入成绩</el-button>
       </el-upload>
       <StatusTag v-if="status" :status="status" />
+      <el-button
+        v-if="status === 'LOCKED' && !hasPendingRequest"
+        type="warning"
+        plain
+        @click="showRequestDialog"
+      >
+        申请成绩勘误
+      </el-button>
     </div>
 
     <el-alert v-if="status === 'LOCKED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
-      成绩单已锁定，无法修改。如需勘误请联系教务管理员解锁。
+      成绩单已锁定，无法继续导入或修改。如发现成绩录入有误，请点击「申请成绩勘误」提交说明，审批解锁后再修改。
     </el-alert>
     <el-alert v-else-if="!loading && assessments.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
       暂无考核点数据，请先在「考核点设置」中创建考核点。

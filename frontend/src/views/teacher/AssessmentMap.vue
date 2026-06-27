@@ -89,6 +89,7 @@ import {
   listAssessments, createAssessment, updateAssessment, deleteAssessment, listObjectives,
   downloadAssessmentTemplate, importAssessments
 } from '../../api/teacher'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -165,9 +166,7 @@ async function downloadTemplate() {
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {
@@ -177,9 +176,7 @@ async function uploadFile({ file }) {
     ElMessage.success(`成功导入 ${res.data} 个考核点`)
     loadData()
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
-      dangerouslyUseHTMLString: true, type: 'error'
-    })
+    showExcelImportError(error)
   } finally { importing.value = false }
 }
 

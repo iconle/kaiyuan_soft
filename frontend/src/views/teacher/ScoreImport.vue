@@ -106,6 +106,7 @@ import {
 } from '../../api/teacher'
 import StatusTag from '../../components/StatusTag.vue'
 import request from '../../utils/request'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -237,9 +238,7 @@ async function downloadTemplate() {
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {
@@ -255,9 +254,7 @@ async function uploadFile({ file }) {
       ElMessage.warning('成绩导入成功，但刷新数据失败，请手动刷新页面')
     })
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.response?.data?.message || error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
-      dangerouslyUseHTMLString: true, type: 'error'
-    })
+    showExcelImportError(error)
   } finally { importing.value = false }
 }
 

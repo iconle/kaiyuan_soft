@@ -223,6 +223,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listGradReqs, createGradReq, updateGradReq, deleteGradReq, addIndicator, updateIndicator, deleteIndicator, downloadIndicatorTemplate, importIndicators } from '../../api/director'
 import { listMajors } from '../../api/admin'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
 
 const loading = ref(false)
 const requirements = ref([])
@@ -343,16 +344,7 @@ async function handleDownloadTemplate() {
 }
 
 function beforeUpload(file) {
-  const ok = !!file.name && file.name.toLowerCase().endsWith('.xlsx')
-  if (!ok) ElMessage.error('仅支持 .xlsx 格式文件，请先下载标准模板')
-  return ok
-}
-
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+  return validateExcelFile(file)
 }
 
 async function customUpload(opt) {
@@ -364,13 +356,7 @@ async function customUpload(opt) {
     importDialogVisible.value = false
     loadData()
   } catch (e) {
-    const msg = e && e.message ? e.message : '导入失败'
-    // 后端逐行列出问题，换行展示，便于用户对照修改
-    ElMessageBox.alert(escapeHtml(msg).replace(/\n/g, '<br/>'), '导入失败', {
-      dangerouslyUseHTMLString: true,
-      confirmButtonText: '知道了',
-      type: 'error'
-    })
+    showExcelImportError(e)
   } finally {
     importing.value = false
   }

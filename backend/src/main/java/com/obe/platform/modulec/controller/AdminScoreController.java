@@ -60,6 +60,9 @@ public class AdminScoreController {
             item.put("lockedBy", s.getLockedBy());
             TeachingClass tc = teachingClassMapper.selectById(s.getClassId());
             item.put("className", tc != null ? tc.getClassName() : String.valueOf(s.getClassId()));
+            item.put("grade", tc != null ? tc.getGrade() : null);
+            item.put("courseId", tc != null ? tc.getCourseId() : null);
+            item.put("semesterId", tc != null ? tc.getSemesterId() : null);
             result.add(item);
         }
         return Result.ok(result);

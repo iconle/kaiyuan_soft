@@ -159,6 +159,9 @@
               <div class="achievement-name">
                 {{ item.objectiveNo }}
               </div>
+              <el-tooltip :content="item.description" placement="top" :show-after="300" effect="light">
+                <span class="achievement-desc">{{ item.description }}</span>
+              </el-tooltip>
 
               <div class="achievement-value">
                 {{ formatAchievement(item.achievement) }}
@@ -239,6 +242,9 @@
               <div class="achievement-name">
                 {{ item.indicatorNo }}
               </div>
+              <el-tooltip :content="item.description" placement="top" :show-after="300" effect="light">
+                <span class="achievement-desc">{{ item.description }}</span>
+              </el-tooltip>
 
               <div class="achievement-value">
                 {{ formatAchievement(item.achievement) }}
@@ -362,9 +368,16 @@
 
     <el-dialog
       v-model="personalDialogVisible"
-      :title="personalDialogTitle"
-      width="720px"
+      width="760px"
     >
+      <template #header>
+        <div>
+          <div style="font-size:16px;font-weight:700">{{ personalDialogTitle }}</div>
+          <div v-if="personalDialogDesc" style="margin-top:6px;font-size:13px;color:#606266;line-height:1.5">
+            {{ personalDialogDesc }}
+          </div>
+        </div>
+      </template>
       <el-table
         v-loading="personalLoading"
         :data="personalRows"
@@ -419,7 +432,7 @@ const requesting = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
 const myRequests = ref([])
-const results = reactive({ objectiveAchievements: {}, courseAchievements: {}, calcTime: null, objectiveLabels: {}, indicatorLabels: {} })
+const results = reactive({ objectiveAchievements: {}, courseAchievements: {}, calcTime: null, objectiveLabels: {}, indicatorLabels: {}, objectiveContents: {}, indicatorContents: {} })
 
 // Chart related refs
 const objectiveChartRef = ref(null)
@@ -431,6 +444,7 @@ const indicatorChartInstance = ref(null)
 const sortAsc = ref(false)
 const personalDialogVisible = ref(false)
 const personalDialogTitle = ref('')
+const personalDialogDesc = ref('')
 const personalLoading = ref(false)
 const personalRows = ref([])
 
@@ -483,20 +497,31 @@ const hasResults = computed(() =>
 
 const objectiveData = computed(() => {
   const labels = results.objectiveLabels || {}
+  const contents = results.objectiveContents || {}
   return Object.entries(results.objectiveAchievements || {}).map(([id, val]) => ({
     objectiveId: id,
     objectiveNo: labels[id] || `目标${id}`,
-    achievement: val
+    achievement: val,
+    description: contents[id] || ''
   }))
 })
 
 const indicatorData = computed(() => {
   const labels = results.indicatorLabels || {}
-  return Object.entries(results.courseAchievements || {}).map(([id, val]) => ({
+  const contents = results.indicatorContents || {}
+  const data = Object.entries(results.courseAchievements || {}).map(([id, val]) => ({
     indicatorId: id,
     indicatorNo: labels[id] || `指标点${id}`,
-    achievement: val
+    achievement: val,
+    description: contents[id] || ''
   }))
+  data.sort((a, b) => {
+    const [a1, a2] = (a.indicatorNo || '').split('-').map(Number)
+    const [b1, b2] = (b.indicatorNo || '').split('-').map(Number)
+    if (!isNaN(a1) && !isNaN(b1)) return a1 - b1 || (a2 || 0) - (b2 || 0)
+    return (a.indicatorNo || '').localeCompare(b.indicatorNo || '')
+  })
+  return data
 })
 function formatAchievement(value) {
   const num = Number(value)
@@ -561,6 +586,7 @@ async function openPersonalDialog(type, item) {
   personalDialogTitle.value = type === 'objective'
     ? `${item.objectiveNo} 学生个人达成度`
     : `${item.indicatorNo} 学生个人达成度`
+  personalDialogDesc.value = item.description || ''
   try {
     const res = type === 'objective'
       ? await listObjectivePersonalAchievements(classId.value, item.objectiveId)
@@ -589,13 +615,6 @@ async function downloadPersonalAchievementExcel() {
     const blob = await downloadPersonalAchievements(classId.value)
     downloadBlob(blob, `学生个人达成度_${classId.value}.xlsx`)
   } catch { /* 拦截器已提示错误 */ }
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = filename; a.click()
-  URL.revokeObjectURL(url)
 }
 
 // Chart rendering functions
@@ -1199,6 +1218,17 @@ const indicatorStats = computed(() => {
   font-size: 15px;
   font-weight: 700;
   color: #303133;
+}
+
+.achievement-desc {
+  flex: 1;
+  font-size: 12px;
+  color: #909399;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+  cursor: default;
 }
 
 .achievement-value {

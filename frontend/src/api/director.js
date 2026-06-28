@@ -77,21 +77,21 @@ export function importMacroMatrix(majorId, file) {
 }
 
 // 全局计算
-export function getDashboard(majorId) {
-  return request.get('/api/global/dashboard', { params: { majorId } })
+export function getDashboard(majorId, grade) {
+  return request.get('/api/global/dashboard', { params: { majorId, grade } })
 }
 
-export function triggerGlobalCompute(majorId, semesterId, operator) {
-  return request.post('/api/global/compute', null, { params: { majorId, semesterId, operator } })
+export function triggerGlobalCompute(majorId, semesterId, grade, operator) {
+  return request.post('/api/global/compute', null, { params: { majorId, semesterId, grade, operator } })
 }
 
-export function getGlobalResults(majorId, semesterId) {
-  return request.get('/api/global/results', { params: { majorId, semesterId } })
+export function getGlobalResults(majorId, semesterId, grade) {
+  return request.get('/api/global/results', { params: { majorId, semesterId, grade } })
 }
 
-export function listMajorPersonalAchievements(majorId, semesterId, indicatorId) {
+export function listMajorPersonalAchievements(majorId, semesterId, grade, indicatorId) {
   return request.get('/api/global/personal-achievements', {
-    params: { majorId, semesterId, indicatorId }
+    params: { majorId, semesterId, grade, indicatorId }
   })
 }
 

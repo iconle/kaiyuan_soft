@@ -6,6 +6,10 @@
         @change="onMajorChange">
         <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
       </el-select>
+      <el-select v-model="selectedGrade" placeholder="目标年级" style="width:160px"
+        clearable @change="onGradeChange">
+        <el-option v-for="g in gradeOptions" :key="g" :label="`${g} 级`" :value="g" />
+      </el-select>
     </div>
 
     <el-alert v-if="dashboard.allReady" type="success" show-icon :closable="false" style="margin-bottom:16px">
@@ -23,9 +27,9 @@
         <div style="text-align:center; color:var(--text-secondary); margin-top:8px">已锁定课程 / 总课程数</div>
       </el-card>
       <el-card header="操作" style="flex:1; min-width:300px">
-        <el-button type="primary" size="large" :disabled="!dashboard.allReady"
+        <el-button type="primary" size="large" :disabled="!dashboard.allReady || !selectedGrade"
           :loading="computing" @click="handleCompute" style="width:100%">
-          {{ computing ? '计算中...' : '执行专业级计算' }}
+          {{ computing ? '计算中...' : selectedGrade ? '执行专业级计算' : '请先选择目标年级' }}
         </el-button>
       </el-card>
     </div>
@@ -51,39 +55,53 @@
         <el-table-column
           prop="indicatorNo"
           label="指标点"
-          width="140"
+          width="90"
           align="center"
           class-name="index-column"
         />
 
         <el-table-column
-          prop="achievement"
+          label="指标点描述"
+          min-width="280"
+          class-name="desc-column"
+        >
+          <template #default="{ row }">
+            <el-tooltip :content="row.description" placement="top" :show-after="400" effect="light">
+              <span class="desc-text">{{ row.description }}</span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+
+        <el-table-column
           label="达成度 G_k"
           min-width="180"
           align="center"
           class-name="gk-column"
         >
           <template #default="{ row }">
-            <span :class="['gk-pill', `is-${getAchievementType(row.achievement)}`]">
+            <span v-if="row.achievement != null" :class="['gk-pill', `is-${getAchievementType(row.achievement)}`]">
               {{ formatAchievement(row.achievement) }}
             </span>
+            <span v-else class="gk-pill is-empty">未计算</span>
           </template>
         </el-table-column>
 
         <el-table-column
-          prop="status"
           label="状态"
           width="140"
           align="center"
           class-name="status-column"
         >
           <template #default="{ row }">
-            <span
-              :class="['status-pill', `is-${getAchievementType(row.achievement)}`]"
-              :style="{ color: getStatusColor(row.achievement) }"
-            >
-              {{ getStatusText(row.achievement) }}
-            </span>
+            <template v-if="row.achievement != null">
+              <span
+                :class="['status-pill', `is-${getAchievementType(row.achievement)}`]"
+                :style="{ color: getStatusColor(row.achievement) }"
+              >
+                {{ getStatusText(row.achievement) }}
+              </span>
+            </template>
+            <span v-else class="status-pill is-empty">—</span>
           </template>
         </el-table-column>
 
@@ -95,6 +113,7 @@
         >
           <template #default="{ row }">
             <el-button
+              v-if="row.achievement != null"
               size="small"
               type="primary"
               link
@@ -102,6 +121,7 @@
             >
               查看
             </el-button>
+            <span v-else style="color:#c0c4cc;font-size:12px">—</span>
           </template>
         </el-table-column>
       </el-table>
@@ -161,9 +181,16 @@
 
     <el-dialog
       v-model="personalDialogVisible"
-      :title="personalDialogTitle"
-      width="720px"
+      width="760px"
     >
+      <template #header>
+        <div>
+          <div style="font-size:16px;font-weight:700">{{ personalDialogTitle }}</div>
+          <div v-if="personalDialogDesc" style="margin-top:6px;font-size:13px;color:#606266;line-height:1.5">
+            {{ personalDialogDesc }}
+          </div>
+        </div>
+      </template>
       <el-table
         v-loading="personalLoading"
         :data="personalRows"
@@ -210,14 +237,18 @@ import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
 const userStore = useUserStore()
 const majors = ref([])
 const selectedMajorId = ref(null)
+const selectedGrade = ref(null)
+const gradeOptions = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
 const computing = ref(false)
 const chartRef = ref(null)
 const indicatorLabels = ref({})
+const indicatorContents = ref({})
 const chartType = ref('radar')
 const chartInstance = ref(null)
 const sortAsc = ref(false)
 const personalDialogVisible = ref(false)
 const personalDialogTitle = ref('')
+const personalDialogDesc = ref('')
 const personalLoading = ref(false)
 const personalRows = ref([])
 
@@ -228,6 +259,7 @@ const dashboard = reactive({
 
 const results = ref({})
 const calcTime = ref('')
+const computedGrade = ref(null)
 const selectedMajorName = computed(() => majors.value.find(item => item.id === selectedMajorId.value)?.name || `专业${selectedMajorId.value}`)
 
 onMounted(async () => {
@@ -238,7 +270,6 @@ onMounted(async () => {
       selectedMajorId.value = majors.value[0].id
       loadDashboard()
       loadIndicatorLabels()
-      loadResults()
     }
   } catch { /* handled */ }
 })
@@ -249,6 +280,7 @@ async function loadIndicatorLabels() {
     const allIndicators = (res.data || []).flatMap(r => r.indicators || [])
     for (const ind of allIndicators) {
       indicatorLabels.value[ind.id] = ind.indicatorNo
+      indicatorContents.value[ind.id] = ind.content || ''
     }
   } catch { /* ignore */ }
 }
@@ -256,7 +288,7 @@ async function loadIndicatorLabels() {
 async function loadResults() {
   if (!selectedMajorId.value) return
   try {
-    const res = await getGlobalResults(selectedMajorId.value, 1)
+    const res = await getGlobalResults(selectedMajorId.value, 1, selectedGrade.value)
     results.value = res.data || {}
     if (Object.keys(results.value).length > 0) {
       await nextTick()
@@ -268,6 +300,7 @@ async function loadResults() {
 function onMajorChange() {
   results.value = {}
   calcTime.value = ''
+  computedGrade.value = null
   chartType.value = 'radar'
   sortAsc.value = false
   if (chartInstance.value) {
@@ -276,25 +309,50 @@ function onMajorChange() {
   }
   loadDashboard()
   loadIndicatorLabels()
-  loadResults()
+}
+
+function onGradeChange() {
+  results.value = {}
+  calcTime.value = ''
+  computedGrade.value = null
+  loadDashboard()
+  if (selectedGrade.value) {
+    loadResults().then(() => {
+      if (Object.keys(results.value).length > 0) {
+        computedGrade.value = selectedGrade.value
+      }
+    })
+  }
 }
 
 async function loadDashboard() {
   if (!selectedMajorId.value) return
   try {
-    const res = await getDashboard(selectedMajorId.value)
+    const res = await getDashboard(selectedMajorId.value, selectedGrade.value)
     Object.assign(dashboard, res.data || {})
   } catch { /* handled */ }
 }
 
-const hasResults = computed(() => Object.keys(results.value).length > 0)
+const hasResults = computed(() =>
+  Object.keys(results.value).length > 0 && computedGrade.value != null && computedGrade.value === selectedGrade.value
+)
+
+const allIndicatorIds = computed(() => Object.keys(indicatorLabels.value))
 
 const resultData = computed(() => {
-  return Object.entries(results.value).map(([id, val]) => ({
+  const data = allIndicatorIds.value.map(id => ({
     indicatorId: id,
     indicatorNo: indicatorLabels.value[id] || id,
-    achievement: val
+    achievement: results.value[id] != null ? results.value[id] : null,
+    description: indicatorContents.value[id] || ''
   }))
+  data.sort((a, b) => {
+    const [a1, a2] = (a.indicatorNo || '').split('-').map(Number)
+    const [b1, b2] = (b.indicatorNo || '').split('-').map(Number)
+    if (!isNaN(a1) && !isNaN(b1)) return a1 - b1 || (a2 || 0) - (b2 || 0)
+    return (a.indicatorNo || '').localeCompare(b.indicatorNo || '')
+  })
+  return data
 })
 
 // 统计数据
@@ -314,9 +372,10 @@ async function handleCompute() {
   computing.value = true
   try {
     const userId = userStore.userId || 1
-    const res = await triggerGlobalCompute(selectedMajorId.value, 1, userId)
+    const res = await triggerGlobalCompute(selectedMajorId.value, 1, selectedGrade.value, userId)
     results.value = res.data?.achievements || {}
     calcTime.value = res.data?.calcTime || ''
+    computedGrade.value = selectedGrade.value
     ElMessage.success('专业级计算完成')
     await nextTick()
     renderCurrentChart()
@@ -543,9 +602,10 @@ async function openMajorPersonalDialog(row) {
   personalDialogVisible.value = true
   personalLoading.value = true
   personalDialogTitle.value = `${row.indicatorNo} 学生个人达成度`
+  personalDialogDesc.value = row.description || ''
   personalRows.value = []
   try {
-    const res = await listMajorPersonalAchievements(selectedMajorId.value, 1, row.indicatorId)
+    const res = await listMajorPersonalAchievements(selectedMajorId.value, 1, selectedGrade.value, row.indicatorId)
     personalRows.value = res.data || []
   } catch { /* handled */ }
   finally { personalLoading.value = false }
@@ -640,6 +700,22 @@ async function downloadExcel() {
   background-color: #fbf8ff;
 }
 
+:deep(.desc-column .cell) {
+  padding: 4px 8px;
+}
+
+.desc-text {
+  display: block;
+  font-size: 12px;
+  color: #606266;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  cursor: default;
+}
+
 :deep(.index-column .cell),
 :deep(.gk-column .cell),
 :deep(.status-column .cell),
@@ -678,6 +754,13 @@ async function downloadExcel() {
   color: #f56c6c;
   background: #fff1f0;
   border: 1px solid #f8c9c9;
+}
+
+.gk-pill.is-empty,
+.status-pill.is-empty {
+  color: #c0c4cc;
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
 }
 
 .status-pill.is-success {

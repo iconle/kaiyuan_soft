@@ -53,8 +53,9 @@ public class TeachingClassController {
             @RequestParam(defaultValue = "1") long page,
             @RequestParam(defaultValue = "10") long size,
             @RequestParam(required = false) Long courseId,
-            @RequestParam(required = false) Long semesterId) {
-        return Result.ok(dictService.listClasses(page, size, courseId, semesterId));
+            @RequestParam(required = false) Long semesterId,
+            @RequestParam(required = false) Integer grade) {
+        return Result.ok(dictService.listClasses(page, size, courseId, semesterId, grade));
     }
 
     @PostMapping

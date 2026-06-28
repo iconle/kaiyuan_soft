@@ -23,25 +23,29 @@ public class GlobalCalcController {
     /** Get dashboard: readiness status of all supporting courses */
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('DIRECTOR','ACADEMIC')")
-    public Result<GlobalCalcService.DashboardData> dashboard(@RequestParam Long majorId) {
-        return Result.ok(globalCalcService.getDashboard(majorId));
+    public Result<GlobalCalcService.DashboardData> dashboard(@RequestParam Long majorId,
+                                                              @RequestParam(required = false) Long semesterId,
+                                                              @RequestParam(required = false) Integer grade) {
+        return Result.ok(globalCalcService.getDashboard(majorId, semesterId, grade));
     }
 
     /** Trigger major-level calculation (Phase 2) */
     @PostMapping("/compute")
     @PreAuthorize("hasAnyRole('DIRECTOR','ACADEMIC')")
     public Result<GlobalCalcService.MajorCalcResult> compute(@RequestParam Long majorId,
-                                                              @RequestParam Long semesterId,
+                                                              @RequestParam(required = false) Long semesterId,
+                                                              @RequestParam(required = false) Integer grade,
                                                               @RequestParam Long operator) {
-        return Result.ok(globalCalcService.compute(majorId, semesterId, operator));
+        return Result.ok(globalCalcService.compute(majorId, semesterId, grade, operator));
     }
 
     /** Get existing major-level results */
     @GetMapping("/results")
     @PreAuthorize("hasAnyRole('DIRECTOR','ACADEMIC')")
     public Result<Map<Long, java.math.BigDecimal>> getResults(@RequestParam Long majorId,
-                                                               @RequestParam Long semesterId) {
-        return Result.ok(globalCalcService.getResults(majorId, semesterId));
+                                                               @RequestParam Long semesterId,
+                                                               @RequestParam(required = false) Integer grade) {
+        return Result.ok(globalCalcService.getResults(majorId, semesterId, grade));
     }
 
     @GetMapping("/personal-achievements")

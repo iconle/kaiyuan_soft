@@ -9,6 +9,9 @@
         <el-select v-model="selectedMajorId" placeholder="选择专业" @change="loadData" class="major-select">
           <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
         </el-select>
+        <el-select v-model="selectedGrade" placeholder="目标年级" clearable @change="loadData" style="width:150px">
+          <el-option v-for="g in gradeOptions" :key="g" :label="`${g} 级`" :value="g" />
+        </el-select>
       </div>
     </div>
 
@@ -176,6 +179,8 @@ const chartColors = {
 
 const majors = ref([])
 const selectedMajorId = ref(null)
+const selectedGrade = ref(null)
+const gradeOptions = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
 const loading = ref(false)
 const lineChartRef = ref(null)
 const barChartRef = ref(null)
@@ -296,7 +301,7 @@ async function loadData() {
   if (!selectedMajorId.value) return
   loading.value = true
   try {
-    const res = await props.loadDashboard(selectedMajorId.value)
+    const res = await props.loadDashboard(selectedMajorId.value, selectedGrade.value)
     Object.assign(dashboard, res.data || {})
     await nextTick()
     renderCharts()

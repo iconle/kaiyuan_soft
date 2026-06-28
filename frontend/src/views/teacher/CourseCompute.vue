@@ -570,18 +570,24 @@ async function openPersonalDialog(type, item) {
 }
 
 async function downloadPdf() {
-  const blob = await downloadCoursePdf(classId.value)
-  downloadBlob(blob, `课程达成度报告_${classId.value}.pdf`)
+  try {
+    const blob = await downloadCoursePdf(classId.value)
+    downloadBlob(blob, `课程达成度报告_${classId.value}.pdf`)
+  } catch { /* 拦截器已提示错误 */ }
 }
 
 async function downloadExcel() {
-  const blob = await downloadCourseExcel(classId.value)
-  downloadBlob(blob, `课程达成度报告_${classId.value}.xlsx`)
+  try {
+    const blob = await downloadCourseExcel(classId.value)
+    downloadBlob(blob, `课程达成度报告_${classId.value}.xlsx`)
+  } catch { /* 拦截器已提示错误 */ }
 }
 
 async function downloadPersonalAchievementExcel() {
-  const blob = await downloadPersonalAchievements(classId.value)
-  downloadBlob(blob, `学生个人达成度_${classId.value}.xlsx`)
+  try {
+    const blob = await downloadPersonalAchievements(classId.value)
+    downloadBlob(blob, `学生个人达成度_${classId.value}.xlsx`)
+  } catch { /* 拦截器已提示错误 */ }
 }
 
 function downloadBlob(blob, filename) {

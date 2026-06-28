@@ -15,10 +15,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ObjectiveService {
+
+    /** 维度 -> 编号前缀。知识=1, 能力=2, 价值=3。导入与新增共用，保证编号规则一致。 */
+    public static final Map<String, String> DIMENSION_PREFIX = Map.of(
+            "知识", "1", "能力", "2", "价值", "3");
+
+    /** 返回维度对应的编号前缀；维度非法或为空时返回 null。 */
+    public static String dimensionPrefix(String dimension) {
+        if (dimension == null) return null;
+        return DIMENSION_PREFIX.get(dimension.trim());
+    }
 
     private final CourseOutlineMapper outlineMapper;
     private final CourseObjectiveMapper objectiveMapper;
@@ -53,6 +64,20 @@ public class ObjectiveService {
             outlineMapper.insert(outline);
         }
         objective.setOutlineId(outline.getId());
+        if (objective.getDimension() != null) {
+            objective.setDimension(objective.getDimension().trim());
+        }
+        if (objective.getObjNo() == null || objective.getObjNo().isBlank()) {
+            String prefix = dimensionPrefix(objective.getDimension());
+            if (prefix == null) {
+                throw new BizException("维度必须为：知识、能力、价值");
+            }
+            long count = objectiveMapper.selectCount(
+                    new LambdaQueryWrapper<CourseObjective>()
+                            .eq(CourseObjective::getOutlineId, outline.getId())
+                            .eq(CourseObjective::getDimension, objective.getDimension()));
+            objective.setObjNo(prefix + "-" + (count + 1));
+        }
         objectiveMapper.insert(objective);
         return objective;
     }

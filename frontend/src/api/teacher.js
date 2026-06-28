@@ -40,6 +40,16 @@ export function getSupportedIndicators(classId) {
   return request.get(`/api/classes/${classId}/weights/supported-indicators`)
 }
 
+export function downloadWeightTemplate(classId) {
+  return request.get(`/api/classes/${classId}/weights/import-template`, {
+    responseType: 'blob'
+  })
+}
+
+export function importWeights(classId, file) {
+  return uploadImport(`/api/classes/${classId}/weights/import`, file)
+}
+
 // 考核点
 export function listAssessments(classId) {
   return request.get(`/api/classes/${classId}/assessments`)

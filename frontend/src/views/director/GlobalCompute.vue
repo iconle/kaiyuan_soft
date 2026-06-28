@@ -205,6 +205,7 @@ import { listMajors } from '../../api/admin'
 import { listGradReqs } from '../../api/director'
 import { useUserStore } from '../../stores/user'
 import * as echarts from 'echarts'
+import { buildDatedFilename, downloadBlob } from '../../utils/downloadFile'
 
 const userStore = useUserStore()
 const majors = ref([])
@@ -227,6 +228,7 @@ const dashboard = reactive({
 
 const results = ref({})
 const calcTime = ref('')
+const selectedMajorName = computed(() => majors.value.find(item => item.id === selectedMajorId.value)?.name || `专业${selectedMajorId.value}`)
 
 onMounted(async () => {
   try {
@@ -569,13 +571,7 @@ function getBarColor(value) {
 
 async function downloadExcel() {
   if (!selectedMajorId.value) return
-  const blob = await downloadMajorExcel(selectedMajorId.value, 1)
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `专业级达成度台账.xlsx`
-  a.click()
-  URL.revokeObjectURL(url)
+  downloadBlob(await downloadMajorExcel(selectedMajorId.value, 1), buildDatedFilename([selectedMajorName.value, '专业级达成度台账'], 'xlsx'))
 }
 </script>
 

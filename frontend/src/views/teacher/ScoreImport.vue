@@ -16,10 +16,27 @@
         <el-button type="primary" plain class="import-action-btn" :loading="importing" :disabled="status === 'LOCKED'">导入成绩</el-button>
       </el-upload>
       <StatusTag v-if="status" :status="status" />
+      <el-button
+        v-if="status === 'LOCKED' && !hasPendingRequest"
+        type="warning"
+        plain
+        @click="showRequestDialog"
+      >
+        申请成绩勘误
+      </el-button>
     </div>
 
     <el-alert v-if="status === 'LOCKED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
-      成绩单已锁定，无法修改。如需勘误请联系教务管理员解锁。
+      成绩单已锁定，无法继续导入或修改。如发现成绩录入有误，请点击「申请成绩勘误」提交说明，审批解锁后再修改。
+    </el-alert>
+    <el-alert
+      v-if="status === 'LOCKED' && hasPendingRequest"
+      type="info"
+      show-icon
+      :closable="false"
+      style="margin-bottom:16px"
+    >
+      已提交勘误申请，当前等待审核。审核前可在下方申请记录中撤销后重新提交。
     </el-alert>
     <el-alert v-else-if="!loading && assessments.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
       暂无考核点数据，请先在「考核点设置」中创建考核点。
@@ -27,6 +44,61 @@
     <el-alert v-else-if="!loading && assessments.length > 0 && selectedAssessmentId && questions.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
+
+    <el-dialog v-model="requestDialogVisible" title="提交成绩勘误申请" width="500px">
+      <el-form label-width="80px">
+        <el-form-item label="勘误原因">
+          <el-input
+            v-model="unlockReason"
+            type="textarea"
+            :rows="4"
+            maxlength="200"
+            show-word-limit
+            placeholder="请说明需要修改的学生、考核点或题目，以及申请解锁的原因"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="requestDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="requesting" @click="handleRequestUnlock">提交申请</el-button>
+      </template>
+    </el-dialog>
+
+    <el-card
+      v-if="myRequests.length > 0"
+      class="unlock-request-card"
+      shadow="never"
+    >
+      <template #header>
+        <span>我的勘误申请</span>
+      </template>
+      <el-table :data="myRequests" border stripe size="small">
+        <el-table-column prop="id" label="工单ID" width="80" align="center" />
+        <el-table-column prop="reason" label="勘误原因" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="createdAt" label="提交时间" width="190" align="center" />
+        <el-table-column label="状态" width="180" align="center">
+          <template #default="{ row }">
+            <el-tag :type="unlockStatusTagType(row.status)" size="small">
+              {{ unlockStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" align="center">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status === 'PENDING'"
+              type="danger"
+              size="small"
+              plain
+              @click="handleCancelRequest(row)"
+            >
+              撤销
+            </el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
     <div v-if="selectedAssessmentId" class="content-card">
       <el-empty v-if="!loading && scoreRows.length === 0" description="暂无学生数据，请先为学生选课" />
@@ -102,10 +174,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores
+  getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores,
+  requestScoreUnlock, listMyUnlockRequests, cancelUnlockRequest
 } from '../../api/teacher'
 import StatusTag from '../../components/StatusTag.vue'
 import request from '../../utils/request'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -118,12 +193,18 @@ const questions = ref([])
 const scoreRows = ref([])
 const edits = ref({})
 const importing = ref(false)
+const requesting = ref(false)
+const requestDialogVisible = ref(false)
+const unlockReason = ref('')
+const myRequests = ref([])
+const hasPendingRequest = computed(() => myRequests.value.some(item => item.status === 'PENDING'))
 
 onMounted(async () => { if (classId.value) await loadAll() })
 
 async function loadAll() {
   loading.value = true
   try {
+    myRequests.value = []
     const [scoreRes, statusRes, assessRes, objRes] = await Promise.all([
       getScores(classId.value).catch(() => ({ data: { rows: [], status: '' } })),
       getScoreStatus(classId.value).catch(() => ({ data: { status: '' } })),
@@ -136,9 +217,19 @@ async function loadAll() {
     status.value = statusRes.data?.status || scoreRes.data?.status || ''
     if (assessments.value.length > 0 && !selectedAssessmentId.value) selectedAssessmentId.value = assessments.value[0].id
     if (selectedAssessmentId.value) await loadQuestions()
+    if (status.value === 'LOCKED') await loadMyRequests()
   } catch (err) {
     ElMessage.error('加载数据失败，请刷新页面重试')
   } finally { loading.value = false }
+}
+
+async function loadMyRequests() {
+  try {
+    const res = await listMyUnlockRequests(classId.value)
+    myRequests.value = res.data || []
+  } catch {
+    myRequests.value = []
+  }
 }
 
 async function loadQuestions() {
@@ -233,13 +324,60 @@ async function saveAll() {
 }
 
 async function downloadTemplate() {
-  try { const blob = await downloadScoreTemplate(classId.value); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = '成绩模板.xlsx'; a.click(); URL.revokeObjectURL(url) } catch { /* handled */ }
+  try {
+    const assessmentName = currentAssessment.value?.name || '成绩'
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(classId.value, `${assessmentName}成绩模板`, 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
+  }
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
+}
+
+function showRequestDialog() {
+  unlockReason.value = ''
+  requestDialogVisible.value = true
+}
+
+async function handleRequestUnlock() {
+  const reason = unlockReason.value.trim()
+  if (!reason) {
+    ElMessage.warning('请填写勘误原因')
+    return
+  }
+  requesting.value = true
+  try {
+    await requestScoreUnlock(classId.value, reason)
+    ElMessage.success('勘误申请已提交，请等待审核')
+    requestDialogVisible.value = false
+    await loadMyRequests()
+  } catch { /* handled */ }
+  finally { requesting.value = false }
+}
+
+function unlockStatusTagType(status) {
+  return status === 'PENDING' ? 'warning' : status === 'UNLOCKED' ? 'success' : status === 'APPROVED' ? '' : 'danger'
+}
+
+function unlockStatusLabel(status) {
+  const labels = {
+    PENDING: '待审核',
+    APPROVED: '已同意，待解锁',
+    REJECTED: '已拒绝',
+    UNLOCKED: '已解锁'
+  }
+  return labels[status] || status || '-'
+}
+
+async function handleCancelRequest(row) {
+  await ElMessageBox.confirm('确定撤销该勘误申请？', '确认撤销', { type: 'warning' })
+  try {
+    await cancelUnlockRequest(classId.value, row.id)
+    ElMessage.success('勘误申请已撤销')
+    await loadMyRequests()
+  } catch { /* handled */ }
 }
 
 async function uploadFile({ file }) {
@@ -255,9 +393,7 @@ async function uploadFile({ file }) {
       ElMessage.warning('成绩导入成功，但刷新数据失败，请手动刷新页面')
     })
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.response?.data?.message || error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
-      dangerouslyUseHTMLString: true, type: 'error'
-    })
+    showExcelImportError(error)
   } finally { importing.value = false }
 }
 
@@ -271,6 +407,21 @@ function escapeHtml(value) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+
+.unlock-request-card {
+  margin-bottom: var(--space-4);
+  border-color: rgba(128, 107, 191, 0.18);
+}
+
+:deep(.unlock-request-card .el-card__header) {
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+:deep(.unlock-request-card .el-card__body) {
+  padding: 12px 16px 16px;
+}
 
 .import-action-btn {
   color: #ffffff !important;

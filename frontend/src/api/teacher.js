@@ -118,6 +118,19 @@ export function getScoreStatus(classId) {
   return request.get(`/api/classes/${classId}/score-status`)
 }
 
+// 成绩勘误申请
+export function requestScoreUnlock(classId, reason) {
+  return request.post(`/api/classes/${classId}/request-unlock`, { reason })
+}
+
+export function listMyUnlockRequests(classId) {
+  return request.get(`/api/classes/${classId}/my-unlock-requests`)
+}
+
+export function cancelUnlockRequest(classId, requestId) {
+  return request.post(`/api/classes/${classId}/cancel-unlock-request/${requestId}`)
+}
+
 // 课程级计算
 export function triggerCourseCompute(classId, operator) {
   return request.post(`/api/classes/${classId}/compute?operator=${operator}`)

@@ -89,6 +89,8 @@ import {
   listAssessments, createAssessment, updateAssessment, deleteAssessment, listObjectives,
   downloadAssessmentTemplate, importAssessments
 } from '../../api/teacher'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId)
@@ -160,14 +162,14 @@ async function handleDelete(row) {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    saveBlob(await downloadAssessmentTemplate(classId.value), '考核点导入模板.xlsx')
+    downloadBlob(await ensureDownloadBlob(await downloadAssessmentTemplate(classId.value)), buildClassFilename(classId.value, '考核点导入模板', 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
   } finally { downloading.value = false }
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {
@@ -177,19 +179,8 @@ async function uploadFile({ file }) {
     ElMessage.success(`成功导入 ${res.data} 个考核点`)
     loadData()
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
-      dangerouslyUseHTMLString: true, type: 'error'
-    })
+    showExcelImportError(error)
   } finally { importing.value = false }
-}
-
-function saveBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
 }
 
 function escapeHtml(value) {

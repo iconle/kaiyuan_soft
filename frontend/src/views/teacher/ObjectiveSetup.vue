@@ -75,6 +75,8 @@ import {
   listObjectives, createObjective, updateObjective, deleteObjective,
   downloadObjectiveTemplate, importObjectives
 } from '../../api/teacher'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -127,14 +129,14 @@ async function handleDelete(row) {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    saveBlob(await downloadObjectiveTemplate(classId.value), '课程目标导入模板.xlsx')
+    downloadBlob(await ensureDownloadBlob(await downloadObjectiveTemplate(classId.value)), buildClassFilename(classId.value, '课程目标导入模板', 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
   } finally { downloading.value = false }
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {
@@ -144,17 +146,8 @@ async function uploadFile({ file }) {
     ElMessage.success(`成功导入 ${res.data} 个课程目标`)
     loadObjectives()
   } catch (error) {
-    showImportError(error)
+    showExcelImportError(error)
   } finally { importing.value = false }
-}
-
-function saveBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
 }
 
 function showImportError(error) {

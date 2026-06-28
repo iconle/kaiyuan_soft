@@ -219,10 +219,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listGradReqs, createGradReq, updateGradReq, deleteGradReq, addIndicator, updateIndicator, deleteIndicator, downloadIndicatorTemplate, importIndicators } from '../../api/director'
 import { listMajors } from '../../api/admin'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const requirements = ref([])
@@ -242,6 +244,7 @@ const indicatorForm = reactive({ indicatorNo: '', content: '' })
 const importing = ref(false)
 const downloading = ref(false)
 const importDialogVisible = ref(false)
+const currentMajorName = computed(() => majors.value.find(item => item.id === currentMajorId.value)?.name || `专业${currentMajorId.value}`)
 
 onMounted(async () => {
   const res = await listMajors({ page: 1, size: 100 })
@@ -319,40 +322,17 @@ async function handleDownloadTemplate() {
   downloading.value = true
   try {
     const blob = await downloadIndicatorTemplate(currentMajorId.value)
-    // 后端业务异常以 HTTP 200 + JSON 返回，blob 需判别后展示错误
-    if (blob && blob.type && blob.type.includes('json')) {
-      let msg = '下载失败'
-      try { msg = JSON.parse(await blob.text()).message || msg } catch (_) {}
-      ElMessage.error(msg)
-      return
-    }
-    const url = window.URL.createObjectURL(new Blob([blob]))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = '指标点导入模板.xlsx'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    window.URL.revokeObjectURL(url)
+    downloadBlob(await ensureDownloadBlob(blob), buildDatedFilename([currentMajorName.value, '指标点导入模板'], 'xlsx'))
     ElMessage.success('模板已开始下载')
-  } catch (_) {
-    /* 网络错误已由拦截器提示 */
+  } catch (error) {
+    showDownloadError(error)
   } finally {
     downloading.value = false
   }
 }
 
 function beforeUpload(file) {
-  const ok = !!file.name && file.name.toLowerCase().endsWith('.xlsx')
-  if (!ok) ElMessage.error('仅支持 .xlsx 格式文件，请先下载标准模板')
-  return ok
-}
-
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+  return validateExcelFile(file)
 }
 
 async function customUpload(opt) {
@@ -364,13 +344,7 @@ async function customUpload(opt) {
     importDialogVisible.value = false
     loadData()
   } catch (e) {
-    const msg = e && e.message ? e.message : '导入失败'
-    // 后端逐行列出问题，换行展示，便于用户对照修改
-    ElMessageBox.alert(escapeHtml(msg).replace(/\n/g, '<br/>'), '导入失败', {
-      dangerouslyUseHTMLString: true,
-      confirmButtonText: '知道了',
-      type: 'error'
-    })
+    showExcelImportError(e)
   } finally {
     importing.value = false
   }

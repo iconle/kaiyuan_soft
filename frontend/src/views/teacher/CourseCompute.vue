@@ -408,6 +408,7 @@ import {
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
 import * as echarts from 'echarts'
+import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const userStore = useUserStore()

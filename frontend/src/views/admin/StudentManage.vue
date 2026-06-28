@@ -137,6 +137,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { listStudents, createStudent, updateStudent, deleteStudent, listColleges, listMajors, listAdminClasses, downloadStudentTemplate, importStudentExcel } from '../../api/admin'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const students = ref([])
@@ -253,6 +255,11 @@ function showImportDialog() {
 }
 
 function handleFileChange(file) {
+  if (!validateExcelFile(file.raw)) {
+    selectedFile.value = null
+    uploadRef.value?.clearFiles()
+    return
+  }
   selectedFile.value = file.raw
 }
 
@@ -263,16 +270,9 @@ function handleExceed() {
 async function handleDownloadTemplate() {
   try {
     const res = await downloadStudentTemplate()
-    const url = URL.createObjectURL(new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = '学生名单导入模板.xlsx'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  } catch {
-    ElMessage.error('下载模板失败')
+    downloadBlob(await ensureDownloadBlob(res), buildDatedFilename(['学生名单', '导入模板'], 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
   }
 }
 
@@ -281,6 +281,7 @@ async function handleImport() {
     ElMessage.warning('请选择要导入的文件')
     return
   }
+  if (!validateExcelFile(selectedFile.value)) return
 
   importing.value = true
   try {
@@ -289,8 +290,7 @@ async function handleImport() {
     importDialogVisible.value = false
     loadData()
   } catch (e) {
-    const errorMsg = e.response?.data?.msg || e.message || '导入失败'
-    ElMessage.error(errorMsg)
+    showExcelImportError(e)
   } finally {
     importing.value = false
   }

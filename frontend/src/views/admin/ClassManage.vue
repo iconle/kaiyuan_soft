@@ -125,6 +125,8 @@ import {
   listMajors, downloadAdminClassTemplate, importAdminClassExcel
 } from '../../api/admin'
 import { listStudents } from '../../api/academic'
+import { validateExcelFile, showExcelImportError } from '../../utils/excelImport'
+import { buildDatedFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const loading = ref(false)
 const classes = ref([])
@@ -177,8 +179,10 @@ async function handleDownloadTemplate() {
   templateDownloading.value = true
   try {
     const blob = await downloadAdminClassTemplate()
-    saveBlob(blob, '行政班级导入模板.xlsx')
-  } catch { /* handled */ }
+    downloadBlob(await ensureDownloadBlob(blob), buildDatedFilename(['行政班级', '导入模板'], 'xlsx'))
+  } catch (error) {
+    showDownloadError(error)
+  }
   finally { templateDownloading.value = false }
 }
 
@@ -186,10 +190,7 @@ async function handleImportFile(uploadFile) {
   if (importing.value) return
   const file = uploadFile?.raw
   if (!file) return
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    ElMessage.warning('仅支持上传 .xlsx 格式文件')
-    return
-  }
+  if (!validateExcelFile(file)) return
 
   importing.value = true
   try {
@@ -198,21 +199,10 @@ async function handleImportFile(uploadFile) {
     page.value = 1
     await loadData()
   } catch (error) {
-    showImportError(error)
+    showExcelImportError(error)
   } finally {
     importing.value = false
   }
-}
-
-function saveBlob(blob, filename) {
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  window.URL.revokeObjectURL(url)
 }
 
 function showImportError(error) {

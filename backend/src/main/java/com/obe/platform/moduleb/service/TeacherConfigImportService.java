@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,12 +50,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TeacherConfigImportService {
 
-    private static final String[] OBJECTIVE_HEADERS = {"课程目标编号", "维度", "目标描述"};
+    private static final String[] OBJECTIVE_HEADERS = {"维度", "目标描述"};
     private static final String[] ASSESSMENT_HEADERS = {
-            "考核点名称", "满分", "权重(%)", "绑定课程目标编号", "排序号"
+            "考核点名称", "满分", "权重(%)", "绑定课程目标编号"
     };
     private static final String[] QUESTION_HEADERS = {
-            "题目名称", "满分", "绑定课程目标编号", "排序号"
+            "题目名称", "满分", "绑定课程目标编号"
     };
 
     private final CourseOutlineMapper outlineMapper;
@@ -66,9 +67,10 @@ public class TeacherConfigImportService {
 
     public byte[] generateObjectiveTemplate() {
         return generateTemplate("课程目标导入", OBJECTIVE_HEADERS, List.of(), List.of(
-                "课程目标编号、维度、目标描述均为必填项。",
-                "填写示例：1-1｜知识｜掌握课程核心知识。",
-                "课程目标编号不能与当前教学班已有编号或文件内其他行重复。",
+                "只需填写「维度」和「目标描述」两列，编号由系统自动生成。",
+                "维度只能填：知识、能力、价值。",
+                "编号规则：知识→1-x，能力→2-x，价值→3-x，序号在该维度下自动递增。",
+                "填写示例：知识｜掌握课程核心知识。",
                 "请勿修改第一行表头；完全空白的行会被忽略。"
         ));
     }
@@ -76,10 +78,11 @@ public class TeacherConfigImportService {
     public byte[] generateAssessmentTemplate(List<CourseObjective> objectives) {
         String firstObjective = objectives.isEmpty() ? "1-1" : objectives.get(0).getObjNo();
         return generateTemplate("考核点导入", ASSESSMENT_HEADERS, List.of(), List.of(
-                "填写示例：期末考试｜100｜50｜" + firstObjective + "｜1。",
+                "填写示例：期末考试｜100｜50｜" + firstObjective + "。",
                 "绑定多个课程目标时，请使用英文逗号分隔，例如：1-1,2-1。",
                 "课程目标编号必须已存在于当前教学班。",
                 "满分必须大于0；权重范围为0至100，导入后总权重不能超过100%。",
+                "排序号无需填写，系统会自动按顺序追加到现有考核点之后。",
                 "请勿修改第一行表头；完全空白的行会被忽略。"
         ));
     }
@@ -90,9 +93,10 @@ public class TeacherConfigImportService {
                 .collect(Collectors.joining(","));
         return generateTemplate("考核点题目导入", QUESTION_HEADERS, List.of(), List.of(
                 "当前考核点：" + assessment.getName() + "，满分：" + assessment.getMaxScore(),
-                "填写示例：第1题｜20｜" + objectiveNos + "｜1。",
+                "填写示例：第1题｜20｜" + objectiveNos + "。",
                 "题目绑定目标只能选择当前考核点已绑定的课程目标：" + objectiveNos,
                 "满分必须大于0，导入后该考核点题目总分不能超过100。",
+                "排序号无需填写，系统会自动按顺序追加到现有题目之后。",
                 "请勿修改第一行表头；完全空白的行会被忽略。"
         ));
     }
@@ -100,36 +104,39 @@ public class TeacherConfigImportService {
     @Transactional
     public int importObjectives(Long classId, MultipartFile file) {
         CourseOutline outline = getOrCreateOutline(classId);
-        Set<String> existing = objectiveMapper.selectList(
-                        new LambdaQueryWrapper<CourseObjective>()
-                                .eq(CourseObjective::getOutlineId, outline.getId()))
-                .stream().map(item -> normalize(item.getObjNo())).collect(Collectors.toSet());
+        List<CourseObjective> existingObjectives = objectiveMapper.selectList(
+                new LambdaQueryWrapper<CourseObjective>()
+                        .eq(CourseObjective::getOutlineId, outline.getId()));
+        Map<String, Long> existingCountByDim = new HashMap<>();
+        for (CourseObjective item : existingObjectives) {
+            if (item.getDimension() != null) {
+                existingCountByDim.merge(item.getDimension().trim(), 1L, Long::sum);
+            }
+        }
 
         List<String> errors = new ArrayList<>();
-        Set<String> fileNos = new HashSet<>();
+        Map<String, Long> fileCountByDim = new HashMap<>();
         List<CourseObjective> rows = new ArrayList<>();
         parseRows(file, OBJECTIVE_HEADERS, (row, rowNo) -> {
-            String objNo = text(row.getCell(0));
-            String dimension = text(row.getCell(1));
-            String description = text(row.getCell(2));
-            if (allBlank(objNo, dimension, description)) return;
-            if (objNo.isBlank()) errors.add(error(rowNo, "课程目标编号不能为空"));
-            if (dimension.isBlank()) errors.add(error(rowNo, "维度不能为空"));
+            String dimension = text(row.getCell(0));
+            String description = text(row.getCell(1));
+            if (allBlank(dimension, description)) return;
+            String trimmedDim = dimension.trim();
+            String prefix = ObjectiveService.dimensionPrefix(trimmedDim);
+            if (dimension.isBlank()) {
+                errors.add(error(rowNo, "维度不能为空"));
+            } else if (prefix == null) {
+                errors.add(error(rowNo, "维度「" + dimension + "」不合法，只能填：知识、能力、价值"));
+            }
             if (description.isBlank()) errors.add(error(rowNo, "目标描述不能为空"));
-            String key = normalize(objNo);
-            if (!objNo.isBlank() && existing.contains(key)) {
-                errors.add(error(rowNo, "课程目标编号「" + objNo + "」已存在"));
-            } else if (!objNo.isBlank() && !fileNos.add(key)) {
-                errors.add(error(rowNo, "课程目标编号「" + objNo + "」在文件中重复"));
-            }
-            if (objNo.isBlank() || dimension.isBlank() || description.isBlank()
-                    || existing.contains(key) || rows.stream().anyMatch(item -> normalize(item.getObjNo()).equals(key))) {
-                return;
-            }
+            if (dimension.isBlank() || prefix == null || description.isBlank()) return;
+            long seq = existingCountByDim.getOrDefault(trimmedDim, 0L)
+                    + fileCountByDim.getOrDefault(trimmedDim, 0L) + 1L;
+            fileCountByDim.merge(trimmedDim, 1L, Long::sum);
             CourseObjective objective = new CourseObjective();
             objective.setOutlineId(outline.getId());
-            objective.setObjNo(objNo);
-            objective.setDimension(dimension);
+            objective.setObjNo(prefix + "-" + seq);
+            objective.setDimension(trimmedDim);
             objective.setDescription(description);
             rows.add(objective);
         });
@@ -154,6 +161,9 @@ public class TeacherConfigImportService {
         BigDecimal existingWeight = existingAssessments.stream()
                 .map(AssessmentPoint::getWeightPercent).filter(value -> value != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        int existingMaxSort = existingAssessments.stream()
+                .map(AssessmentPoint::getSortOrder).filter(Objects::nonNull)
+                .max(Integer::compareTo).orElse(0);
 
         List<String> errors = new ArrayList<>();
         Set<String> fileNames = new HashSet<>();
@@ -163,12 +173,10 @@ public class TeacherConfigImportService {
             String maxScoreText = text(row.getCell(1));
             String weightText = text(row.getCell(2));
             String objectiveText = text(row.getCell(3));
-            String sortText = text(row.getCell(4));
-            if (allBlank(name, maxScoreText, weightText, objectiveText, sortText)) return;
+            if (allBlank(name, maxScoreText, weightText, objectiveText)) return;
             BigDecimal maxScore = positiveDecimal(maxScoreText, rowNo, "满分", errors);
             BigDecimal weight = decimalInRange(weightText, rowNo, "权重", BigDecimal.ZERO,
                     new BigDecimal("100"), errors);
-            Integer sortOrder = positiveInteger(sortText, rowNo, "排序号", errors);
             if (name.isBlank()) errors.add(error(rowNo, "考核点名称不能为空"));
             String nameKey = normalize(name);
             if (!name.isBlank() && existingNames.contains(nameKey)) {
@@ -177,7 +185,7 @@ public class TeacherConfigImportService {
                 errors.add(error(rowNo, "考核点名称「" + name + "」在文件中重复"));
             }
             List<Long> boundIds = resolveObjectiveIds(objectiveText, objectiveIds, rowNo, errors);
-            if (!name.isBlank() && maxScore != null && weight != null && sortOrder != null
+            if (!name.isBlank() && maxScore != null && weight != null
                     && !boundIds.isEmpty() && !existingNames.contains(nameKey)
                     && rows.stream().noneMatch(item -> normalize(item.point().getName()).equals(nameKey))) {
                 AssessmentPoint point = new AssessmentPoint();
@@ -185,7 +193,8 @@ public class TeacherConfigImportService {
                 point.setName(name);
                 point.setMaxScore(maxScore);
                 point.setWeightPercent(weight);
-                point.setSortOrder(sortOrder);
+                point.setObjectiveId(boundIds.get(0));
+                point.setSortOrder(existingMaxSort + rows.size() + 1);
                 rows.add(new AssessmentImportRow(point, boundIds));
             }
         });
@@ -223,6 +232,9 @@ public class TeacherConfigImportService {
                 .map(item -> normalize(item.getName())).collect(Collectors.toSet());
         BigDecimal existingScore = existingQuestions.stream().map(AssessmentQuestion::getMaxScore)
                 .filter(value -> value != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+        int existingMaxSort = existingQuestions.stream()
+                .map(AssessmentQuestion::getSortOrder).filter(Objects::nonNull)
+                .max(Integer::compareTo).orElse(0);
 
         List<String> errors = new ArrayList<>();
         Set<String> fileNames = new HashSet<>();
@@ -231,10 +243,8 @@ public class TeacherConfigImportService {
             String name = text(row.getCell(0));
             String maxScoreText = text(row.getCell(1));
             String objectiveText = text(row.getCell(2));
-            String sortText = text(row.getCell(3));
-            if (allBlank(name, maxScoreText, objectiveText, sortText)) return;
+            if (allBlank(name, maxScoreText, objectiveText)) return;
             BigDecimal maxScore = positiveDecimal(maxScoreText, rowNo, "满分", errors);
-            Integer sortOrder = positiveInteger(sortText, rowNo, "排序号", errors);
             if (name.isBlank()) errors.add(error(rowNo, "题目名称不能为空"));
             String nameKey = normalize(name);
             if (!name.isBlank() && existingNames.contains(nameKey)) {
@@ -243,14 +253,14 @@ public class TeacherConfigImportService {
                 errors.add(error(rowNo, "题目名称「" + name + "」在文件中重复"));
             }
             List<Long> boundIds = resolveObjectiveIds(objectiveText, allowedObjectives, rowNo, errors);
-            if (!name.isBlank() && maxScore != null && sortOrder != null && !boundIds.isEmpty()
+            if (!name.isBlank() && maxScore != null && !boundIds.isEmpty()
                     && !existingNames.contains(nameKey)
                     && rows.stream().noneMatch(item -> normalize(item.question().getName()).equals(nameKey))) {
                 AssessmentQuestion question = new AssessmentQuestion();
                 question.setAssessmentId(assessmentId);
                 question.setName(name);
                 question.setMaxScore(maxScore);
-                question.setSortOrder(sortOrder);
+                question.setSortOrder(existingMaxSort + rows.size() + 1);
                 rows.add(new QuestionImportRow(question, boundIds));
             }
         });

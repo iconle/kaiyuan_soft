@@ -31,6 +31,9 @@
         <el-select v-model="filterSemesterId" placeholder="按学期筛选" clearable @change="loadData" style="width:220px;margin-left:8px">
           <el-option v-for="s in semesters" :key="s.id" :label="s.label" :value="s.id" />
         </el-select>
+        <el-select v-model="filterGrade" placeholder="目标年级" clearable @change="loadData" style="width:140px;margin-left:8px">
+          <el-option v-for="g in gradeOptions" :key="g" :label="`${g} 级`" :value="g" />
+        </el-select>
       </div>
 
       <el-table class="wide-class-table" :data="classes" border stripe v-loading="loading">
@@ -38,6 +41,11 @@
         <el-table-column prop="className" label="班级名称" min-width="260" class-name="nowrap-column" />
         <el-table-column prop="courseName" label="所属课程" min-width="260" class-name="nowrap-column" />
         <el-table-column prop="teacherName" label="主讲教师" min-width="130" class-name="nowrap-column" />
+        <el-table-column label="目标年级" width="100" align="center">
+          <template #default="{ row }">
+            {{ row.grade ? `${row.grade} 级` : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="学生管理" min-width="120" align="center">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="manageStudents(row)">管理学生</el-button>
@@ -87,6 +95,7 @@
         <el-form-item label="所属课程" required><el-select v-model="form.courseId" style="width:100%"><el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" /></el-select></el-form-item>
         <el-form-item label="主讲教师" required><el-select v-model="form.teacherId" style="width:100%"><el-option v-for="t in teachers" :key="t.id" :label="`${t.realName} (${t.username})`" :value="t.id" /></el-select></el-form-item>
         <el-form-item label="开课学期" required><el-select v-model="form.semesterId" style="width:100%"><el-option v-for="s in semesters" :key="s.id" :label="s.label" :value="s.id" /></el-select></el-form-item>
+        <el-form-item label="目标年级" required><el-select v-model="form.grade" style="width:100%" placeholder="选择目标年级"><el-option v-for="g in gradeOptions" :key="g" :label="`${g} 级`" :value="g" /></el-select></el-form-item>
       </el-form>
       <template #footer><el-button @click="dialogVisible = false">取消</el-button><el-button type="primary" @click="handleSubmit">确定</el-button></template>
     </el-dialog>
@@ -196,13 +205,15 @@ const size = ref(10)
 const total = ref(0)
 const filterCourseId = ref(null)
 const filterSemesterId = ref(null)
+const filterGrade = ref(null)
 const templateDownloading = ref(false)
 const importing = ref(false)
 const availTable = ref(null) 
 
 const dialogVisible = ref(false)
 const editing = ref(null)
-const form = reactive({ className: '', courseId: null, teacherId: null, semesterId: null })
+const form = reactive({ className: '', courseId: null, teacherId: null, semesterId: null, grade: null })
+const gradeOptions = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
 
 const studentDialogVisible = ref(false)
 const currentClass = ref(null)
@@ -238,7 +249,8 @@ async function loadData() {
     const res = await listTeachingClasses({
       page: page.value, size: size.value,
       courseId: filterCourseId.value || undefined,
-      semesterId: filterSemesterId.value || undefined
+      semesterId: filterSemesterId.value || undefined,
+      grade: filterGrade.value || undefined
     })
     classes.value = res.data?.records || []
     total.value = res.data?.total || 0
@@ -299,7 +311,13 @@ function indexMethod(i) {
 
 function showDialog(row) {
   editing.value = row || null
-  Object.assign(form, { className: row?.className || '', courseId: row?.courseId || null, teacherId: row?.teacherId || null, semesterId: row?.semesterId || null })
+  Object.assign(form, {
+    className: row?.className || '',
+    courseId: row?.courseId || null,
+    teacherId: row?.teacherId || null,
+    semesterId: row?.semesterId || null,
+    grade: row?.grade || null
+  })
   dialogVisible.value = true
 }
 

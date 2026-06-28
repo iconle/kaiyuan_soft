@@ -100,13 +100,16 @@ public class DictService {
 
     // ========== 教学班级 ==========
 
-    public PageResult<TeachingClass> listClasses(long page, long size, Long courseId, Long semesterId) {
+    public PageResult<TeachingClass> listClasses(long page, long size, Long courseId, Long semesterId, Integer grade) {
         var wrapper = new LambdaQueryWrapper<TeachingClass>();
         if (courseId != null) {
             wrapper.eq(TeachingClass::getCourseId, courseId);
         }
         if (semesterId != null) {
             wrapper.eq(TeachingClass::getSemesterId, semesterId);
+        }
+        if (grade != null) {
+            wrapper.eq(TeachingClass::getGrade, grade);
         }
         wrapper.orderByAsc(TeachingClass::getId);
         Page<TeachingClass> result = teachingClassMapper.selectPage(new Page<>(page, size), wrapper);

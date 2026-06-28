@@ -213,12 +213,43 @@ public class PersonalAchievementService {
 
         clearMajorAchievements(majorId, semesterId);
         for (Map.Entry<Long, Map<Long, Map<Long, BigDecimal>>> entry : byStudent.entrySet()) {
+            Long studentId = entry.getKey();
+            Map<Long, Map<Long, BigDecimal>> studentCourseData = entry.getValue();
+
+            // Re-normalize weights within the student's enrolled courses.
+            // Global weights sum to 1.0 across ALL cohort courses, but a student
+            // only takes a subset — so we filter and re-normalize per student.
+            Set<Long> studentClassIds = studentCourseData.keySet();
+
+            // Filter weight records to only this student's classes
+            List<Level3Calculator.MacroWeightRecord> studentWeights = new ArrayList<>();
+            Map<Long, BigDecimal> indicatorSums = new HashMap<>();
+            for (Level3Calculator.MacroWeightRecord w : weightRecords) {
+                if (studentClassIds.contains(w.courseId())) {
+                    studentWeights.add(w);
+                    indicatorSums.merge(w.indicatorId(), w.weight(), BigDecimal::add);
+                }
+            }
+
+            // Re-normalize: ensure sum = 1.0 for each indicator within this student's scope
+            List<Level3Calculator.MacroWeightRecord> normalizedWeights = new ArrayList<>();
+            for (Level3Calculator.MacroWeightRecord w : studentWeights) {
+                BigDecimal sum = indicatorSums.get(w.indicatorId());
+                if (sum != null && sum.compareTo(BigDecimal.ZERO) > 0
+                        && sum.subtract(BigDecimal.ONE).abs().compareTo(new BigDecimal("0.01")) > 0) {
+                    BigDecimal factor = BigDecimal.ONE.divide(sum, 10, java.math.RoundingMode.HALF_UP);
+                    normalizedWeights.add(new Level3Calculator.MacroWeightRecord(
+                            w.courseId(), w.indicatorId(), w.weight().multiply(factor)));
+                } else {
+                    normalizedWeights.add(w);
+                }
+            }
+
             Map<Long, BigDecimal> achievements = Level3Calculator.calcMajorAchievement(
-                    entry.getValue(),
-                    weightRecords);
+                    studentCourseData, normalizedWeights);
             for (Map.Entry<Long, BigDecimal> achievement : achievements.entrySet()) {
                 insertPersonalAchievement(
-                        entry.getKey(),
+                        studentId,
                         null,
                         majorId,
                         semesterId,

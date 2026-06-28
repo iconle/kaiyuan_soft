@@ -3,9 +3,33 @@
     <div class="page-header">
       <h3>内部权重分配</h3>
       <el-button
+        @click="downloadTemplate"
+        :loading="downloading"
+        :disabled="!supportedIndicators.length"
+      >
+        下载模板
+      </el-button>
+      <el-upload
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="uploadFile"
+        accept=".xlsx"
+      >
+        <el-button
+          type="primary"
+          plain
+          class="import-action-btn"
+          :loading="importing"
+          :disabled="!supportedIndicators.length"
+        >
+          导入权重
+        </el-button>
+      </el-upload>
+      <el-button
         class="save-weight-btn"
         type="primary"
         round
+        style="margin-left: auto;"
         :disabled="!allValid || saving"
         :loading="saving"
         @click="handleSave"
@@ -58,14 +82,16 @@
 <script setup>
 import { ref, computed, onMounted, h } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { getWeights, updateWeights, getSupportedIndicators, listObjectives } from '../../api/teacher'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
 const loading = ref(false)
 const objectives = ref([])
 const saving = ref(false)
+const downloading = ref(false)
+const importing = ref(false)
 const supportedIndicators = ref([])
 const weightData = ref([]) // flat list from API
 const weightMatrix = ref([]) // computed matrix rows
@@ -161,6 +187,55 @@ async function handleSave() {
     saving.value = false
   }
 }
+
+async function downloadTemplate() {
+  downloading.value = true
+  try {
+    saveBlob(await downloadWeightTemplate(classId.value), '内部权重导入模板.xlsx')
+  } finally {
+    downloading.value = false
+  }
+}
+
+function beforeUpload(file) {
+  const valid = file.name?.toLowerCase().endsWith('.xlsx')
+  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
+  return valid
+}
+
+async function uploadFile({ file }) {
+  importing.value = true
+  try {
+    const res = await importWeights(classId.value, file)
+    const imported = res.data || []
+    // 合并进页面矩阵：文件中出现的单元格覆盖对应值，其余保留；
+    // 不立即保存，由用户在页面核对、调整（列合计需为 1.00）后再点「保存权重」。
+    imported.forEach(w => {
+      const row = weightMatrix.value.find(r => r.objectiveId === w.objectiveId)
+      if (row) row.weights[w.indicatorId] = Number(w.weight)
+    })
+    ElMessage.success(`已导入 ${imported.length} 项权重，请核对后点击「保存权重」`)
+  } catch (error) {
+    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
+      dangerouslyUseHTMLString: true, type: 'error'
+    })
+  } finally {
+    importing.value = false
+  }
+}
+
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 </script>
 
 <style scoped>
@@ -169,7 +244,8 @@ async function handleSave() {
 .page-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
   min-height: 32px;
   margin-bottom: var(--space-4);
 }
@@ -268,6 +344,25 @@ async function handleSave() {
 
 :deep(.weight-matrix-table .el-table__footer-wrapper .col-sum.invalid) {
   color: var(--el-color-danger) !important;
+}
+
+.import-action-btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  border-color: #806bbf !important;
+  box-shadow: 0 8px 18px rgba(128, 107, 191, 0.24);
+}
+
+.import-action-btn:hover,
+.import-action-btn:focus {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #a895d4, #735ab8) !important;
+  border-color: #735ab8 !important;
+}
+
+:deep(.import-action-btn.is-loading),
+:deep(.import-action-btn.is-disabled) {
+  color: #ffffff !important;
 }
 
 .save-weight-btn {

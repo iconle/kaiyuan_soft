@@ -145,7 +145,7 @@ public class PdfExporter {
         cs.beginText();
         cs.setFont(font, fontSize);
         cs.newLineAtOffset(x, y);
-        cs.showText(text);
+        cs.showText(sanitizeForFont(font, text));
         cs.endText();
         return y - LINE_HEIGHT;
     }
@@ -173,6 +173,31 @@ public class PdfExporter {
         return value != null ? value : "";
     }
 
+    /**
+     * 清理 PDF 文本流无法渲染的字符，避免 PDFBox showText 抛异常导致整份报告生成失败：
+     *  - 移除换行符 \n \r（PDF 文本流禁止，是最常见的崩溃原因，报错 U+000A/U+000D in font）
+     *  - 制表符 \t 转空格
+     *  - 移除其他 C0 控制字符
+     *  - 跳过当前字体（文泉驿微米黑）不含的字形（如部分特殊符号），避免 U+XXXX in font
+     */
+    private static String sanitizeForFont(PDFont font, String text) {
+        if (text == null || text.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\n' || c == '\r') continue;
+            if (c == '\t') { sb.append(' '); continue; }
+            if (c < 0x20) continue;
+            try {
+                font.getStringWidth(String.valueOf(c));
+                sb.append(c);
+            } catch (Exception ignore) {
+                // 字体不含该字形，跳过
+            }
+        }
+        return sb.toString();
+    }
+
     private static class ReportWriter {
         private final PDDocument document;
         private final PDFont font;
@@ -187,7 +212,7 @@ public class PdfExporter {
         }
 
         void writeLine(String text, float fontSize, float x) throws Exception {
-            for (String line : wrap(text, fontSize, x)) {
+            for (String line : wrap(sanitizeForFont(font, text), fontSize, x)) {
                 ensureSpace();
                 contentStream.beginText();
                 contentStream.setFont(font, fontSize);

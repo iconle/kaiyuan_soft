@@ -51,6 +51,9 @@ public class AssessmentService {
             outlineMapper.insert(outline);
         }
         point.setOutlineId(outline.getId());
+        if (point.getObjectiveId() == null && point.getObjectiveIds() != null && !point.getObjectiveIds().isEmpty()) {
+            point.setObjectiveId(point.getObjectiveIds().get(0));
+        }
         assessmentPointMapper.insert(point);
         // Save objective bindings
         saveObjectives(point.getId(), point.getObjectiveIds());

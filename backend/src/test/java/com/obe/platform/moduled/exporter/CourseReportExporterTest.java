@@ -66,6 +66,26 @@ class CourseReportExporterTest {
         }
     }
 
+    @Test
+    void generatesPdfEvenWhenTextContainsNewlines() throws Exception {
+        // 课程目标描述里含换行符/制表符：过去会让 PDFBox showText 抛 U+000A in font，
+        // 整份 PDF 生成失败、接口返回 JSON 错误，前端下载后打不开。
+        List<CourseObjectiveResult> objs = List.of(new CourseObjectiveResult(
+                "1-1", "知识", "掌握数据结构\n理解时间复杂度\t与空间复杂度",
+                new BigDecimal("0.83")));
+        byte[] pdf = PdfExporter.generateCourseReport(
+                "数据结构", "计科2023级1班", objs, List.of(), List.of(),
+                LocalDateTime.of(2026, 6, 28, 10, 0));
+
+        assertThat(pdf).isNotEmpty();
+        assertThat(new String(pdf, 0, 4)).isEqualTo("%PDF");
+        try (var document = Loader.loadPDF(pdf)) {
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(1);
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text).contains("数据结构").contains("时间复杂度").contains("空间复杂度");
+        }
+    }
+
     private List<CourseObjectiveResult> objectives() {
         return List.of(new CourseObjectiveResult(
                 "1",

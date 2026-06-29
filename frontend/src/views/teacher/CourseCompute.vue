@@ -361,9 +361,27 @@
     </template>
 
     <div v-if="hasResults" style="margin-top: 16px; display: flex; gap: 8px;">
-      <el-button @click="downloadPdf">导出 PDF 报告</el-button>
-      <el-button @click="downloadExcel">导出 Excel 报告</el-button>
-      <el-button @click="downloadPersonalAchievementExcel">导出学生个人达成度</el-button>
+      <el-button
+        :loading="pdfDownloading"
+        :disabled="pdfDownloading"
+        @click="downloadPdf"
+      >
+        导出 PDF 报告
+      </el-button>
+      <el-button
+        :loading="excelDownloading"
+        :disabled="excelDownloading"
+        @click="downloadExcel"
+      >
+        导出 Excel 报告
+      </el-button>
+      <el-button
+        :loading="personalDownloading"
+        :disabled="personalDownloading"
+        @click="downloadPersonalAchievementExcel"
+      >
+        导出学生个人达成度
+      </el-button>
     </div>
 
     <el-dialog
@@ -430,6 +448,9 @@ const resolveClassName = inject('resolveClassName', () => '')
 const status = ref('')
 const computing = ref(false)
 const requesting = ref(false)
+const pdfDownloading = ref(false)
+const excelDownloading = ref(false)
+const personalDownloading = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
 const myRequests = ref([])
@@ -598,24 +619,33 @@ async function openPersonalDialog(type, item) {
 }
 
 async function downloadPdf() {
+  if (pdfDownloading.value) return
+  pdfDownloading.value = true
   try {
     const blob = await downloadCoursePdf(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.pdf`)
   } catch { /* 拦截器已提示错误 */ }
+  finally { pdfDownloading.value = false }
 }
 
 async function downloadExcel() {
+  if (excelDownloading.value) return
+  excelDownloading.value = true
   try {
     const blob = await downloadCourseExcel(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.xlsx`)
   } catch { /* 拦截器已提示错误 */ }
+  finally { excelDownloading.value = false }
 }
 
 async function downloadPersonalAchievementExcel() {
+  if (personalDownloading.value) return
+  personalDownloading.value = true
   try {
     const blob = await downloadPersonalAchievements(classId.value)
     downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
   } catch { /* 拦截器已提示错误 */ }
+  finally { personalDownloading.value = false }
 }
 
 // Chart rendering functions

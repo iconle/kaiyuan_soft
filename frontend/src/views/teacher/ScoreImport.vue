@@ -5,7 +5,14 @@
       <el-select v-model="selectedAssessmentId" placeholder="选择考核点" style="width:260px" @change="loadAll">
         <el-option v-for="ap in assessments" :key="ap.id" :label="`${ap.name} → ${assessmentObjLabel(ap)}`" :value="ap.id" />
       </el-select>
-      <el-button type="primary" @click="downloadTemplate" :disabled="!selectedAssessmentId">下载模板</el-button>
+      <el-button
+        type="primary"
+        :loading="downloading"
+        :disabled="!selectedAssessmentId || downloading"
+        @click="downloadTemplate"
+      >
+        下载模板
+      </el-button>
       <el-upload
         :show-file-list="false"
         :before-upload="beforeUpload"
@@ -194,6 +201,7 @@ const questions = ref([])
 const scoreRows = ref([])
 const edits = ref({})
 const importing = ref(false)
+const downloading = ref(false)
 const requesting = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
@@ -325,10 +333,14 @@ async function saveAll() {
 }
 
 async function downloadTemplate() {
+  if (!selectedAssessmentId.value || downloading.value) return
+  downloading.value = true
   try {
     downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '成绩录入模板', 'xlsx'))
   } catch (error) {
     showDownloadError(error)
+  } finally {
+    downloading.value = false
   }
 }
 

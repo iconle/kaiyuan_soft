@@ -128,7 +128,12 @@
 
       <div class="result-footer">
         <div class="calc-time">计算时间：{{ calcTime || '-' }}</div>
-        <el-button class="export-btn" @click="downloadExcel">
+        <el-button
+          class="export-btn"
+          :loading="exporting"
+          :disabled="exporting || !selectedMajorId"
+          @click="downloadExcel"
+        >
           导出穿透式 Excel 台账
         </el-button>
       </div>
@@ -240,6 +245,7 @@ const selectedMajorId = ref(null)
 const selectedGrade = ref(null)
 const gradeOptions = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
 const computing = ref(false)
+const exporting = ref(false)
 const chartRef = ref(null)
 const indicatorLabels = ref({})
 const indicatorContents = ref({})
@@ -630,8 +636,12 @@ function getBarColor(value) {
 }
 
 async function downloadExcel() {
-  if (!selectedMajorId.value) return
-  downloadBlob(await downloadMajorExcel(selectedMajorId.value, 1), buildDatedFilename([selectedMajorName.value, '专业级达成度台账'], 'xlsx'))
+  if (!selectedMajorId.value || exporting.value) return
+  exporting.value = true
+  try {
+    downloadBlob(await downloadMajorExcel(selectedMajorId.value, 1), buildDatedFilename([selectedMajorName.value, '专业级达成度台账'], 'xlsx'))
+  } catch { /* handled */ }
+  finally { exporting.value = false }
 }
 </script>
 

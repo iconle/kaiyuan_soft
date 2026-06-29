@@ -53,9 +53,9 @@ class TeacherConfigImportServiceTest {
 
         try (Workbook workbook = new XSSFWorkbook(new ByteArrayInputStream(data))) {
             var sheet = workbook.getSheetAt(0);
-            assertThat(sheet.getRow(0).getCell(0).getStringCellValue()).isEqualTo("课程目标编号");
-            assertThat(sheet.getRow(0).getCell(1).getStringCellValue()).isEqualTo("维度");
-            assertThat(sheet.getRow(0).getCell(2).getStringCellValue()).isEqualTo("目标描述");
+            assertThat(sheet.getRow(0).getCell(0).getStringCellValue()).isEqualTo("维度");
+            assertThat(sheet.getRow(0).getCell(1).getStringCellValue()).isEqualTo("目标描述");
+            assertThat(sheet.getRow(0).getCell(2)).isNull();
             assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEmpty();
         }
     }
@@ -67,7 +67,9 @@ class TeacherConfigImportServiceTest {
         when(outlineMapper.selectOne(any())).thenReturn(outline);
         when(objectiveMapper.selectList(any())).thenReturn(List.of());
 
-        MockMultipartFile file = workbook("错误表头", "维度", "目标描述", "1-1", "知识", "描述");
+        MockMultipartFile file = workbook(
+                new String[]{"课程目标编号", "维度", "目标描述"},
+                new String[]{"1-1", "知识", "描述"});
 
         assertThatThrownBy(() -> service.importObjectives(1L, file))
                 .isInstanceOf(BizException.class)
@@ -83,25 +85,25 @@ class TeacherConfigImportServiceTest {
         when(objectiveMapper.selectList(any())).thenReturn(List.of());
 
         MockMultipartFile file = workbook(
-                "课程目标编号", "维度", "目标描述", "1-1", "知识", "掌握核心知识");
+                new String[]{"维度", "目标描述"},
+                new String[]{"知识", "掌握核心知识"});
 
         assertThat(service.importObjectives(1L, file)).isEqualTo(1);
         verify(objectiveMapper).insert(any(CourseObjective.class));
     }
 
-    private MockMultipartFile workbook(String h1, String h2, String h3,
-                                       String v1, String v2, String v3) throws Exception {
+    private MockMultipartFile workbook(String[] headers, String[] values) throws Exception {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             var sheet = workbook.createSheet("课程目标导入");
             var header = sheet.createRow(0);
-            header.createCell(0).setCellValue(h1);
-            header.createCell(1).setCellValue(h2);
-            header.createCell(2).setCellValue(h3);
+            for (int index = 0; index < headers.length; index++) {
+                header.createCell(index).setCellValue(headers[index]);
+            }
             var row = sheet.createRow(1);
-            row.createCell(0).setCellValue(v1);
-            row.createCell(1).setCellValue(v2);
-            row.createCell(2).setCellValue(v3);
+            for (int index = 0; index < values.length; index++) {
+                row.createCell(index).setCellValue(values[index]);
+            }
             workbook.write(output);
             return new MockMultipartFile(
                     "file", "课程目标.xlsx",

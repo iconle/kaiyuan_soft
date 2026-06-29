@@ -87,7 +87,7 @@ import { ref, computed, onMounted, h } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
-import { getExcelUploadTip, validateExcelFile } from '../../utils/excelImport'
+import { getExcelUploadTip, showExcelImportError, validateExcelFile } from '../../utils/excelImport'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -219,9 +219,7 @@ async function uploadFile({ file }) {
     })
     ElMessage.success(`已导入 ${imported.length} 项权重，请核对后点击「保存权重」`)
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
-      dangerouslyUseHTMLString: true, type: 'error'
-    })
+    showExcelImportError(error, '权重导入失败，请检查模板格式和权重数值后重试')
   } finally {
     importing.value = false
   }
@@ -236,9 +234,6 @@ function saveBlob(blob, filename) {
   URL.revokeObjectURL(url)
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
 </script>
 
 <style scoped>

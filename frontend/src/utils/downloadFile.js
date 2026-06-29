@@ -18,6 +18,10 @@ export function buildClassFilename(className, type, extension) {
   return buildDatedFilename([className, type], extension)
 }
 
+export function buildPersonalAchievementFilename(className, extension = 'xlsx') {
+  return buildClassFilename(className || '当前课程', '学生个人达成度', extension)
+}
+
 export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob instanceof Blob ? blob : new Blob([blob]))
   const anchor = document.createElement('a')

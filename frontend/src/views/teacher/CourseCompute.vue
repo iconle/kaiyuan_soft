@@ -421,7 +421,7 @@ import {
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
 import * as echarts from 'echarts'
-import { downloadBlob } from '../../utils/downloadFile'
+import { buildPersonalAchievementFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -614,7 +614,7 @@ async function downloadExcel() {
 async function downloadPersonalAchievementExcel() {
   try {
     const blob = await downloadPersonalAchievements(classId.value)
-    downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
+    downloadBlob(blob, buildPersonalAchievementFilename(resolveClassName(classId.value)))
   } catch { /* 拦截器已提示错误 */ }
 }
 

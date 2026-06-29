@@ -14,13 +14,14 @@
         :before-upload="beforeUpload"
         :http-request="uploadFile"
         accept=".xlsx"
+        :disabled="importDisabled"
       >
         <el-button
           type="primary"
           plain
           class="import-action-btn"
           :loading="importing"
-          :disabled="!supportedIndicators.length"
+          :disabled="importDisabled"
         >
           导入权重
         </el-button>
@@ -37,8 +38,19 @@
         保存权重
       </el-button>
     </div>
+    <div class="import-tip">
+      {{ weightImportTip }}
+    </div>
 
     <div class="content-card">
+      <el-alert
+        v-if="hasImportedWeights"
+        class="import-success-alert"
+        type="success"
+        :closable="false"
+        title="权重已导入到页面，请核对列合计后点击「保存权重」完成提交"
+      />
+
       <el-alert
         v-if="!allValid"
         class="weight-warning-alert"
@@ -84,6 +96,8 @@ import { ref, computed, onMounted, h } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
+import { getExcelUploadTip, showExcelImportError, validateExcelFile } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -95,6 +109,8 @@ const importing = ref(false)
 const supportedIndicators = ref([])
 const weightData = ref([]) // flat list from API
 const weightMatrix = ref([]) // computed matrix rows
+const weightImportTip = getExcelUploadTip()
+const hasImportedWeights = ref(false)
 
 const colSums = computed(() => {
   const sums = {}
@@ -110,6 +126,10 @@ const allValid = computed(() => {
   if (supportedIndicators.value.length === 0) return false
   return Object.values(colSums.value).every(s => s.valid)
 })
+
+const importDisabled = computed(() =>
+  !supportedIndicators.value.length || importing.value || downloading.value
+)
 
 function getSummaries({ columns }) {
   return columns.map((column, index) => {
@@ -145,6 +165,7 @@ async function loadData() {
     objectives.value = objRes.data || []
     supportedIndicators.value = indRes.data || []
     weightData.value = weightRes.data || []
+    hasImportedWeights.value = false
 
     // Build matrix: one row per objective
     weightMatrix.value = objectives.value.map(obj => {
@@ -183,6 +204,7 @@ async function handleSave() {
 
     await updateWeights(classId.value, flatWeights)
     ElMessage.success('权重已保存')
+    hasImportedWeights.value = false
   } finally {
     saving.value = false
   }
@@ -191,16 +213,17 @@ async function handleSave() {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    saveBlob(await downloadWeightTemplate(classId.value), '内部权重导入模板.xlsx')
+    const blob = await ensureDownloadBlob(await downloadWeightTemplate(classId.value))
+    downloadBlob(blob, buildClassFilename(classId.value, '内部权重导入模板', 'xlsx'))
+  } catch (error) {
+    showDownloadError(error, '内部权重导入模板下载失败，请稍后重试')
   } finally {
     downloading.value = false
   }
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {
@@ -214,28 +237,15 @@ async function uploadFile({ file }) {
       const row = weightMatrix.value.find(r => r.objectiveId === w.objectiveId)
       if (row) row.weights[w.indicatorId] = Number(w.weight)
     })
+    hasImportedWeights.value = imported.length > 0
     ElMessage.success(`已导入 ${imported.length} 项权重，请核对后点击「保存权重」`)
   } catch (error) {
-    ElMessageBox.alert(escapeHtml(error?.message || '导入失败').replace(/\n/g, '<br>'), '导入失败', {
-      dangerouslyUseHTMLString: true, type: 'error'
-    })
+    showExcelImportError(error, '权重导入失败，请检查模板格式和权重数值后重试')
   } finally {
     importing.value = false
   }
 }
 
-function saveBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
 </script>
 
 <style scoped>
@@ -253,6 +263,13 @@ function escapeHtml(value) {
 .page-header h3 {
   margin: 0;
   font-size: var(--text-lg);
+}
+
+.import-tip {
+  margin: -8px 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
 }
 
 .content-card {
@@ -424,6 +441,18 @@ function escapeHtml(value) {
   border-radius: 16px;
   background-color: rgba(245, 108, 108, 0.12) !important;
   border: 1px solid rgba(245, 108, 108, 0.28);
+}
+
+:deep(.import-success-alert) {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  background-color: rgba(103, 194, 58, 0.12) !important;
+  border: 1px solid rgba(103, 194, 58, 0.28);
+}
+
+:deep(.import-success-alert .el-alert__title) {
+  color: #2f8f46 !important;
+  font-weight: 500;
 }
 
 :deep(.weight-warning-alert .el-alert__title) {

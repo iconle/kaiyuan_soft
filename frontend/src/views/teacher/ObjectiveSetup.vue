@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -80,6 +80,7 @@ import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const objectives = ref([])
 const dialogVisible = ref(false)
@@ -129,7 +130,7 @@ async function handleDelete(row) {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    downloadBlob(await ensureDownloadBlob(await downloadObjectiveTemplate(classId.value)), buildClassFilename(classId.value, '课程目标导入模板', 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadObjectiveTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '课程目标导入模板', 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   } finally { downloading.value = false }

@@ -10,8 +10,12 @@ export function buildDatedFilename(parts, extension, date = new Date()) {
   return `${safeParts.join('-')}.${extension.replace(/^\./, '')}`
 }
 
-export function buildClassFilename(classId, type, extension) {
-  return buildDatedFilename([`教学班级${classId}`, type], extension)
+/**
+ * 拼接「班级名-模板类型-日期」下载文件名。
+ * @param className 真实教学班级名（如「数据结构202401」），由调用方按 classId 解析后传入
+ */
+export function buildClassFilename(className, type, extension) {
+  return buildDatedFilename([className, type], extension)
 }
 
 export function downloadBlob(blob, filename) {

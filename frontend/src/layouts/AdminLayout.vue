@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, provide, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Setting, User, Collection, School, Notebook, UserFilled, Files, DataAnalysis, Document, Grid, EditPen, Aim, Histogram, List, DataBoard, TrendCharts, Upload, Finished, OfficeBuilding, Tickets, Unlock, Edit } from '@element-plus/icons-vue'
@@ -119,6 +119,14 @@ const activeClassId = ref(localStorage.getItem('activeClassId') || '')
 const teacherClasses = ref([])
 const teacherSemesters = ref([])
 const teacherFilterSemester = ref(null)
+
+// 供子页面按 classId 解析真实班级名（如「数据结构202401」），用于下载文件名等场景。
+// 复用本布局已加载的教师教学班列表，避免每个子页面重复请求 my-classes。
+provide('resolveClassName', (classId) => {
+  if (!classId) return ''
+  const found = teacherClasses.value.find(c => String(c.id) === String(classId))
+  return found?.className || ''
+})
 
 const filteredTeacherClasses = computed(() => {
   if (!teacherFilterSemester.value) return teacherClasses.value

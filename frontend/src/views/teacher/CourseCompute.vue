@@ -409,7 +409,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, inject, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
@@ -421,11 +421,12 @@ import {
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
 import * as echarts from 'echarts'
-import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
+import { downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const userStore = useUserStore()
 const classId = ref(route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const status = ref('')
 const computing = ref(false)
 const requesting = ref(false)
@@ -599,21 +600,21 @@ async function openPersonalDialog(type, item) {
 async function downloadPdf() {
   try {
     const blob = await downloadCoursePdf(classId.value)
-    downloadBlob(blob, `课程达成度报告_${classId.value}.pdf`)
+    downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.pdf`)
   } catch { /* 拦截器已提示错误 */ }
 }
 
 async function downloadExcel() {
   try {
     const blob = await downloadCourseExcel(classId.value)
-    downloadBlob(blob, `课程达成度报告_${classId.value}.xlsx`)
+    downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.xlsx`)
   } catch { /* 拦截器已提示错误 */ }
 }
 
 async function downloadPersonalAchievementExcel() {
   try {
     const blob = await downloadPersonalAchievements(classId.value)
-    downloadBlob(blob, `学生个人达成度_${classId.value}.xlsx`)
+    downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
   } catch { /* 拦截器已提示错误 */ }
 }
 

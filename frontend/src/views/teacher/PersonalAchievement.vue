@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Download, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -188,6 +188,7 @@ import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = computed(() => route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const exporting = ref(false)
 const keyword = ref('')
@@ -265,7 +266,7 @@ async function openDetail(row) {
 async function handleExport() {
   exporting.value = true
   try {
-    downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(classId.value, '个人达成度', 'xlsx'))
+    downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(resolveClassName(classId.value), '个人达成度', 'xlsx'))
     ElMessage.success('个人达成度 Excel 已导出')
   } finally {
     exporting.value = false

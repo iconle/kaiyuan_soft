@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -86,6 +86,7 @@ import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError
 
 const route = useRoute()
 const classId = ref(route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const assessments = ref([])
 const allObjectives = ref([])
@@ -164,7 +165,7 @@ async function downloadTemplate() {
   downloading.value = true
   try {
     const assessmentName = assessments.value.find(item => item.id === selectedAssessmentId.value)?.name
-    downloadBlob(await ensureDownloadBlob(await downloadQuestionTemplate(selectedAssessmentId.value)), buildClassFilename(classId.value, `${assessmentName || '考核点'}题目导入模板`, 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadQuestionTemplate(selectedAssessmentId.value)), buildClassFilename(resolveClassName(classId.value), `${assessmentName || '考核点'}题目导入模板`, 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   } finally { downloading.value = false }

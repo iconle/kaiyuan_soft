@@ -170,7 +170,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -184,6 +184,7 @@ import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError
 
 const route = useRoute()
 const classId = ref(route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const status = ref('')
 const assessments = ref([])
@@ -326,7 +327,7 @@ async function saveAll() {
 async function downloadTemplate() {
   try {
     const assessmentName = currentAssessment.value?.name || '成绩'
-    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(classId.value, `${assessmentName}成绩模板`, 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), `${assessmentName}成绩模板`, 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   }

@@ -86,18 +86,18 @@ public class TeachingClassImportService {
             sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, TEMPLATE_HEADERS.length - 1));
 
             Row sample = sheet.createRow(1);
-            sample.createCell(0).setCellValue("数据结构-2025秋-1班");
+            sample.createCell(0).setCellValue("数据结构202401");
             sample.createCell(1).setCellValue("数据结构");
             sample.createCell(2).setCellValue("teacher_wang");
-            sample.createCell(3).setCellValue("2025-2026-1");
+            sample.createCell(3).setCellValue("2024-2025学年第一学期");
 
             Sheet noteSheet = workbook.createSheet("填写说明");
             String[] notes = {
                     "请从第2行开始填写教学班级数据，第1行表头和第1个工作表名称不要修改。",
-                    "班级名称：必填，同一课程和同一学期下不能重复，例如：数据结构-2025秋-1班。",
+                    "班级名称：必填，同一课程和同一学期下不能重复；格式为「课程名+年级+班号」，年级由名称后缀解析（如 数据结构202401 → 2024级），例如：数据结构202401。",
                     "课程名称：必填，填写课程体系中已经存在的课程名称；如果系统中有重名课程，请先在课程体系中处理重名。",
                     "主讲教师用户名：必填，填写系统用户管理中角色为主讲教师的用户名，例如：teacher_wang。",
-                    "开课学期：必填，填写系统学期字典中的学期标签，例如：2025-2026-1。",
+                    "开课学期：必填，填写系统学期字典中的学期标签，例如：2024-2025学年第一学期。",
                     "系统会跳过完全空白的行；单次最多导入1000条数据。"
             };
             for (int i = 0; i < notes.length; i++) {
@@ -242,7 +242,7 @@ public class TeachingClassImportService {
         String semesterLabel = normalize(getCellString(row.getCell(3)));
 
         if (className == null) {
-            rowErrors.add("班级名称不能为空，请填写如「数据结构-2025秋-1班」");
+            rowErrors.add("班级名称不能为空，请填写如「数据结构202401」");
         }
 
         Course course = null;

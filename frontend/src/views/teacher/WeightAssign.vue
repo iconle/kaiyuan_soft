@@ -14,13 +14,14 @@
         :before-upload="beforeUpload"
         :http-request="uploadFile"
         accept=".xlsx"
+        :disabled="importDisabled"
       >
         <el-button
           type="primary"
           plain
           class="import-action-btn"
           :loading="importing"
-          :disabled="!supportedIndicators.length"
+          :disabled="importDisabled"
         >
           导入权重
         </el-button>
@@ -115,6 +116,10 @@ const allValid = computed(() => {
   if (supportedIndicators.value.length === 0) return false
   return Object.values(colSums.value).every(s => s.valid)
 })
+
+const importDisabled = computed(() =>
+  !supportedIndicators.value.length || importing.value || downloading.value
+)
 
 function getSummaries({ columns }) {
   return columns.map((column, index) => {

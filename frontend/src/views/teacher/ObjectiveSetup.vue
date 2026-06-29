@@ -13,7 +13,12 @@
       <el-table :data="objectives" border stripe v-loading="loading" empty-text="暂无课程目标，请先新增或导入">
         <el-table-column prop="objNo" label="编号" width="80" />
         <el-table-column prop="dimension" label="维度" width="80" />
-        <el-table-column prop="description" label="目标描述" />
+        <el-table-column
+          prop="description"
+          label="目标描述"
+          min-width="260"
+          show-overflow-tooltip
+        />
 
         <el-table-column
           label="操作"

@@ -9,7 +9,7 @@
       <span class="hint" v-if="indicators.length > 0">所有指标点列合计必须为 1.00</span>
       <el-button v-if="indicators.length > 0" @click="handleDownloadTemplate" :loading="downloading">下载模板</el-button>
       <el-button v-if="indicators.length > 0" @click="openImportDialog">导入课程支撑</el-button>
-      <el-button v-if="indicators.length > 0" @click="handleAddRow">添加课程支撑</el-button>
+      <!-- <el-button v-if="indicators.length > 0" @click="handleAddRow">添加课程支撑</el-button> -->
       <el-button v-if="indicators.length > 0" type="primary" @click="handleSubmit" :disabled="!allColumnsValid">提交生效</el-button>
     </div>
 

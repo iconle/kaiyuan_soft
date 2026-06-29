@@ -326,8 +326,7 @@ async function saveAll() {
 
 async function downloadTemplate() {
   try {
-    const assessmentName = currentAssessment.value?.name || '成绩'
-    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), `${assessmentName}成绩模板`, 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '成绩录入模板', 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   }

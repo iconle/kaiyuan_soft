@@ -50,9 +50,22 @@
       :data="filteredRows"
       border
       stripe
-      empty-text="暂无个人达成度数据"
       class="personal-achievement-table"
     >
+      <template #empty>
+        <el-empty :description="tableEmptyText" :image-size="96">
+          <el-button
+            v-if="keyword.trim()"
+            type="primary"
+            link
+            class="personal-empty-action"
+            @click="keyword = ''"
+          >
+            清空搜索条件
+          </el-button>
+        </el-empty>
+      </template>
+
       <el-table-column
         prop="studentNo"
         label="学号"
@@ -143,7 +156,12 @@
 
         <el-tabs>
           <el-tab-pane label="课程目标">
-            <el-table :data="objectiveRows" border size="small">
+            <el-table
+              :data="objectiveRows"
+              border
+              size="small"
+              empty-text="暂无课程目标达成度明细，请先完成课程级计算"
+            >
               <el-table-column prop="label" label="课程目标" />
               <el-table-column label="达成度" width="150" align="center">
                 <template #default="{ row }">{{ formatAchievement(row.value) }}</template>
@@ -156,7 +174,12 @@
             </el-table>
           </el-tab-pane>
           <el-tab-pane label="指标点">
-            <el-table :data="indicatorRows" border size="small">
+            <el-table
+              :data="indicatorRows"
+              border
+              size="small"
+              empty-text="暂无指标点达成度明细，请先完成课程级计算"
+            >
               <el-table-column prop="label" label="指标点" />
               <el-table-column label="达成度" width="150" align="center">
                 <template #default="{ row }">{{ formatAchievement(row.value) }}</template>
@@ -225,6 +248,11 @@ const achievedCount = computed(() =>
 const unachievedCount = computed(() => rows.value.length - achievedCount.value)
 const detailTitle = computed(() =>
   `${detail.studentName || '学生'}（${detail.studentNo || '-'}）`
+)
+const tableEmptyText = computed(() =>
+  keyword.value.trim()
+    ? '未找到匹配的学生，请调整搜索条件'
+    : '暂无个人达成度数据，请先完成课程级计算'
 )
 
 const objectiveRows = computed(() => toDetailRows(
@@ -434,6 +462,10 @@ function statusText(value) {
 
 :deep(.personal-achievement-table .el-table__row td) {
   height: 58px;
+}
+
+.personal-empty-action {
+  margin-top: 4px;
 }
 
 /* 综合达成度：数值 + 小进度条 */

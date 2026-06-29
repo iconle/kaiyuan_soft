@@ -84,6 +84,7 @@ import { ref, computed, onMounted, h } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
+import { validateExcelFile } from '../../utils/excelImport'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -198,9 +199,7 @@ async function downloadTemplate() {
 }
 
 function beforeUpload(file) {
-  const valid = file.name?.toLowerCase().endsWith('.xlsx')
-  if (!valid) ElMessage.error('仅支持 .xlsx 格式文件')
-  return valid
+  return validateExcelFile(file)
 }
 
 async function uploadFile({ file }) {

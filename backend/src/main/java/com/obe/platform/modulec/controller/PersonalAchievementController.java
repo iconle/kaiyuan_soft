@@ -1,6 +1,8 @@
 package com.obe.platform.modulec.controller;
 
 import com.obe.platform.common.Result;
+import com.obe.platform.modulea.entity.TeachingClass;
+import com.obe.platform.modulea.mapper.TeachingClassMapper;
 import com.obe.platform.modulec.service.PersonalAchievementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -22,6 +26,7 @@ import java.util.List;
 public class PersonalAchievementController {
 
     private final PersonalAchievementService personalAchievementService;
+    private final TeachingClassMapper teachingClassMapper;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('TEACHER','ACADEMIC','DIRECTOR')")
@@ -58,12 +63,27 @@ public class PersonalAchievementController {
     @PreAuthorize("hasAnyRole('TEACHER','ACADEMIC','DIRECTOR')")
     public ResponseEntity<byte[]> export(@PathVariable Long classId) {
         byte[] excel = personalAchievementService.exportExcel(classId);
-        String filename = URLEncoder.encode(
-                "个人达成度数据-" + classId + ".xlsx",
-                StandardCharsets.UTF_8);
+        String filename = URLEncoder.encode(buildExportFilename(classId), StandardCharsets.UTF_8);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(excel);
+    }
+
+    private String buildExportFilename(Long classId) {
+        TeachingClass teachingClass = teachingClassMapper.selectById(classId);
+        String className = teachingClass == null ? "教学班级" + classId : teachingClass.getClassName();
+        String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        return sanitizeFilenamePart(className) + "-学生个人达成度-" + date + ".xlsx";
+    }
+
+    private String sanitizeFilenamePart(String value) {
+        if (value == null || value.isBlank()) {
+            return "教学班级";
+        }
+        return value.trim()
+                .replaceAll("[\\\\/:*?\"<>|]", "")
+                .replaceAll("\\s+", "")
+                .replaceAll("-+", "-");
     }
 }

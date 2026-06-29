@@ -37,6 +37,9 @@
         保存权重
       </el-button>
     </div>
+    <div class="import-tip">
+      {{ weightImportTip }}
+    </div>
 
     <div class="content-card">
       <el-alert
@@ -84,7 +87,7 @@ import { ref, computed, onMounted, h } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
-import { validateExcelFile } from '../../utils/excelImport'
+import { getExcelUploadTip, validateExcelFile } from '../../utils/excelImport'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -96,6 +99,7 @@ const importing = ref(false)
 const supportedIndicators = ref([])
 const weightData = ref([]) // flat list from API
 const weightMatrix = ref([]) // computed matrix rows
+const weightImportTip = getExcelUploadTip()
 
 const colSums = computed(() => {
   const sums = {}
@@ -252,6 +256,13 @@ function escapeHtml(value) {
 .page-header h3 {
   margin: 0;
   font-size: var(--text-lg);
+}
+
+.import-tip {
+  margin: -8px 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
 }
 
 .content-card {

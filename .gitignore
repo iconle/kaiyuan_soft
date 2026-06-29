@@ -36,3 +36,17 @@ backend/target/
 # deploy/works/course-oss/frontend/assets/
 # deploy/works/course-oss/backend/*.jar
 deploy/works/course-oss/frontend/assets/
+frontend/dist.zip
+*.zip
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application.yml
+deploy/docker-compose.yml
+deploy/works/course-oss/backend/obe-platform-1.0.0.jar
+deploy/works/course-oss/frontend/index.html
+sql/obe_platform_backup.sql
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application.yml
+deploy/docker-compose.yml
+deploy/works/course-oss/backend/obe-platform-1.0.0.jar
+deploy/works/course-oss/frontend/index.html
+sql/obe_platform_backup.sql

@@ -44,6 +44,14 @@
 
     <div class="content-card">
       <el-alert
+        v-if="hasImportedWeights"
+        class="import-success-alert"
+        type="success"
+        :closable="false"
+        title="权重已导入到页面，请核对列合计后点击「保存权重」完成提交"
+      />
+
+      <el-alert
         v-if="!allValid"
         class="weight-warning-alert"
         type="error"
@@ -101,6 +109,7 @@ const supportedIndicators = ref([])
 const weightData = ref([]) // flat list from API
 const weightMatrix = ref([]) // computed matrix rows
 const weightImportTip = getExcelUploadTip()
+const hasImportedWeights = ref(false)
 
 const colSums = computed(() => {
   const sums = {}
@@ -155,6 +164,7 @@ async function loadData() {
     objectives.value = objRes.data || []
     supportedIndicators.value = indRes.data || []
     weightData.value = weightRes.data || []
+    hasImportedWeights.value = false
 
     // Build matrix: one row per objective
     weightMatrix.value = objectives.value.map(obj => {
@@ -193,6 +203,7 @@ async function handleSave() {
 
     await updateWeights(classId.value, flatWeights)
     ElMessage.success('权重已保存')
+    hasImportedWeights.value = false
   } finally {
     saving.value = false
   }
@@ -222,6 +233,7 @@ async function uploadFile({ file }) {
       const row = weightMatrix.value.find(r => r.objectiveId === w.objectiveId)
       if (row) row.weights[w.indicatorId] = Number(w.weight)
     })
+    hasImportedWeights.value = imported.length > 0
     ElMessage.success(`已导入 ${imported.length} 项权重，请核对后点击「保存权重」`)
   } catch (error) {
     showExcelImportError(error, '权重导入失败，请检查模板格式和权重数值后重试')
@@ -434,6 +446,18 @@ function saveBlob(blob, filename) {
   border-radius: 16px;
   background-color: rgba(245, 108, 108, 0.12) !important;
   border: 1px solid rgba(245, 108, 108, 0.28);
+}
+
+:deep(.import-success-alert) {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  background-color: rgba(103, 194, 58, 0.12) !important;
+  border: 1px solid rgba(103, 194, 58, 0.28);
+}
+
+:deep(.import-success-alert .el-alert__title) {
+  color: #2f8f46 !important;
+  font-weight: 500;
 }
 
 :deep(.weight-warning-alert .el-alert__title) {

@@ -97,6 +97,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
 import { getExcelUploadTip, showExcelImportError, validateExcelFile } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
@@ -212,7 +213,10 @@ async function handleSave() {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    saveBlob(await downloadWeightTemplate(classId.value), '内部权重导入模板.xlsx')
+    const blob = await ensureDownloadBlob(await downloadWeightTemplate(classId.value))
+    downloadBlob(blob, buildClassFilename(classId.value, '内部权重导入模板', 'xlsx'))
+  } catch (error) {
+    showDownloadError(error, '内部权重导入模板下载失败，请稍后重试')
   } finally {
     downloading.value = false
   }
@@ -240,15 +244,6 @@ async function uploadFile({ file }) {
   } finally {
     importing.value = false
   }
-}
-
-function saveBlob(blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
 }
 
 </script>

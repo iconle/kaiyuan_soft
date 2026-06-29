@@ -18,7 +18,12 @@
     <div class="content-card">
       <el-table :data="questions" border stripe v-loading="loading" v-if="selectedAssessmentId" empty-text="暂无题目，请先新增或导入">
         <el-table-column prop="sortOrder" label="序号" width="60" />
-        <el-table-column prop="name" label="题目名称" width="180" />
+        <el-table-column
+          prop="name"
+          label="题目名称"
+          width="180"
+          show-overflow-tooltip
+        />
         <el-table-column prop="maxScore" label="满分" width="80" />
         <el-table-column label="绑定目标" min-width="200">
           <template #default="{ row }">

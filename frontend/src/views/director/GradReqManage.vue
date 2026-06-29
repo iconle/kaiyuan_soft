@@ -124,6 +124,7 @@
                 prop="content"
                 label="描述"
                 min-width="300"
+                show-overflow-tooltip
               />
 
               <el-table-column

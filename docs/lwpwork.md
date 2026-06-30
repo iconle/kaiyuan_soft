@@ -1,3 +1,4 @@
+
 # 功能开发工作报告：课程支撑（宏观支撑矩阵）批量导入
 
 ## 一、基本信息
@@ -124,6 +125,19 @@ GET /api/macro-matrix/template?majorId={majorId}
 
 按所选专业预填现有课程支撑关系，并附「填写说明」sheet（含可选课程编号 / 指标点编号清单）。
 
+### 2. 上传导入课程支撑
+
+```
+POST /api/macro-matrix/import?majorId={majorId}
+Content-Type: multipart/form-data
+参数：file（.xlsx 文件）
+权限：DIRECTOR
+返回：Result<Integer>，data 为成功导入的课程支撑条数
+```
+
+- 校验失败时返回 `code=500`、`message` 为逐条错误（换行分隔），**不写库**。
+- 校验通过并整体替换成功后返回 `code=200`、`data=N`。
+
 ---
 
 ## 六、关键实现说明
@@ -236,7 +250,7 @@ GET /api/macro-matrix/template?majorId={majorId}
 | `0d307d3` | feat(macro-matrix): director.js 增加模板下载 / 导入封装                                    |
 | `746fd07` | feat(macro-matrix): MacroMatrix.vue 增加下载模板 / 课程支撑导入按钮与导入弹窗              |
 
-每次提交均**只包含当次修改的单个代码文件**，未夹带其它文件
+每次提交均**只包含当次修改的单个代码文件**，未夹带其它文件。
 
 ---
 

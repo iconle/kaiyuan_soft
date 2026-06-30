@@ -250,7 +250,7 @@ Content-Type: multipart/form-data
 | `0d307d3` | feat(macro-matrix): director.js 增加模板下载 / 导入封装                                    |
 | `746fd07` | feat(macro-matrix): MacroMatrix.vue 增加下载模板 / 课程支撑导入按钮与导入弹窗              |
 
-每次提交均**只包含当次修改的单个代码文件**，未夹带其它文件
+每次提交均**只包含当次修改的单个代码文件**，未夹带其它文件。
 
 ---
 

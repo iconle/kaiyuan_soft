@@ -21,10 +21,24 @@
     </el-alert>
     <el-alert v-else-if="status === 'IMPORTED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
       成绩已导入，点击「一键计算」执行课程级达成度计算（目标级 + 课程级）。计算完成后成绩单将锁定。
+      <el-button size="small" type="primary" class="alert-action-button" @click="goScoreImport">
+        查看或修改成绩
+      </el-button>
     </el-alert>
     <el-alert v-else type="info" show-icon :closable="false" style="margin-bottom:16px">
       请先在「成绩导入」中导入学生成绩数据。
+      <el-button size="small" type="primary" class="alert-action-button" @click="goScoreImport">
+        去成绩导入
+      </el-button>
     </el-alert>
+
+    <div v-if="showScoreEntryBar" class="score-entry-bar">
+      <div>
+        <strong>{{ scoreEntryTitle }}</strong>
+        <span>{{ scoreEntryDescription }}</span>
+      </div>
+      <el-button type="primary" @click="goScoreImport">{{ scoreEntryButtonText }}</el-button>
+    </div>
 
     <!-- My unlock requests status -->
     <el-card
@@ -539,6 +553,15 @@ const hasResults = computed(() =>
 )
 
 const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
+const showScoreEntryBar = computed(() => status.value !== 'LOCKED')
+const hasImportedScores = computed(() => status.value === 'IMPORTED')
+const scoreEntryTitle = computed(() => hasImportedScores.value ? '成绩已导入' : '尚未导入成绩')
+const scoreEntryDescription = computed(() =>
+  hasImportedScores.value
+    ? '如需核对或修正成绩，可先返回成绩导入页面。'
+    : '请先完成成绩导入，再执行课程级达成度计算。'
+)
+const scoreEntryButtonText = computed(() => hasImportedScores.value ? '查看或修改成绩' : '去成绩导入')
 const reportExportReady = computed(() => canViewPersonalAchievement.value)
 const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {
@@ -650,6 +673,11 @@ async function openPersonalDialog(type, item) {
 
 function goPersonalAchievement() {
   router.push(`/teacher/${classId.value}/personal-achievements`)
+}
+
+function goScoreImport() {
+  ElMessage.info('正在前往成绩导入页面')
+  router.push(`/teacher/${classId.value}/scores`)
 }
 
 async function downloadPdf() {
@@ -1121,6 +1149,32 @@ const indicatorStats = computed(() => {
   font-size: 13px;
 }
 
+.alert-action-button {
+  margin-left: 8px;
+}
+
+.score-entry-bar {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(230, 162, 60, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.score-entry-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.score-entry-bar span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 .result-action-bar {
   margin-bottom: 16px;
   padding: 14px 16px;
@@ -1396,6 +1450,7 @@ const indicatorStats = computed(() => {
 }
 
 @media (max-width: 720px) {
+  .score-entry-bar,
   .result-action-bar {
     align-items: flex-start;
     flex-direction: column;

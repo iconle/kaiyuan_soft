@@ -33,22 +33,44 @@
       </el-button>
     </div>
 
-    <el-alert v-if="status === 'LOCKED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
+    <el-alert
+      v-if="status === 'LOCKED'"
+      type="warning"
+      show-icon
+      :closable="false"
+      class="score-alert"
+    >
       成绩单已锁定，无法继续导入或修改。如发现成绩录入有误，请点击「申请成绩勘误」提交说明，审批解锁后再修改。
     </el-alert>
+
     <el-alert
       v-if="status === 'LOCKED' && hasPendingRequest"
       type="info"
       show-icon
       :closable="false"
-      style="margin-bottom:16px"
+      class="score-alert"
     >
       已提交勘误申请，当前等待审核。审核前可在下方申请记录中撤销后重新提交。
     </el-alert>
-    <el-alert v-else-if="!loading && assessments.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
+
+
+    <el-alert
+      v-else-if="!loading && assessments.length === 0"
+      type="info"
+      show-icon
+      :closable="false"
+      class="score-alert"
+    >
       暂无考核点数据，请先在「考核点设置」中创建考核点。
     </el-alert>
-    <el-alert v-else-if="!loading && assessments.length > 0 && selectedAssessmentId && questions.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
+
+    <el-alert
+      v-else-if="!loading && assessments.length > 0 && selectedAssessmentId && questions.length === 0"
+      type="info"
+      show-icon
+      :closable="false"
+      class="score-alert"
+    >
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
 
@@ -484,7 +506,15 @@ function escapeHtml(value) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+.score-alert {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(128, 107, 191, 0.12);
+}
 
+:deep(.score-alert .el-alert__content) {
+  line-height: 1.7;
+}
 .compute-entry-bar {
   margin-bottom: var(--space-4);
   padding: 14px 16px;

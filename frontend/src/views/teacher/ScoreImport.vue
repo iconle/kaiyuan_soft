@@ -315,15 +315,8 @@ const hasEdits = computed(() => editCount.value > 0)
 
 async function saveAll() {
   if (saving.value || editCount.value === 0) return
-  await ElMessageBox.confirm(
-    `本次将保存 ${editCount.value} 条成绩修改，确认提交吗？`,
-    '确认保存成绩修改',
-    {
-      type: 'warning',
-      confirmButtonText: '确认保存',
-      cancelButtonText: '取消'
-    }
-  )
+  const confirmed = await confirmSaveEdits()
+  if (!confirmed) return
   let saved = 0
   let failed = 0
   for (const [key, score] of Object.entries(edits.value)) {
@@ -348,6 +341,23 @@ async function saveAll() {
     await loadQuestions()
   } else if (failed > 0) {
     ElMessage.error('保存失败，请重试')
+  }
+}
+
+async function confirmSaveEdits() {
+  try {
+    await ElMessageBox.confirm(
+      `本次将保存 ${editCount.value} 条成绩修改，确认提交吗？`,
+      '确认保存成绩修改',
+      {
+        type: 'warning',
+        confirmButtonText: '确认保存',
+        cancelButtonText: '取消'
+      }
+    )
+    return true
+  } catch {
+    return false
   }
 }
 

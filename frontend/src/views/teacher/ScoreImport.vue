@@ -339,9 +339,13 @@ async function saveAll() {
     }
     if (saved > 0) {
       const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
-      ElMessage.success(msg)
-      edits.value = {}
-      await loadQuestions()
+      if (failed > 0) {
+        ElMessage.warning(msg)
+      } else {
+        ElMessage.success(msg)
+        edits.value = {}
+        await loadQuestions()
+      }
     } else if (failed > 0) {
       ElMessage.error('保存失败，请重试')
     }

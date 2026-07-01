@@ -89,7 +89,7 @@
     </div>
 
     <!-- Class edit dialog -->
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑教学班级' : '新增教学班级'" width="480px">
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑教学班级' : '新增教学班级'" width="min(480px, 92vw)">
       <el-form :model="form" label-width="90px">
         <el-form-item label="班级名称" required><el-input v-model="form.className" /></el-form-item>
         <el-form-item label="所属课程" required><el-select v-model="form.courseId" style="width:100%"><el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" /></el-select></el-form-item>
@@ -104,7 +104,7 @@
     <el-dialog
       v-model="studentDialogVisible"
       :title="`学生管理 - ${currentClass?.className || ''}`"
-      width="860px"
+      width="min(860px, 96vw)"
       append-to-body
       class="student-manage-dialog"
     >

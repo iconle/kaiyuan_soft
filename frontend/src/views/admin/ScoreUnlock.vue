@@ -14,7 +14,7 @@
           <el-table :data="filteredSheets" border stripe v-loading="loadingSheets">
             <el-table-column prop="id" label="成绩单ID" width="90" />
             <el-table-column prop="classId" label="班级ID" width="80" />
-            <el-table-column prop="className" label="班级名称" min-width="180" />
+            <el-table-column prop="className" label="班级名称" min-width="180" show-overflow-tooltip />
             <el-table-column label="目标年级" width="100" align="center">
               <template #default="{ row }">
                 {{ row.grade ? `${row.grade} 级` : '-' }}
@@ -61,9 +61,9 @@
           </el-alert>
           <el-table v-if="!requestError" :data="requests" border stripe v-loading="loadingRequests">
             <el-table-column prop="id" label="工单ID" width="80" />
-            <el-table-column prop="className" label="班级" min-width="160" />
+            <el-table-column prop="className" label="班级" min-width="160" show-overflow-tooltip />
             <el-table-column prop="requesterName" label="申请人" width="120" />
-            <el-table-column prop="reason" label="勘误原因" min-width="180" />
+            <el-table-column prop="reason" label="勘误原因" min-width="180" show-overflow-tooltip />
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'PENDING' ? 'warning' : row.status === 'UNLOCKED' ? 'success' : row.status === 'APPROVED' ? '' : 'danger'" size="small">

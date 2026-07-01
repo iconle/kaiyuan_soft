@@ -317,30 +317,35 @@ async function saveAll() {
   if (saving.value || editCount.value === 0) return
   const confirmed = await confirmSaveEdits()
   if (!confirmed) return
+  saving.value = true
   let saved = 0
   let failed = 0
-  for (const [key, score] of Object.entries(edits.value)) {
-    if (key.startsWith('q_')) {
-      const [, studentId, questionId] = key.split('_')
-      try {
-        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
-        saved++
-      } catch { failed++ }
-    } else if (key.startsWith('a_')) {
-      const [, studentId, assessId] = key.split('_')
-      try {
-        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
-        saved++
-      } catch { failed++ }
+  try {
+    for (const [key, score] of Object.entries(edits.value)) {
+      if (key.startsWith('q_')) {
+        const [, studentId, questionId] = key.split('_')
+        try {
+          await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
+          saved++
+        } catch { failed++ }
+      } else if (key.startsWith('a_')) {
+        const [, studentId, assessId] = key.split('_')
+        try {
+          await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
+          saved++
+        } catch { failed++ }
+      }
     }
-  }
-  if (saved > 0) {
-    const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
-    ElMessage.success(msg)
-    edits.value = {}
-    await loadQuestions()
-  } else if (failed > 0) {
-    ElMessage.error('保存失败，请重试')
+    if (saved > 0) {
+      const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
+      ElMessage.success(msg)
+      edits.value = {}
+      await loadQuestions()
+    } else if (failed > 0) {
+      ElMessage.error('保存失败，请重试')
+    }
+  } finally {
+    saving.value = false
   }
 }
 

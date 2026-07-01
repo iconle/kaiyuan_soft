@@ -347,8 +347,8 @@ async function downloadTemplate() {
 
 function getScoreTemplateClassName() {
   const classInfo = resolveClassInfo(classId.value)
-  if (!classInfo) return resolveClassName(classId.value)
-  return [classInfo.courseName, classInfo.className].filter(Boolean).join('-')
+  if (!classInfo) return resolveClassName(classId.value) || `教学班级${classId.value}`
+  return [classInfo.courseName, classInfo.className].filter(Boolean).join('-') || `教学班级${classId.value}`
 }
 
 function beforeUpload(file) {

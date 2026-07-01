@@ -92,7 +92,7 @@
       <el-button type="primary" @click="goCourseCompute">去课程级计算</el-button>
     </div>
 
-    <el-dialog v-model="requestDialogVisible" title="提交成绩勘误申请" width="500px">
+    <el-dialog v-model="requestDialogVisible" title="提交成绩勘误申请" width="min(500px, 92vw)">
       <el-form label-width="80px">
         <el-form-item label="勘误原因">
           <el-input

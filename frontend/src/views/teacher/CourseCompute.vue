@@ -24,6 +24,9 @@
     </el-alert>
     <el-alert v-else type="info" show-icon :closable="false" style="margin-bottom:16px">
       请先在「成绩导入」中导入学生成绩数据。
+      <el-button size="small" type="primary" class="alert-action-button" @click="goScoreImport">
+        去成绩导入
+      </el-button>
     </el-alert>
 
     <!-- My unlock requests status -->
@@ -1123,6 +1126,10 @@ const indicatorStats = computed(() => {
   gap: 8px;
   flex-wrap: wrap;
   font-size: 13px;
+}
+
+.alert-action-button {
+  margin-left: 8px;
 }
 
 .result-action-bar {

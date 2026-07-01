@@ -75,7 +75,7 @@
     </div>
 
     <!-- Class dialog -->
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑班级' : '新增班级'" width="480px">
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑班级' : '新增班级'" width="min(480px, 92vw)">
       <el-form :model="form" label-width="100px">
         <el-form-item label="班级名称" required>
           <el-input v-model="form.className" placeholder="如：计算机科学与技术2501班" />
@@ -96,7 +96,7 @@
     </el-dialog>
 
     <!-- Students dialog -->
-    <el-dialog v-model="studentDialogVisible" :title="`班级学生 - ${selectedClass?.className || ''}`" width="640px">
+    <el-dialog v-model="studentDialogVisible" :title="`班级学生 - ${selectedClass?.className || ''}`" width="min(640px, 92vw)">
       <div style="margin-bottom:12px; display:flex; gap:8px">
         <el-select v-model="addStudentId" placeholder="选择学生" filterable style="flex:1">
           <el-option v-for="s in availableStudents" :key="s.id" :label="`${s.studentNo} ${s.name}`" :value="s.id" />

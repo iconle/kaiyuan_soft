@@ -149,11 +149,13 @@
 
     <div v-if="selectedAssessmentId" class="content-card">
       <el-empty v-if="!loading && scoreRows.length === 0" description="暂无学生数据，请先为学生选课" />
-      <div class="section-title">考核点: {{ currentAssessment?.name || '' }}
-        <span style="font-size:13px;color:var(--text-secondary);margin-left:8px">满分: {{ currentAssessment?.maxScore || '-' }}</span>
+      <div class="section-title score-section-title">
+        <span>考核点: {{ currentAssessment?.name || '' }}</span>
+        <span class="score-section-meta">满分: {{ currentAssessment?.maxScore || '-' }}</span>
       </div>
 
-      <div style="overflow-x: auto; max-width: 100%;">
+      <div class="score-table-wrapper">
+        
       <el-table
         :data="scoreRows"
         border
@@ -161,14 +163,16 @@
         size="small"
         v-loading="loading"
         v-if="questions.length > 0"
-        class="score-import-table"
+        class="score-import-table score-table"
       >
         <el-table-column prop="studentNo" label="学号" width="120" fixed />
         <el-table-column prop="studentName" label="姓名" width="100" fixed />
         <el-table-column v-for="q in questions" :key="q.id" :label="q.name" min-width="110">
           <template #header>
-            <div>{{ q.name }}</div>
-            <div style="font-size:11px;color:var(--text-secondary)">满分:{{ q.maxScore }}→{{ questionObjLabel(q) }}</div>
+            <div class="score-question-header">
+              <div class="score-question-title">{{ q.name }}</div>
+              <div class="score-question-meta">满分: {{ q.maxScore }} → {{ questionObjLabel(q) }}</div>
+            </div>
           </template>
           <template #default="{ row }">
             <el-input-number
@@ -180,7 +184,6 @@
               :precision="1"
               size="small"
               controls-position="right"
-              style="width:100%"
               class="score-number-input"
             />
             <span v-else>{{ getQScore(row.studentId, q.id) ?? '-' }}</span>
@@ -194,22 +197,43 @@
       </el-table>
 
       <!-- No questions: show assessment-level score input -->
-      <el-table :data="scoreRows" border stripe size="small" v-loading="loading" v-else-if="scoreRows.length > 0">
+      <el-table
+        :data="scoreRows"
+        border
+        stripe
+        size="small"
+        v-loading="loading"
+        v-else-if="scoreRows.length > 0"
+        class="score-import-table score-table"
+      >
         <el-table-column prop="studentNo" label="学号" width="120" />
         <el-table-column prop="studentName" label="姓名" width="100" />
         <el-table-column :label="currentAssessment?.name || '成绩'" min-width="150">
-          <template #header><div>{{ currentAssessment?.name || '成绩' }}</div><div style="font-size:11px;color:var(--text-secondary)">满分:{{ currentAssessment?.maxScore || '-' }}</div></template>
+          <template #header>
+            <div class="score-question-header">
+              <div class="score-question-title">{{ currentAssessment?.name || '成绩' }}</div>
+              <div class="score-question-meta">满分: {{ currentAssessment?.maxScore || '-' }}</div>
+            </div>
+          </template>
           <template #default="{ row }">
-            <el-input-number v-if="status !== 'LOCKED'" :model-value="getAScore(row.studentId)"
-              @update:model-value="val => setAScore(row.studentId, val)" :min="0" :max="currentAssessment?.maxScore"
-              :precision="1" size="small" controls-position="right" style="width:100%" />
+            <el-input-number
+              v-if="status !== 'LOCKED'"
+              :model-value="getAScore(row.studentId)"
+              @update:model-value="val => setAScore(row.studentId, val)"
+              :min="0"
+              :max="currentAssessment?.maxScore"
+              :precision="1"
+              size="small"
+              controls-position="right"
+              class="score-number-input"
+            />
             <span v-else>{{ getAScore(row.studentId) ?? '-' }}</span>
           </template>
         </el-table-column>
       </el-table>
       </div>
 
-      <div style="margin-top:12px" v-if="hasEdits && status !== 'LOCKED'">
+      <div class="score-save-actions" v-if="hasEdits && status !== 'LOCKED'">
         <el-button
           type="warning"
           :loading="saving"
@@ -565,7 +589,82 @@ function escapeHtml(value) {
   border-radius: 10px;
   border: 1px solid rgba(128, 107, 191, 0.12);
 }
+.score-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
+.score-section-meta {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.score-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.score-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.score-table-wrapper::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(128, 107, 191, 0.28);
+}
+
+.score-table-wrapper::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(128, 107, 191, 0.08);
+}
+
+.score-table {
+  min-width: 760px;
+}
+
+:deep(.score-import-table .el-table__header th) {
+  background: #f7f4ff;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+:deep(.score-import-table .el-table__fixed-header-wrapper th) {
+  background: #f7f4ff;
+}
+
+.score-question-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.4;
+}
+
+.score-question-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.score-question-meta {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.score-number-input {
+  width: 100%;
+}
+
+.score-save-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
 :deep(.score-alert .el-alert__content) {
   line-height: 1.7;
 }

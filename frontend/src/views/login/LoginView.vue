@@ -62,6 +62,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login } from '../../api/auth'
 import { useUserStore } from '../../stores/user'
+import { getHomePath, getTeacherHomePath } from '../../utils/roleHome'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -78,15 +79,7 @@ const rules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-function getHomeRoute(roleCode) {
-  switch (roleCode) {
-    case 'ADMIN': return '/admin/users'
-    case 'ACADEMIC': return '/academic/courses'
-    case 'DIRECTOR': return '/director/grad-req'
-    case 'TEACHER': return '/teacher/1/objectives'
-    default: return '/login'
-  }
-}
+
 
 async function handleLogin() {
   await formRef.value.validate()
@@ -108,7 +101,7 @@ async function handleLogin() {
         if (classes.length > 0) {
           const firstId = String(classes[0].id)
           localStorage.setItem('activeClassId', firstId)
-          router.push(`/teacher/${firstId}/objectives`)
+          router.push(getTeacherHomePath(firstId))
           return
         }
         ElMessage.warning('您当前未任教任何教学班级,请联系教务管理员分配班级')
@@ -116,8 +109,7 @@ async function handleLogin() {
         // 接口失败时 fallback 到默认 route
       }
     }
-
-    router.push(getHomeRoute(res.data.roleCode))
+    router.push(getHomePath(res.data.roleCode) || '/login')
   } catch (e) {
     // error handled by interceptor
   } finally {

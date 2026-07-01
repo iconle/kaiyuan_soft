@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import { getHomePath } from '../utils/roleHome'
 const routes = [
   {
     path: '/login',
@@ -133,15 +133,6 @@ const routes = [
   }
 ]
 
-function getHomePath(roleCode) {
-  switch (roleCode) {
-    case 'ADMIN': return '/admin/users'
-    case 'ACADEMIC': return '/academic/courses'
-    case 'DIRECTOR': return '/director/grad-req'
-    case 'TEACHER': return '/teacher/1/objectives'
-    default: return null
-  }
-}
 
 const router = createRouter({
   history: createWebHistory(),

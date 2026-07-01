@@ -354,6 +354,7 @@ async function saveAll() {
       } else {
         ElMessage.success(msg)
         edits.value = {}
+        showComputeEntry.value = true
         await loadQuestions().catch(() => {
           ElMessage.warning('成绩已保存，但刷新数据失败，请手动刷新页面')
         })

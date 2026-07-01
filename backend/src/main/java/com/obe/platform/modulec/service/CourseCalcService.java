@@ -220,16 +220,24 @@ public class CourseCalcService {
         scoreSheetMapper.updateById(sheet);
 
         // Build label maps
-        Map<Long, String> objLabels = objectives.stream()
-                .collect(Collectors.toMap(CourseObjective::getId, CourseObjective::getObjNo));
+        Map<Long, String> objLabels = new HashMap<>();
+        Map<Long, String> objContents = new HashMap<>();
+        for (CourseObjective obj : objectives) {
+            objLabels.put(obj.getId(), obj.getObjNo());
+            objContents.put(obj.getId(), obj.getDescription());
+        }
         List<Long> indicatorIds = courseAchievements.keySet().stream().toList();
         Map<Long, String> indLabels = new HashMap<>();
+        Map<Long, String> indContents = new HashMap<>();
         if (!indicatorIds.isEmpty()) {
             var indicators = indicatorMapper.selectBatchIds(indicatorIds);
-            for (var ind : indicators) indLabels.put(ind.getId(), ind.getIndicatorNo());
+            for (var ind : indicators) {
+                indLabels.put(ind.getId(), ind.getIndicatorNo());
+                indContents.put(ind.getId(), ind.getContent());
+            }
         }
 
-        return new CalcResult(objAchievements, courseAchievements, now, objLabels, indLabels);
+        return new CalcResult(objAchievements, courseAchievements, now, objLabels, indLabels, objContents, indContents);
     }
 
     /**
@@ -249,16 +257,24 @@ public class CourseCalcService {
         LocalDateTime calcTime = objList.isEmpty() ? null : objList.get(0).getCalcTime();
         // Build labels
         Map<Long, String> objLabels = new HashMap<>();
+        Map<Long, String> objContents = new HashMap<>();
         Map<Long, String> indLabels = new HashMap<>();
+        Map<Long, String> indContents = new HashMap<>();
         if (!objMap.isEmpty()) {
             var objs = objectiveMapper.selectBatchIds(objMap.keySet());
-            for (var o : objs) objLabels.put(o.getId(), o.getObjNo());
+            for (var o : objs) {
+                objLabels.put(o.getId(), o.getObjNo());
+                objContents.put(o.getId(), o.getDescription());
+            }
         }
         if (!courseMap.isEmpty()) {
             var inds = indicatorMapper.selectBatchIds(courseMap.keySet());
-            for (var i : inds) indLabels.put(i.getId(), i.getIndicatorNo());
+            for (var i : inds) {
+                indLabels.put(i.getId(), i.getIndicatorNo());
+                indContents.put(i.getId(), i.getContent());
+            }
         }
-        return new CalcResult(objMap, courseMap, calcTime, objLabels, indLabels);
+        return new CalcResult(objMap, courseMap, calcTime, objLabels, indLabels, objContents, indContents);
     }
 
     /**
@@ -292,5 +308,7 @@ public class CourseCalcService {
                               Map<Long, BigDecimal> courseAchievements,
                               @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime calcTime,
                               Map<Long, String> objectiveLabels,
-                              Map<Long, String> indicatorLabels) {}
+                              Map<Long, String> indicatorLabels,
+                              Map<Long, String> objectiveContents,
+                              Map<Long, String> indicatorContents) {}
 }

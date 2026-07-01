@@ -15,7 +15,12 @@
     <div class="content-card">
       <el-table :data="assessments" border stripe v-loading="loading" empty-text="暂无考核点，请先新增或导入">
         <el-table-column prop="sortOrder" label="序号" width="60" />
-        <el-table-column prop="name" label="考核点名称" width="160" />
+        <el-table-column
+          prop="name"
+          label="考核点名称"
+          width="160"
+          show-overflow-tooltip
+        />
         <el-table-column prop="maxScore" label="满分" width="70" />
         <el-table-column prop="weightPercent" label="权重(%)" width="90" />
         <el-table-column label="绑定目标" min-width="180">
@@ -82,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -94,6 +99,7 @@ import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError
 
 const route = useRoute()
 const classId = ref(route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const assessments = ref([])
 const objectives = ref([])
@@ -162,7 +168,7 @@ async function handleDelete(row) {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    downloadBlob(await ensureDownloadBlob(await downloadAssessmentTemplate(classId.value)), buildClassFilename(classId.value, '考核点导入模板', 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadAssessmentTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '考核点导入模板', 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   } finally { downloading.value = false }

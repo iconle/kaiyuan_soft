@@ -5,15 +5,23 @@
         <h3>个人达成度</h3>
         <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
       </div>
-      <el-button
-        type="primary"
-        :icon="Download"
-        :loading="exporting"
-        :disabled="rows.length === 0"
-        @click="handleExport"
+      <el-tooltip
+        :disabled="exportReady"
+        :content="exportDisabledReason"
+        placement="bottom"
       >
-        导出 Excel
-      </el-button>
+        <span>
+          <el-button
+            type="primary"
+            :icon="Download"
+            :loading="exporting"
+            :disabled="!exportReady"
+            @click="handleExport"
+          >
+            导出 Excel
+          </el-button>
+        </span>
+      </el-tooltip>
     </div>
 
     <div class="summary-band">
@@ -45,14 +53,55 @@
       />
     </div>
 
+    <el-alert
+      v-if="showEmptyGuide"
+      type="info"
+      show-icon
+      :closable="false"
+      class="empty-guide-alert"
+    >
+      暂无个人达成度数据。请先完成成绩导入，再到「课程级计算」页面执行一键计算，系统会生成每位学生的个人达成度结果。
+    </el-alert>
+
     <el-table
       v-loading="loading"
       :data="filteredRows"
       border
       stripe
-      empty-text="暂无个人达成度数据"
       class="personal-achievement-table"
     >
+      <template #empty>
+        <el-empty :description="tableEmptyText" :image-size="96">
+          <el-button
+            v-if="loadError"
+            type="primary"
+            link
+            class="personal-empty-action"
+            @click="loadRows"
+          >
+            重新加载
+          </el-button>
+          <el-button
+            v-else-if="keyword.trim()"
+            type="primary"
+            link
+            class="personal-empty-action"
+            @click="keyword = ''"
+          >
+            清空搜索条件
+          </el-button>
+          <el-button
+            v-else-if="!loadError"
+            type="primary"
+            link
+            class="personal-empty-action"
+            @click="goCourseCompute"
+          >
+            去课程级计算
+          </el-button>
+        </el-empty>
+      </template>
+
       <el-table-column
         prop="studentNo"
         label="学号"
@@ -143,7 +192,12 @@
 
         <el-tabs>
           <el-tab-pane label="课程目标">
-            <el-table :data="objectiveRows" border size="small">
+            <el-table
+              :data="objectiveRows"
+              border
+              size="small"
+              empty-text="暂无课程目标达成度明细，请先完成课程级计算"
+            >
               <el-table-column prop="label" label="课程目标" />
               <el-table-column label="达成度" width="150" align="center">
                 <template #default="{ row }">{{ formatAchievement(row.value) }}</template>
@@ -156,7 +210,12 @@
             </el-table>
           </el-tab-pane>
           <el-tab-pane label="指标点">
-            <el-table :data="indicatorRows" border size="small">
+            <el-table
+              :data="indicatorRows"
+              border
+              size="small"
+              empty-text="暂无指标点达成度明细，请先完成课程级计算"
+            >
               <el-table-column prop="label" label="指标点" />
               <el-table-column label="达成度" width="150" align="center">
                 <template #default="{ row }">{{ formatAchievement(row.value) }}</template>
@@ -175,8 +234,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Download, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import {
@@ -187,11 +246,14 @@ import {
 import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const classId = computed(() => route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const exporting = ref(false)
 const keyword = ref('')
 const rows = ref([])
+const loadError = ref('')
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detail = reactive({
@@ -217,6 +279,9 @@ const averageAchievement = computed(() => {
   if (rows.value.length === 0) return 0
   return rows.value.reduce((sum, row) => sum + Number(row.overallAchievement || 0), 0) / rows.value.length
 })
+const exportReady = computed(() => rows.value.length > 0 && !loadError.value)
+const exportDisabledReason = computed(() => loadError.value || '暂无个人达成度数据，请先完成课程级计算后再导出')
+const showEmptyGuide = computed(() => !loading.value && !loadError.value && rows.value.length === 0 && !keyword.value.trim())
 
 const achievedCount = computed(() =>
   rows.value.filter(row => Number(row.overallAchievement) >= 0.7).length
@@ -224,6 +289,13 @@ const achievedCount = computed(() =>
 const unachievedCount = computed(() => rows.value.length - achievedCount.value)
 const detailTitle = computed(() =>
   `${detail.studentName || '学生'}（${detail.studentNo || '-'}）`
+)
+const tableEmptyText = computed(() =>
+  loadError.value
+    ? loadError.value
+    : keyword.value.trim()
+    ? '未找到匹配的学生，请调整搜索条件'
+    : '暂无个人达成度数据，请先完成成绩导入和课程级计算'
 )
 
 const objectiveRows = computed(() => toDetailRows(
@@ -243,9 +315,13 @@ watch(classId, loadRows)
 async function loadRows() {
   if (!classId.value) return
   loading.value = true
+  loadError.value = ''
   try {
     const response = await listPersonalAchievements(classId.value)
     rows.value = response.data || []
+  } catch {
+    rows.value = []
+    loadError.value = '个人达成度数据加载失败，请刷新页面后重试'
   } finally {
     loading.value = false
   }
@@ -263,13 +339,21 @@ async function openDetail(row) {
 }
 
 async function handleExport() {
+  if (!exportReady.value) {
+    ElMessage.warning(exportDisabledReason.value)
+    return
+  }
   exporting.value = true
   try {
-    downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(classId.value, '个人达成度', 'xlsx'))
+    downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(resolveClassName(classId.value), '个人达成度', 'xlsx'))
     ElMessage.success('个人达成度 Excel 已导出')
   } finally {
     exporting.value = false
   }
+}
+
+function goCourseCompute() {
+  router.push(`/teacher/${classId.value}/compute`)
 }
 
 function toDetailRows(values = {}, labels = {}, fallback) {
@@ -379,6 +463,10 @@ function statusText(value) {
   width: 260px;
 }
 
+.empty-guide-alert {
+  margin-bottom: 12px;
+}
+
 .achievement-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -433,6 +521,10 @@ function statusText(value) {
 
 :deep(.personal-achievement-table .el-table__row td) {
   height: 58px;
+}
+
+.personal-empty-action {
+  margin-top: 4px;
 }
 
 /* 综合达成度：数值 + 小进度条 */

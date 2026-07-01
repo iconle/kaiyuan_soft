@@ -44,9 +44,14 @@ public class GlobalCalcService {
     private final PersonalAchievementService personalAchievementService;
 
     /**
-     * Check the readiness status of all courses that support the given major.
+     * Check the readiness status of courses that support the given major.
+     * Optionally filter by semester and/or grade (enrollment year).
+     *
+     * @param majorId    the major ID (required)
+     * @param semesterId optional semester filter (null = all semesters)
+     * @param grade      optional grade filter, e.g. 2024 (null = all grades)
      */
-    public DashboardData getDashboard(Long majorId) {
+    public DashboardData getDashboard(Long majorId, Long semesterId, Integer grade) {
         List<MacroSupportMatrix> matrix = macroSupportMatrixMapper.selectList(
                 new LambdaQueryWrapper<MacroSupportMatrix>());
 
@@ -65,8 +70,16 @@ public class GlobalCalcService {
         int totalCount = 0;
 
         for (Course course : courses) {
-            List<TeachingClass> classes = teachingClassMapper.selectList(
-                    new LambdaQueryWrapper<TeachingClass>().eq(TeachingClass::getCourseId, course.getId()));
+            LambdaQueryWrapper<TeachingClass> classWrapper =
+                    new LambdaQueryWrapper<TeachingClass>()
+                            .eq(TeachingClass::getCourseId, course.getId());
+            if (semesterId != null) {
+                classWrapper.eq(TeachingClass::getSemesterId, semesterId);
+            }
+            if (grade != null) {
+                classWrapper.eq(TeachingClass::getGrade, grade);
+            }
+            List<TeachingClass> classes = teachingClassMapper.selectList(classWrapper);
 
             for (TeachingClass tc : classes) {
                 totalCount++;
@@ -104,11 +117,18 @@ public class GlobalCalcService {
 
     /**
      * Execute Phase 2 (Level 3) calculation for a major.
+     *
+     * @param majorId    the major ID
+     * @param semesterId the semester for storing results
+     * @param grade      optional grade filter (null = all grades)
+     * @param operator   the user triggering the calculation
      */
     @Transactional(rollbackFor = Exception.class)
-    public MajorCalcResult compute(Long majorId, Long semesterId, Long operator) {
-        // 1. Check readiness
-        DashboardData dashboard = getDashboard(majorId);
+    public MajorCalcResult compute(Long majorId, Long semesterId, Integer grade, Long operator) {
+        // 1. Check readiness — when grade is specified, don't also filter by semester
+        //    (a single grade spans multiple semesters)
+        Long filterSemesterId = (grade != null) ? null : semesterId;
+        DashboardData dashboard = getDashboard(majorId, filterSemesterId, grade);
         if (!dashboard.allReady()) {
             throw new BizException("存在未完成课程级计算的课程: "
                     + dashboard.incompleteClassIds());
@@ -212,6 +232,7 @@ public class GlobalCalcService {
             ma.setMajorId(majorId);
             ma.setIndicatorId(e.getKey());
             ma.setSemesterId(semesterId);
+            ma.setGrade(grade);
             ma.setAchievement(e.getValue());
             ma.setCalcTime(now);
             ma.setTriggeredBy(operator);
@@ -233,11 +254,14 @@ public class GlobalCalcService {
     /**
      * Get existing major-level results.
      */
-    public Map<Long, BigDecimal> getResults(Long majorId, Long semesterId) {
-        List<MajorAchievement> list = majorAchievementMapper.selectList(
-                new LambdaQueryWrapper<MajorAchievement>()
-                        .eq(MajorAchievement::getMajorId, majorId)
-                        .eq(MajorAchievement::getSemesterId, semesterId));
+    public Map<Long, BigDecimal> getResults(Long majorId, Long semesterId, Integer grade) {
+        LambdaQueryWrapper<MajorAchievement> wrapper = new LambdaQueryWrapper<MajorAchievement>()
+                .eq(MajorAchievement::getMajorId, majorId)
+                .eq(MajorAchievement::getSemesterId, semesterId);
+        if (grade != null) {
+            wrapper.eq(MajorAchievement::getGrade, grade);
+        }
+        List<MajorAchievement> list = majorAchievementMapper.selectList(wrapper);
         return list.stream()
                 .collect(Collectors.toMap(
                         MajorAchievement::getIndicatorId,

@@ -37,7 +37,27 @@
           <template #title><el-icon><EditPen /></el-icon><span>课程大纲</span></template>
           <div class="teacher-sidebar-selects" @click.stop>
             <div class="teacher-select-label">教学学期</div>
-           
+
+            <el-select
+              v-model="activeClassId"
+              placeholder="请选择教学班级"
+              size="default"
+              class="teacher-select"
+              @change="switchTeacherClass"
+              @click.stop
+            >
+              <el-option
+                v-for="c in filteredTeacherClasses"
+                :key="c.id"
+                :label="`${c.courseName || '课程'} - ${c.className || '班级'+c.id}`"
+                :value="String(c.id)"
+              />
+              <template #empty>
+                <div class="teacher-select-empty">{{ teacherClassEmptyText }}</div>
+              </template>
+            </el-select>
+
+
             <el-select
               v-model="teacherFilterSemester"
               placeholder="全部学期"
@@ -46,21 +66,14 @@
               class="teacher-select"
               @click.stop
             >
-              <el-option v-for="s in teacherSemesters" :key="s.id" :label="s.label" :value="s.id" />
+              <el-option
+                v-for="s in teacherSemesters"
+                :key="s.id"
+                :label="s.label"
+                :value="s.id"
+              />
             </el-select>
-            <div class="teacher-select-label">教学班级</div>
-            <el-select
-            v-model="activeClassId"
-            placeholder="选择教学班级"
-            size="default"
-            class="teacher-select"
-            @change="switchTeacherClass"
-            @click.stop
-          >
-              <el-option v-for="c in filteredTeacherClasses" :key="c.id"
-                :label="`${c.courseName || '课程'} - ${c.className || '班级'+c.id}`" :value="String(c.id)" />
-            </el-select>
-          </div>
+            </div>
           <el-menu-item :index="`/teacher/${activeClassId}/objectives`"><el-icon><Aim /></el-icon>课程目标</el-menu-item>
           <el-menu-item :index="`/teacher/${activeClassId}/weights`"><el-icon><Histogram /></el-icon>权重分配</el-menu-item>
           <el-menu-item :index="`/teacher/${activeClassId}/assessments`"><el-icon><List /></el-icon>考核点映射</el-menu-item>
@@ -99,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, provide, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Setting, User, Collection, School, Notebook, UserFilled, Files, DataAnalysis, Document, Grid, EditPen, Aim, Histogram, List, DataBoard, TrendCharts, Upload, Finished, OfficeBuilding, Tickets, Unlock, Edit } from '@element-plus/icons-vue'
@@ -120,11 +133,26 @@ const teacherClasses = ref([])
 const teacherSemesters = ref([])
 const teacherFilterSemester = ref(null)
 
+// 供子页面按 classId 解析真实班级名（如「数据结构202401」），用于下载文件名等场景。
+// 复用本布局已加载的教师教学班列表，避免每个子页面重复请求 my-classes。
+provide('resolveClassName', (classId) => {
+  if (!classId) return ''
+  const found = teacherClasses.value.find(c => String(c.id) === String(classId))
+  return found?.className || ''
+})
+
+provide('resolveClassInfo', (classId) => {
+  if (!classId) return null
+  return teacherClasses.value.find(c => String(c.id) === String(classId)) || null
+})
+
 const filteredTeacherClasses = computed(() => {
   if (!teacherFilterSemester.value) return teacherClasses.value
   return teacherClasses.value.filter(c => c.semesterId === teacherFilterSemester.value)
 })
-
+const teacherClassEmptyText = computed(() =>
+  teacherFilterSemester.value ? '当前学期暂无教学班级' : '暂无可选教学班级'
+)
 onMounted(async () => {
   const denied = sessionStorage.getItem('permDenied')
   if (denied) {
@@ -262,6 +290,14 @@ function handleLogout() {
   background: rgba(158, 137, 205, 0.10);
   border: 1px solid rgba(158, 137, 205, 0.18);
   color: #5f4a9c;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-1px);
+  background: rgba(158, 137, 205, 0.16);
+  border-color: rgba(158, 137, 205, 0.34);
+  box-shadow: 0 8px 18px rgba(126, 87, 194, 0.12);
 }
 
 .user-avatar {
@@ -275,12 +311,15 @@ function handleLogout() {
   font-weight: 700;
   color: #ffffff;
   background: linear-gradient(135deg, #9e89cd, #806bbf);
+  transition: transform 0.18s ease;
 }
-
 .user-info {
   font-size: 14px;
   font-weight: 600;
   color: #5f4a9c;
+}
+.user-card:hover .user-avatar {
+  transform: scale(1.06);
 }
 
 .logout-btn {
@@ -308,6 +347,7 @@ function handleLogout() {
   border-radius: 50%;
   background: #f29ca3;
   box-shadow: 0 0 0 4px rgba(242, 156, 163, 0.16);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .logout-btn:hover {
@@ -316,6 +356,20 @@ function handleLogout() {
   border-color: rgba(229, 107, 111, 0.32);
   transform: translateY(-1px);
   box-shadow: 0 8px 18px rgba(229, 107, 111, 0.12);
+}
+.logout-btn:hover .logout-dot {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 5px rgba(242, 156, 163, 0.22);
+}
+
+.logout-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 10px rgba(229, 107, 111, 0.10);
+}
+
+.logout-btn:focus-visible {
+  outline: 2px solid rgba(229, 107, 111, 0.28);
+  outline-offset: 2px;
 }
 
 .layout-main {
@@ -326,18 +380,41 @@ function handleLogout() {
 }
 
 .teacher-sidebar-selects {
-  padding: var(--space-1) var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-3);
 }
 
 .teacher-select-label {
   font-size: var(--text-xs);
+  font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .teacher-select {
   width: 100%;
   margin-bottom: var(--space-2);
+}
+.teacher-select-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+:deep(.teacher-select .el-select__wrapper) {
+  min-height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+:deep(.teacher-select .el-select__wrapper:hover) {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(126, 87, 194, 0.16) inset;
+}
+
+:deep(.teacher-select .el-select__wrapper.is-focused) {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #9b87c9 inset, 0 6px 14px rgba(126, 87, 194, 0.12);
 }
 /* Issue #93：侧边栏菜单项高度和选中区域优化 */
 :deep(.layout-aside .el-menu) {

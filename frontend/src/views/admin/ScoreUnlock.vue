@@ -2,16 +2,24 @@
   <div class="page-container">
     <div class="page-header">
       <h3>成绩解锁管理（勘误工单）</h3>
+      <el-select v-model="filterGrade" placeholder="目标年级" clearable style="width:150px" @change="loadSheets">
+        <el-option v-for="g in gradeOptions" :key="g" :label="`${g} 级`" :value="g" />
+      </el-select>
     </div>
 
     <div class="content-card">
       <el-tabs v-model="activeTab">
         <!-- Tab 1: Score sheet status + direct unlock -->
         <el-tab-pane label="成绩单状态" name="sheets">
-          <el-table :data="sheets" border stripe v-loading="loadingSheets">
+          <el-table :data="filteredSheets" border stripe v-loading="loadingSheets">
             <el-table-column prop="id" label="成绩单ID" width="90" />
             <el-table-column prop="classId" label="班级ID" width="80" />
             <el-table-column prop="className" label="班级名称" min-width="180" />
+            <el-table-column label="目标年级" width="100" align="center">
+              <template #default="{ row }">
+                {{ row.grade ? `${row.grade} 级` : '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'LOCKED' ? 'success' : row.status === 'IMPORTED' ? 'warning' : 'info'" size="small">
@@ -136,6 +144,13 @@ const loadingRequests = ref(false)
 const sheets = ref([])
 const requests = ref([])
 const requestError = ref(false)
+const filterGrade = ref(null)
+const gradeOptions = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029]
+
+const filteredSheets = computed(() => {
+  if (!filterGrade.value) return sheets.value
+  return sheets.value.filter(s => s.grade === filterGrade.value)
+})
 
 onMounted(() => {
   loadSheets()

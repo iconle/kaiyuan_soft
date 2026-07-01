@@ -15,6 +15,7 @@ public class TeachingClass {
     private Long courseId;
     private Long teacherId;
     private Long semesterId;
+    private Integer grade;
     private String className;
 
     @TableField(exist = false)

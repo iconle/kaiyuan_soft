@@ -13,7 +13,12 @@
       <el-table :data="objectives" border stripe v-loading="loading" empty-text="暂无课程目标，请先新增或导入">
         <el-table-column prop="objNo" label="编号" width="80" />
         <el-table-column prop="dimension" label="维度" width="80" />
-        <el-table-column prop="description" label="目标描述" />
+        <el-table-column
+          prop="description"
+          label="目标描述"
+          min-width="260"
+          show-overflow-tooltip
+        />
 
         <el-table-column
           label="操作"
@@ -48,11 +53,8 @@
 
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑目标' : '新增目标'" width="520px">
       <el-form :model="form" label-width="80px">
-        <el-form-item label="编号" required>
-          <el-input v-model="form.objNo" placeholder="如 1-1" />
-        </el-form-item>
-        <el-form-item label="维度">
-          <el-select v-model="form.dimension" style="width: 100%">
+        <el-form-item label="维度" required>
+          <el-select v-model="form.dimension" style="width: 100%" placeholder="选择维度，编号将自动生成">
             <el-option value="知识" />
             <el-option value="能力" />
             <el-option value="价值" />
@@ -71,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -83,11 +85,12 @@ import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
 const objectives = ref([])
 const dialogVisible = ref(false)
 const editing = ref(null)
-const form = reactive({ objNo: '', dimension: '', description: '' })
+const form = reactive({ dimension: '', description: '' })
 const importing = ref(false)
 const downloading = ref(false)
 
@@ -105,15 +108,17 @@ async function loadObjectives() {
 
 function showDialog(row) {
   editing.value = row || null
-  Object.assign(form, { objNo: row?.objNo || '', dimension: row?.dimension || '', description: row?.description || '' })
+  Object.assign(form, { dimension: row?.dimension || '', description: row?.description || '' })
   dialogVisible.value = true
 }
 
 async function handleSubmit() {
+  if (!form.dimension) { ElMessage.warning('请选择维度'); return }
+  if (!form.description.trim()) { ElMessage.warning('请填写目标描述'); return }
   if (editing.value) {
-    await updateObjective(editing.value.id, { ...form, outlineId: editing.value.outlineId })
+    await updateObjective(editing.value.id, { dimension: form.dimension, description: form.description, outlineId: editing.value.outlineId })
   } else {
-    await createObjective(classId.value, form)
+    await createObjective(classId.value, { dimension: form.dimension, description: form.description })
   }
   ElMessage.success('操作成功')
   dialogVisible.value = false
@@ -130,7 +135,7 @@ async function handleDelete(row) {
 async function downloadTemplate() {
   downloading.value = true
   try {
-    downloadBlob(await ensureDownloadBlob(await downloadObjectiveTemplate(classId.value)), buildClassFilename(classId.value, '课程目标导入模板', 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadObjectiveTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '课程目标导入模板', 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   } finally { downloading.value = false }

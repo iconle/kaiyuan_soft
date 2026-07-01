@@ -73,12 +73,12 @@ public class StudentImportService {
 
             // 创建示例行
             Row exampleRow = sheet.createRow(1);
-            exampleRow.createCell(0).setCellValue("2024001");
+            exampleRow.createCell(0).setCellValue("2024010121");
             exampleRow.createCell(1).setCellValue("张三");
-            exampleRow.createCell(2).setCellValue("计算机学院");
+            exampleRow.createCell(2).setCellValue("计算机科学与技术学院");
             exampleRow.createCell(3).setCellValue("计算机科学与技术");
             exampleRow.createCell(4).setCellValue(2024);
-            exampleRow.createCell(5).setCellValue("计科2401");
+            exampleRow.createCell(5).setCellValue("计算机科学与技术2401班");
 
             // 添加说明行
             int noteRow = 3;

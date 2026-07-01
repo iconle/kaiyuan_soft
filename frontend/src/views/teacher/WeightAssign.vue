@@ -3,9 +3,34 @@
     <div class="page-header">
       <h3>内部权重分配</h3>
       <el-button
+        @click="downloadTemplate"
+        :loading="downloading"
+        :disabled="!supportedIndicators.length"
+      >
+        下载模板
+      </el-button>
+      <el-upload
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="uploadFile"
+        accept=".xlsx"
+        :disabled="importDisabled"
+      >
+        <el-button
+          type="primary"
+          plain
+          class="import-action-btn"
+          :loading="importing"
+          :disabled="importDisabled"
+        >
+          导入权重
+        </el-button>
+      </el-upload>
+      <el-button
         class="save-weight-btn"
         type="primary"
         round
+        style="margin-left: auto;"
         :disabled="!allValid || saving"
         :loading="saving"
         @click="handleSave"
@@ -13,8 +38,19 @@
         保存权重
       </el-button>
     </div>
+    <div class="import-tip">
+      {{ weightImportTip }}
+    </div>
 
     <div class="content-card">
+      <el-alert
+        v-if="hasImportedWeights"
+        class="import-success-alert"
+        type="success"
+        :closable="false"
+        title="权重已导入到页面，请核对列合计后点击「保存权重」完成提交"
+      />
+
       <el-alert
         v-if="!allValid"
         class="weight-warning-alert"
@@ -58,17 +94,23 @@
 <script setup>
 import { ref, computed, onMounted, h } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { getWeights, updateWeights, getSupportedIndicators, listObjectives } from '../../api/teacher'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getWeights, updateWeights, getSupportedIndicators, listObjectives, downloadWeightTemplate, importWeights } from '../../api/teacher'
+import { getExcelUploadTip, showExcelImportError, validateExcelFile } from '../../utils/excelImport'
+import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
 const classId = ref(route.params.classId || route.query.classId)
 const loading = ref(false)
 const objectives = ref([])
 const saving = ref(false)
+const downloading = ref(false)
+const importing = ref(false)
 const supportedIndicators = ref([])
 const weightData = ref([]) // flat list from API
 const weightMatrix = ref([]) // computed matrix rows
+const weightImportTip = getExcelUploadTip()
+const hasImportedWeights = ref(false)
 
 const colSums = computed(() => {
   const sums = {}
@@ -84,6 +126,10 @@ const allValid = computed(() => {
   if (supportedIndicators.value.length === 0) return false
   return Object.values(colSums.value).every(s => s.valid)
 })
+
+const importDisabled = computed(() =>
+  !supportedIndicators.value.length || importing.value || downloading.value
+)
 
 function getSummaries({ columns }) {
   return columns.map((column, index) => {
@@ -119,6 +165,7 @@ async function loadData() {
     objectives.value = objRes.data || []
     supportedIndicators.value = indRes.data || []
     weightData.value = weightRes.data || []
+    hasImportedWeights.value = false
 
     // Build matrix: one row per objective
     weightMatrix.value = objectives.value.map(obj => {
@@ -157,10 +204,48 @@ async function handleSave() {
 
     await updateWeights(classId.value, flatWeights)
     ElMessage.success('权重已保存')
+    hasImportedWeights.value = false
   } finally {
     saving.value = false
   }
 }
+
+async function downloadTemplate() {
+  downloading.value = true
+  try {
+    const blob = await ensureDownloadBlob(await downloadWeightTemplate(classId.value))
+    downloadBlob(blob, buildClassFilename(classId.value, '内部权重导入模板', 'xlsx'))
+  } catch (error) {
+    showDownloadError(error, '内部权重导入模板下载失败，请稍后重试')
+  } finally {
+    downloading.value = false
+  }
+}
+
+function beforeUpload(file) {
+  return validateExcelFile(file)
+}
+
+async function uploadFile({ file }) {
+  importing.value = true
+  try {
+    const res = await importWeights(classId.value, file)
+    const imported = res.data || []
+    // 合并进页面矩阵：文件中出现的单元格覆盖对应值，其余保留；
+    // 不立即保存，由用户在页面核对、调整（列合计需为 1.00）后再点「保存权重」。
+    imported.forEach(w => {
+      const row = weightMatrix.value.find(r => r.objectiveId === w.objectiveId)
+      if (row) row.weights[w.indicatorId] = Number(w.weight)
+    })
+    hasImportedWeights.value = imported.length > 0
+    ElMessage.success(`已导入 ${imported.length} 项权重，请核对后点击「保存权重」`)
+  } catch (error) {
+    showExcelImportError(error, '权重导入失败，请检查模板格式和权重数值后重试')
+  } finally {
+    importing.value = false
+  }
+}
+
 </script>
 
 <style scoped>
@@ -169,7 +254,8 @@ async function handleSave() {
 .page-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
   min-height: 32px;
   margin-bottom: var(--space-4);
 }
@@ -177,6 +263,13 @@ async function handleSave() {
 .page-header h3 {
   margin: 0;
   font-size: var(--text-lg);
+}
+
+.import-tip {
+  margin: -8px 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
 }
 
 .content-card {
@@ -270,6 +363,25 @@ async function handleSave() {
   color: var(--el-color-danger) !important;
 }
 
+.import-action-btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #9e89cd, #806bbf) !important;
+  border-color: #806bbf !important;
+  box-shadow: 0 8px 18px rgba(128, 107, 191, 0.24);
+}
+
+.import-action-btn:hover,
+.import-action-btn:focus {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #a895d4, #735ab8) !important;
+  border-color: #735ab8 !important;
+}
+
+:deep(.import-action-btn.is-loading),
+:deep(.import-action-btn.is-disabled) {
+  color: #ffffff !important;
+}
+
 .save-weight-btn {
   min-width: 104px;
   height: 32px;
@@ -329,6 +441,18 @@ async function handleSave() {
   border-radius: 16px;
   background-color: rgba(245, 108, 108, 0.12) !important;
   border: 1px solid rgba(245, 108, 108, 0.28);
+}
+
+:deep(.import-success-alert) {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  background-color: rgba(103, 194, 58, 0.12) !important;
+  border: 1px solid rgba(103, 194, 58, 0.28);
+}
+
+:deep(.import-success-alert .el-alert__title) {
+  color: #2f8f46 !important;
+  font-weight: 500;
 }
 
 :deep(.weight-warning-alert .el-alert__title) {

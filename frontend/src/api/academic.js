@@ -34,8 +34,8 @@ export function getStudentsByClass(classId) {
 export { listSemesters } from './admin'
 
 // 宏观看板与报表（与专业负责人共享）
-export function getDashboard(majorId) {
-  return request.get('/api/global/dashboard', { params: { majorId } })
+export function getDashboard(majorId, grade) {
+  return request.get('/api/global/dashboard', { params: { majorId, grade } })
 }
 
 export function getMajorReport(majorId, semesterId) {

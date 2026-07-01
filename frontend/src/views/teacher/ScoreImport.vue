@@ -5,7 +5,14 @@
       <el-select v-model="selectedAssessmentId" placeholder="选择考核点" style="width:260px" @change="loadAll">
         <el-option v-for="ap in assessments" :key="ap.id" :label="`${ap.name} → ${assessmentObjLabel(ap)}`" :value="ap.id" />
       </el-select>
-      <el-button type="primary" @click="downloadTemplate" :disabled="!selectedAssessmentId">下载模板</el-button>
+      <el-button
+        type="primary"
+        :loading="downloading"
+        :disabled="!selectedAssessmentId || downloading"
+        @click="downloadTemplate"
+      >
+        下载模板
+      </el-button>
       <el-upload
         :show-file-list="false"
         :before-upload="beforeUpload"
@@ -44,6 +51,14 @@
     <el-alert v-else-if="!loading && assessments.length > 0 && selectedAssessmentId && questions.length === 0" type="info" show-icon :closable="false" style="margin-bottom:16px">
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
+
+    <div v-if="showComputeEntry && status !== 'LOCKED'" class="compute-entry-bar">
+      <div>
+        <strong>成绩已更新</strong>
+        <span>可继续执行课程级达成度计算。</span>
+      </div>
+      <el-button type="primary" @click="goCourseCompute">去课程级计算</el-button>
+    </div>
 
     <el-dialog v-model="requestDialogVisible" title="提交成绩勘误申请" width="500px">
       <el-form label-width="80px">
@@ -163,15 +178,22 @@
       </div>
 
       <div style="margin-top:12px" v-if="hasEdits && status !== 'LOCKED'">
-        <el-button type="warning" @click="saveAll">保存修改 ({{ editCount }})</el-button>
+        <el-button
+          type="warning"
+          :loading="saving"
+          :disabled="saving"
+          @click="saveAll"
+        >
+          保存修改 ({{ editCount }})
+        </el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, inject, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores,
@@ -183,7 +205,10 @@ import { validateExcelFile, showExcelImportError } from '../../utils/excelImport
 import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const classId = ref(route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
+const resolveClassInfo = inject('resolveClassInfo', () => null)
 const loading = ref(false)
 const status = ref('')
 const assessments = ref([])
@@ -193,7 +218,10 @@ const questions = ref([])
 const scoreRows = ref([])
 const edits = ref({})
 const importing = ref(false)
+const downloading = ref(false)
+const saving = ref(false)
 const requesting = ref(false)
+const showComputeEntry = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
 const myRequests = ref([])
@@ -296,44 +324,92 @@ const editCount = computed(() => Object.keys(edits.value).length)
 const hasEdits = computed(() => editCount.value > 0)
 
 async function saveAll() {
+  if (saving.value || editCount.value === 0) return
+  const pendingEdits = Object.entries(edits.value)
+  const confirmed = await confirmSaveEdits(pendingEdits.length)
+  if (!confirmed) return
+  saving.value = true
   let saved = 0
   let failed = 0
-  for (const [key, score] of Object.entries(edits.value)) {
-    if (key.startsWith('q_')) {
-      const [, studentId, questionId] = key.split('_')
-      try {
-        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
-        saved++
-      } catch { failed++ }
-    } else if (key.startsWith('a_')) {
-      const [, studentId, assessId] = key.split('_')
-      try {
-        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
-        saved++
-      } catch { failed++ }
+  try {
+    for (const [key, score] of pendingEdits) {
+      if (key.startsWith('q_')) {
+        const [, studentId, questionId] = key.split('_')
+        try {
+          await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
+          saved++
+        } catch { failed++ }
+      } else if (key.startsWith('a_')) {
+        const [, studentId, assessId] = key.split('_')
+        try {
+          await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
+          saved++
+        } catch { failed++ }
+      }
     }
+    if (saved > 0) {
+      const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
+      showComputeEntry.value = true
+      if (failed > 0) {
+        ElMessage.warning(msg)
+      } else {
+        ElMessage.success(`${msg}，可继续进行课程级计算`)
+        edits.value = {}
+        await loadQuestions().catch(() => {
+          ElMessage.warning('成绩已保存，但刷新数据失败，请手动刷新页面')
+        })
+      }
+    } else if (failed > 0) {
+      ElMessage.error('保存失败，请重试')
+    }
+  } finally {
+    saving.value = false
   }
-  if (saved > 0) {
-    const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
-    ElMessage.success(msg)
-    edits.value = {}
-    await loadQuestions()
-  } else if (failed > 0) {
-    ElMessage.error('保存失败，请重试')
+}
+
+async function confirmSaveEdits(count) {
+  try {
+    await ElMessageBox.confirm(
+      `本次将保存 ${count} 条成绩修改，确认提交吗？`,
+      '确认保存成绩修改',
+      {
+        type: 'warning',
+        confirmButtonText: '确认保存',
+        cancelButtonText: '取消'
+      }
+    )
+    return true
+  } catch {
+    return false
   }
 }
 
 async function downloadTemplate() {
+  if (!selectedAssessmentId.value || downloading.value) return
+  downloading.value = true
   try {
-    const assessmentName = currentAssessment.value?.name || '成绩'
-    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(classId.value, `${assessmentName}成绩模板`, 'xlsx'))
+    const filename = buildClassFilename(getScoreTemplateClassName(), '成绩录入模板', 'xlsx')
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), filename)
+    ElMessage.success(`模板已开始下载：${filename}`)
   } catch (error) {
     showDownloadError(error)
+  } finally {
+    downloading.value = false
   }
+}
+
+function getScoreTemplateClassName() {
+  const classInfo = resolveClassInfo(classId.value)
+  if (!classInfo) return resolveClassName(classId.value) || `教学班级${classId.value}`
+  return [classInfo.courseName, classInfo.className].filter(Boolean).join('-') || `教学班级${classId.value}`
 }
 
 function beforeUpload(file) {
   return validateExcelFile(file)
+}
+
+function goCourseCompute() {
+  router.push(`/teacher/${classId.value}/compute`)
 }
 
 function showRequestDialog() {
@@ -386,7 +462,8 @@ async function uploadFile({ file }) {
   form.append('file', file)
   try {
     await uploadScores(classId.value, form)
-    ElMessage.success('成绩导入成功')
+    ElMessage.success('成绩导入成功，可继续进行课程级计算')
+    showComputeEntry.value = true
     // Wait a bit before reloading to ensure backend has processed
     await new Promise(resolve => setTimeout(resolve, 300))
     await loadAll().catch(() => {
@@ -407,6 +484,35 @@ function escapeHtml(value) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+
+.compute-entry-bar {
+  margin-bottom: var(--space-4);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(128, 107, 191, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.compute-entry-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.compute-entry-bar span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .compute-entry-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 
 .unlock-request-card {
   margin-bottom: var(--space-4);

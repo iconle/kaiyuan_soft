@@ -11,9 +11,11 @@
 
     <el-alert v-if="status === 'LOCKED'" type="success" show-icon :closable="false" style="margin-bottom:16px">
       课程级计算已完成，成绩单已锁定。计算时间：{{ results.calcTime || '-' }}
-      <div style="margin-top:8px;font-size:13px">
+      <div class="locked-alert-actions">
         如需勘误成绩，请点击下方按钮提交勘误申请，由教务管理员或系统管理员审批解锁。
-        <el-button v-if="!hasPendingRequest" size="small" type="warning" style="margin-left:8px"
+        <el-button v-if="canViewPersonalAchievement" size="small" type="primary"
+          @click="goPersonalAchievement">查看个人达成度</el-button>
+        <el-button v-if="!hasPendingRequest" size="small" type="warning"
           @click="showRequestDialog"> 提交勘误申请</el-button>
       </div>
     </el-alert>
@@ -113,6 +115,15 @@
         <el-button type="primary" @click="handleRequestUnlock" :loading="requesting">提交申请</el-button>
       </template>
     </el-dialog>
+
+    <div v-if="canViewPersonalAchievement" class="result-action-bar">
+      <div>
+        <strong>课程级计算结果已生成</strong>
+        <span>可继续查看每位学生的个人达成度明细。</span>
+      </div>
+      <el-button type="primary" @click="goPersonalAchievement">查看个人达成度</el-button>
+    </div>
+
     <div v-if="hasResults" class="achievement-overview">
       <!-- Objective achievements -->
       <el-card class="achievement-panel" shadow="hover">
@@ -159,6 +170,9 @@
               <div class="achievement-name">
                 {{ item.objectiveNo }}
               </div>
+              <el-tooltip :content="item.description" placement="top" :show-after="300" effect="light">
+                <span class="achievement-desc">{{ item.description }}</span>
+              </el-tooltip>
 
               <div class="achievement-value">
                 {{ formatAchievement(item.achievement) }}
@@ -239,6 +253,9 @@
               <div class="achievement-name">
                 {{ item.indicatorNo }}
               </div>
+              <el-tooltip :content="item.description" placement="top" :show-after="300" effect="light">
+                <span class="achievement-desc">{{ item.description }}</span>
+              </el-tooltip>
 
               <div class="achievement-value">
                 {{ formatAchievement(item.achievement) }}
@@ -354,17 +371,51 @@
       </el-card>
     </template>
 
-    <div v-if="hasResults" style="margin-top: 16px; display: flex; gap: 8px;">
-      <el-button @click="downloadPdf">导出 PDF 报告</el-button>
-      <el-button @click="downloadExcel">导出 Excel 报告</el-button>
-      <el-button @click="downloadPersonalAchievementExcel">导出学生个人达成度</el-button>
+    <div class="report-export-actions">
+      <el-button
+        :loading="pdfDownloading"
+        :disabled="exportDisabled || pdfDownloading"
+        @click="downloadPdf"
+      >
+        导出 PDF 报告
+      </el-button>
+      <el-button
+        :loading="excelDownloading"
+        :disabled="exportDisabled || excelDownloading"
+        @click="downloadExcel"
+      >
+        导出 Excel 报告
+      </el-button>
+      <el-button
+        :loading="personalDownloading"
+        :disabled="exportDisabled || personalDownloading"
+        @click="downloadPersonalAchievementExcel"
+      >
+        导出学生个人达成度
+      </el-button>
     </div>
+    <el-alert
+      v-if="exportDisabled"
+      type="info"
+      show-icon
+      :closable="false"
+      class="report-export-tip"
+    >
+      {{ exportDisabledReason }}
+    </el-alert>
 
     <el-dialog
       v-model="personalDialogVisible"
-      :title="personalDialogTitle"
-      width="720px"
+      width="760px"
     >
+      <template #header>
+        <div>
+          <div style="font-size:16px;font-weight:700">{{ personalDialogTitle }}</div>
+          <div v-if="personalDialogDesc" style="margin-top:6px;font-size:13px;color:#606266;line-height:1.5">
+            {{ personalDialogDesc }}
+          </div>
+        </div>
+      </template>
       <el-table
         v-loading="personalLoading"
         :data="personalRows"
@@ -396,8 +447,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, reactive, computed, inject, onMounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 import {
@@ -408,18 +459,23 @@ import {
 import { useUserStore } from '../../stores/user'
 import StatusTag from '../../components/StatusTag.vue'
 import * as echarts from 'echarts'
-import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
+import { downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 const classId = ref(route.params.classId)
+const resolveClassName = inject('resolveClassName', () => '')
 const status = ref('')
 const computing = ref(false)
 const requesting = ref(false)
+const pdfDownloading = ref(false)
+const excelDownloading = ref(false)
+const personalDownloading = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
 const myRequests = ref([])
-const results = reactive({ objectiveAchievements: {}, courseAchievements: {}, calcTime: null, objectiveLabels: {}, indicatorLabels: {} })
+const results = reactive({ objectiveAchievements: {}, courseAchievements: {}, calcTime: null, objectiveLabels: {}, indicatorLabels: {}, objectiveContents: {}, indicatorContents: {} })
 
 // Chart related refs
 const objectiveChartRef = ref(null)
@@ -431,6 +487,7 @@ const indicatorChartInstance = ref(null)
 const sortAsc = ref(false)
 const personalDialogVisible = ref(false)
 const personalDialogTitle = ref('')
+const personalDialogDesc = ref('')
 const personalLoading = ref(false)
 const personalRows = ref([])
 
@@ -481,22 +538,42 @@ const hasResults = computed(() =>
   Object.keys(results.courseAchievements || {}).length > 0
 )
 
+const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
+const reportExportReady = computed(() => canViewPersonalAchievement.value)
+const exportDisabled = computed(() => !reportExportReady.value)
+const exportDisabledReason = computed(() => {
+  if (status.value === 'IMPORTED') return '成绩已导入但尚未完成课程级计算，请先点击「一键计算」生成达成度结果后再导出报告。'
+  if (status.value === 'LOCKED' && !hasResults.value) return '成绩单已锁定，但暂未读取到课程级计算结果，请刷新页面或重新进入后再导出。'
+  return '暂未导入成绩数据，请先在「成绩导入」页面完成成绩导入，再进行课程级计算和报告导出。'
+})
+
 const objectiveData = computed(() => {
   const labels = results.objectiveLabels || {}
+  const contents = results.objectiveContents || {}
   return Object.entries(results.objectiveAchievements || {}).map(([id, val]) => ({
     objectiveId: id,
     objectiveNo: labels[id] || `目标${id}`,
-    achievement: val
+    achievement: val,
+    description: contents[id] || ''
   }))
 })
 
 const indicatorData = computed(() => {
   const labels = results.indicatorLabels || {}
-  return Object.entries(results.courseAchievements || {}).map(([id, val]) => ({
+  const contents = results.indicatorContents || {}
+  const data = Object.entries(results.courseAchievements || {}).map(([id, val]) => ({
     indicatorId: id,
     indicatorNo: labels[id] || `指标点${id}`,
-    achievement: val
+    achievement: val,
+    description: contents[id] || ''
   }))
+  data.sort((a, b) => {
+    const [a1, a2] = (a.indicatorNo || '').split('-').map(Number)
+    const [b1, b2] = (b.indicatorNo || '').split('-').map(Number)
+    if (!isNaN(a1) && !isNaN(b1)) return a1 - b1 || (a2 || 0) - (b2 || 0)
+    return (a.indicatorNo || '').localeCompare(b.indicatorNo || '')
+  })
+  return data
 })
 function formatAchievement(value) {
   const num = Number(value)
@@ -548,7 +625,7 @@ async function handleCompute() {
   try {
     const userId = userStore.userId || 1
     await triggerCourseCompute(classId.value, userId)
-    ElMessage.success('课程级计算完成，成绩单已锁定')
+    ElMessage.success('课程级计算完成，可继续查看个人达成度')
     loadData()
   } catch { /* handled */ }
   finally { computing.value = false }
@@ -561,6 +638,7 @@ async function openPersonalDialog(type, item) {
   personalDialogTitle.value = type === 'objective'
     ? `${item.objectiveNo} 学生个人达成度`
     : `${item.indicatorNo} 学生个人达成度`
+  personalDialogDesc.value = item.description || ''
   try {
     const res = type === 'objective'
       ? await listObjectivePersonalAchievements(classId.value, item.objectiveId)
@@ -570,19 +648,56 @@ async function openPersonalDialog(type, item) {
   finally { personalLoading.value = false }
 }
 
+function goPersonalAchievement() {
+  router.push(`/teacher/${classId.value}/personal-achievements`)
+}
+
 async function downloadPdf() {
-  const blob = await downloadCoursePdf(classId.value)
-  downloadBlob(blob, buildClassFilename(classId.value, '课程达成度报告', 'pdf'))
+  if (pdfDownloading.value) return
+  if (!ensureReportExportReady()) return
+  pdfDownloading.value = true
+  try {
+    const blob = await downloadCoursePdf(classId.value)
+    downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.pdf`)
+    ElMessage.success('PDF 报告已开始下载')
+  } catch {
+    ElMessage.error('PDF 报告导出失败，请确认已完成课程级计算后重试')
+  }
+  finally { pdfDownloading.value = false }
 }
 
 async function downloadExcel() {
-  const blob = await downloadCourseExcel(classId.value)
-  downloadBlob(blob, buildClassFilename(classId.value, '课程达成度报告', 'xlsx'))
+  if (excelDownloading.value) return
+  if (!ensureReportExportReady()) return
+  excelDownloading.value = true
+  try {
+    const blob = await downloadCourseExcel(classId.value)
+    downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.xlsx`)
+    ElMessage.success('Excel 报告已开始下载')
+  } catch {
+    ElMessage.error('Excel 报告导出失败，请确认已完成课程级计算后重试')
+  }
+  finally { excelDownloading.value = false }
 }
 
 async function downloadPersonalAchievementExcel() {
-  const blob = await downloadPersonalAchievements(classId.value)
-  downloadBlob(blob, buildClassFilename(classId.value, '学生个人达成度', 'xlsx'))
+  if (personalDownloading.value) return
+  if (!ensureReportExportReady()) return
+  personalDownloading.value = true
+  try {
+    const blob = await downloadPersonalAchievements(classId.value)
+    downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
+    ElMessage.success('学生个人达成度已开始下载')
+  } catch {
+    ElMessage.error('学生个人达成度导出失败，请确认已完成课程级计算后重试')
+  }
+  finally { personalDownloading.value = false }
+}
+
+function ensureReportExportReady() {
+  if (!exportDisabled.value) return true
+  ElMessage.warning(exportDisabledReason.value)
+  return false
 }
 
 // Chart rendering functions
@@ -996,6 +1111,38 @@ const indicatorStats = computed(() => {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.locked-alert-actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.result-action-bar {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(128, 107, 191, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.result-action-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.result-action-bar span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 /* 我的勘误申请表格优化 */
 :deep(.my-unlock-table .el-table__header th) {
   height: 42px;
@@ -1080,6 +1227,18 @@ const indicatorStats = computed(() => {
   width: 100%;
   margin-bottom: 20px;
 }
+
+.report-export-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.report-export-tip {
+  margin-top: 12px;
+}
+
 /* 课程达成度结果展示优化 */
 .achievement-overview {
   display: grid;
@@ -1188,6 +1347,17 @@ const indicatorStats = computed(() => {
   color: #303133;
 }
 
+.achievement-desc {
+  flex: 1;
+  font-size: 12px;
+  color: #909399;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+  cursor: default;
+}
+
 .achievement-value {
   font-size: 18px;
   font-weight: 800;
@@ -1222,6 +1392,13 @@ const indicatorStats = computed(() => {
 @media (max-width: 1200px) {
   .achievement-overview {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .result-action-bar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

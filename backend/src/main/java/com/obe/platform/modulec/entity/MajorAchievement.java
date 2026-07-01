@@ -18,6 +18,7 @@ public class MajorAchievement {
     private Long majorId;
     private Long indicatorId;
     private Long semesterId;
+    private Integer grade;
     private BigDecimal achievement;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime calcTime;

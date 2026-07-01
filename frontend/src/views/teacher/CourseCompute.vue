@@ -539,7 +539,7 @@ const hasResults = computed(() =>
 )
 
 const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
-const reportExportReady = computed(() => status.value === 'LOCKED' && hasResults.value)
+const reportExportReady = computed(() => canViewPersonalAchievement.value)
 const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {
   if (status.value === 'IMPORTED') return '成绩已导入但尚未完成课程级计算，请先点击「一键计算」生成达成度结果后再导出报告。'

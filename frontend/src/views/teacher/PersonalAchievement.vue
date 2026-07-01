@@ -5,15 +5,23 @@
         <h3>个人达成度</h3>
         <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
       </div>
-      <el-button
-        type="primary"
-        :icon="Download"
-        :loading="exporting"
-        :disabled="rows.length === 0"
-        @click="handleExport"
+      <el-tooltip
+        :disabled="exportReady"
+        content="暂无个人达成度数据，请先完成课程级计算后再导出"
+        placement="bottom"
       >
-        导出 Excel
-      </el-button>
+        <span>
+          <el-button
+            type="primary"
+            :icon="Download"
+            :loading="exporting"
+            :disabled="!exportReady"
+            @click="handleExport"
+          >
+            导出 Excel
+          </el-button>
+        </span>
+      </el-tooltip>
     </div>
 
     <div class="summary-band">
@@ -261,6 +269,7 @@ const averageAchievement = computed(() => {
   if (rows.value.length === 0) return 0
   return rows.value.reduce((sum, row) => sum + Number(row.overallAchievement || 0), 0) / rows.value.length
 })
+const exportReady = computed(() => rows.value.length > 0 && !loadError.value)
 
 const achievedCount = computed(() =>
   rows.value.filter(row => Number(row.overallAchievement) >= 0.7).length

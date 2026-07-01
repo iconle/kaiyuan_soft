@@ -13,6 +13,8 @@
       课程级计算已完成，成绩单已锁定。计算时间：{{ results.calcTime || '-' }}
       <div style="margin-top:8px;font-size:13px">
         如需勘误成绩，请点击下方按钮提交勘误申请，由教务管理员或系统管理员审批解锁。
+        <el-button v-if="hasResults" size="small" type="primary" style="margin-left:8px"
+          @click="goPersonalAchievement">查看个人达成度</el-button>
         <el-button v-if="!hasPendingRequest" size="small" type="warning" style="margin-left:8px"
           @click="showRequestDialog"> 提交勘误申请</el-button>
       </div>

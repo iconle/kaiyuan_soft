@@ -641,7 +641,9 @@ async function downloadPdf() {
   try {
     const blob = await downloadCoursePdf(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.pdf`)
-  } catch { /* 拦截器已提示错误 */ }
+  } catch {
+    ElMessage.error('PDF 报告导出失败，请确认已完成课程级计算后重试')
+  }
   finally { pdfDownloading.value = false }
 }
 
@@ -652,7 +654,9 @@ async function downloadExcel() {
   try {
     const blob = await downloadCourseExcel(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.xlsx`)
-  } catch { /* 拦截器已提示错误 */ }
+  } catch {
+    ElMessage.error('Excel 报告导出失败，请确认已完成课程级计算后重试')
+  }
   finally { excelDownloading.value = false }
 }
 
@@ -663,7 +667,9 @@ async function downloadPersonalAchievementExcel() {
   try {
     const blob = await downloadPersonalAchievements(classId.value)
     downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
-  } catch { /* 拦截器已提示错误 */ }
+  } catch {
+    ElMessage.error('学生个人达成度导出失败，请确认已完成课程级计算后重试')
+  }
   finally { personalDownloading.value = false }
 }
 

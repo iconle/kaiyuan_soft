@@ -142,7 +142,7 @@ onMounted(async () => {
   const denied = sessionStorage.getItem('permDenied')
   if (denied) {
     sessionStorage.removeItem('permDenied')
-    ElMessage.warning(`无权访问「${denied}」，已跳转到您的首页`)
+    ElMessage.warning(`您暂无权限访问「${denied}」，系统已自动返回当前角色首页`)
   }
   if (roleCode.value === 'TEACHER') {
     try {

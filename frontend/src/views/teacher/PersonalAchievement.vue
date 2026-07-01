@@ -55,7 +55,16 @@
       <template #empty>
         <el-empty :description="tableEmptyText" :image-size="96">
           <el-button
-            v-if="keyword.trim()"
+            v-if="loadError"
+            type="primary"
+            link
+            class="personal-empty-action"
+            @click="loadRows"
+          >
+            重新加载
+          </el-button>
+          <el-button
+            v-else-if="keyword.trim()"
             type="primary"
             link
             class="personal-empty-action"

@@ -327,6 +327,10 @@ async function openDetail(row) {
 }
 
 async function handleExport() {
+  if (!exportReady.value) {
+    ElMessage.warning('暂无个人达成度数据，请先完成课程级计算后再导出')
+    return
+  }
   exporting.value = true
   try {
     downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(resolveClassName(classId.value), '个人达成度', 'xlsx'))

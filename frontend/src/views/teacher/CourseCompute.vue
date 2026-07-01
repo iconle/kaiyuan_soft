@@ -676,6 +676,7 @@ function goPersonalAchievement() {
 }
 
 function goScoreImport() {
+  ElMessage.info('正在前往成绩导入页面')
   router.push(`/teacher/${classId.value}/scores`)
 }
 

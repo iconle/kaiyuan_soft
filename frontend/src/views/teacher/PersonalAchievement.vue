@@ -60,7 +60,7 @@
       :closable="false"
       class="empty-guide-alert"
     >
-      暂无个人达成度数据。请先完成成绩导入，再到「课程级计算」页面执行一键计算，系统会生成每位学生的个人达成度结果。
+      当前暂无个人达成度数据。请先完成成绩导入，并在「课程级计算」页面执行一键计算，系统将自动生成每位学生的个人达成度结果。
     </el-alert>
 
     <el-table
@@ -296,8 +296,8 @@ const tableEmptyText = computed(() =>
   loadError.value
     ? loadError.value
     : keyword.value.trim()
-    ? '未找到匹配的学生，请调整搜索条件'
-    : '暂无个人达成度数据，请先完成成绩导入和课程级计算'
+    ? '未找到匹配的学生，请尝试更换学号或姓名关键词'
+    : '暂无个人达成度数据，请先完成成绩导入，并前往课程级计算页面执行一键计算'
 )
 
 const objectiveRows = computed(() => toDetailRows(
@@ -487,6 +487,9 @@ function statusText(value) {
 
 .empty-guide-alert {
   margin-bottom: 12px;
+  border-radius: 10px;
+  background-color: #f7f4ff;
+  border: 1px solid rgba(155, 135, 201, 0.22);
 }
 
 .achievement-value {
@@ -546,7 +549,15 @@ function statusText(value) {
 }
 
 .personal-empty-action {
-  margin-top: 4px;
+  margin-top: 6px;
+  font-weight: 600;
+  color: #7f67bd;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.personal-empty-action:hover {
+  color: #6f55b5;
+  transform: translateY(-1px);
 }
 
 /* 综合达成度：数值 + 小进度条 */

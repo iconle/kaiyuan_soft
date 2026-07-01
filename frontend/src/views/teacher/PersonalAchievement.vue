@@ -6,7 +6,12 @@
         <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
       </div>
       <div class="page-header-actions">
-        <el-button @click="goCourseCompute">返回课程级计算</el-button>
+        <el-tooltip
+          content="返回查看课程目标、指标点达成度和计算结果"
+          placement="bottom"
+        >
+          <el-button @click="goCourseCompute">返回课程级计算</el-button>
+        </el-tooltip>
         <el-tooltip
           :disabled="exportReady"
           :content="exportDisabledReason"

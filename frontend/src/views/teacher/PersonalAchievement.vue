@@ -339,6 +339,7 @@ async function openDetail(row) {
 }
 
 async function handleExport() {
+  if (exporting.value) return
   if (!exportReady.value) {
     ElMessage.warning(exportDisabledReason.value)
     return

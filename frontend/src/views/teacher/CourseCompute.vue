@@ -624,7 +624,7 @@ async function handleCompute() {
   try {
     const userId = userStore.userId || 1
     await triggerCourseCompute(classId.value, userId)
-    ElMessage.success('课程级计算完成，成绩单已锁定')
+    ElMessage.success('课程级计算完成，可继续查看个人达成度')
     loadData()
   } catch { /* handled */ }
   finally { computing.value = false }

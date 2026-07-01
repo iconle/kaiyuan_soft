@@ -332,6 +332,7 @@ function handleLogout() {
   border-radius: 50%;
   background: #f29ca3;
   box-shadow: 0 0 0 4px rgba(242, 156, 163, 0.16);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .logout-btn:hover {
@@ -340,6 +341,20 @@ function handleLogout() {
   border-color: rgba(229, 107, 111, 0.32);
   transform: translateY(-1px);
   box-shadow: 0 8px 18px rgba(229, 107, 111, 0.12);
+}
+.logout-btn:hover .logout-dot {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 5px rgba(242, 156, 163, 0.22);
+}
+
+.logout-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 10px rgba(229, 107, 111, 0.10);
+}
+
+.logout-btn:focus-visible {
+  outline: 2px solid rgba(229, 107, 111, 0.28);
+  outline-offset: 2px;
 }
 
 .layout-main {

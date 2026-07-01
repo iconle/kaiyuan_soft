@@ -349,12 +349,12 @@ async function saveAll() {
     }
     if (saved > 0) {
       const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
+      showComputeEntry.value = true
       if (failed > 0) {
         ElMessage.warning(msg)
       } else {
         ElMessage.success(msg)
         edits.value = {}
-        showComputeEntry.value = true
         await loadQuestions().catch(() => {
           ElMessage.warning('成绩已保存，但刷新数据失败，请手动刷新页面')
         })

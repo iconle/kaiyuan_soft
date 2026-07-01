@@ -13,7 +13,7 @@
       课程级计算已完成，成绩单已锁定。计算时间：{{ results.calcTime || '-' }}
       <div class="locked-alert-actions">
         如需勘误成绩，请点击下方按钮提交勘误申请，由教务管理员或系统管理员审批解锁。
-        <el-button v-if="hasResults" size="small" type="primary"
+        <el-button v-if="canViewPersonalAchievement" size="small" type="primary"
           @click="goPersonalAchievement">查看个人达成度</el-button>
         <el-button v-if="!hasPendingRequest" size="small" type="warning"
           @click="showRequestDialog"> 提交勘误申请</el-button>
@@ -116,7 +116,7 @@
       </template>
     </el-dialog>
 
-    <div v-if="hasResults" class="result-action-bar">
+    <div v-if="canViewPersonalAchievement" class="result-action-bar">
       <div>
         <strong>课程级计算结果已生成</strong>
         <span>可继续查看每位学生的个人达成度明细。</span>
@@ -538,6 +538,7 @@ const hasResults = computed(() =>
   Object.keys(results.courseAchievements || {}).length > 0
 )
 
+const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
 const reportExportReady = computed(() => status.value === 'LOCKED' && hasResults.value)
 const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {

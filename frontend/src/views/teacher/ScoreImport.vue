@@ -170,7 +170,14 @@
       </div>
 
       <div style="margin-top:12px" v-if="hasEdits && status !== 'LOCKED'">
-        <el-button type="warning" @click="saveAll">保存修改 ({{ editCount }})</el-button>
+        <el-button
+          type="warning"
+          :loading="saving"
+          :disabled="saving"
+          @click="saveAll"
+        >
+          保存修改 ({{ editCount }})
+        </el-button>
       </div>
     </div>
   </div>
@@ -203,6 +210,7 @@ const scoreRows = ref([])
 const edits = ref({})
 const importing = ref(false)
 const downloading = ref(false)
+const saving = ref(false)
 const requesting = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')

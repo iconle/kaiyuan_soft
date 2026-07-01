@@ -64,6 +64,9 @@
       class="empty-guide-alert"
     >
       当前暂无个人达成度数据。请先完成成绩导入，并在「课程级计算」页面执行一键计算，系统将自动生成每位学生的个人达成度结果。
+      <el-button size="small" type="primary" class="empty-guide-action" @click="goCourseCompute">
+        返回课程级计算
+      </el-button>
     </el-alert>
 
     <el-table
@@ -499,6 +502,10 @@ function statusText(value) {
   border-radius: 10px;
   background-color: #f7f4ff;
   border: 1px solid rgba(155, 135, 201, 0.22);
+}
+
+.empty-guide-action {
+  margin-left: 8px;
 }
 
 .achievement-value {

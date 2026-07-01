@@ -315,13 +315,14 @@ const hasEdits = computed(() => editCount.value > 0)
 
 async function saveAll() {
   if (saving.value || editCount.value === 0) return
-  const confirmed = await confirmSaveEdits()
+  const pendingEdits = Object.entries(edits.value)
+  const confirmed = await confirmSaveEdits(pendingEdits.length)
   if (!confirmed) return
   saving.value = true
   let saved = 0
   let failed = 0
   try {
-    for (const [key, score] of Object.entries(edits.value)) {
+    for (const [key, score] of pendingEdits) {
       if (key.startsWith('q_')) {
         const [, studentId, questionId] = key.split('_')
         try {
@@ -349,10 +350,10 @@ async function saveAll() {
   }
 }
 
-async function confirmSaveEdits() {
+async function confirmSaveEdits(count) {
   try {
     await ElMessageBox.confirm(
-      `本次将保存 ${editCount.value} 条成绩修改，确认提交吗？`,
+      `本次将保存 ${count} 条成绩修改，确认提交吗？`,
       '确认保存成绩修改',
       {
         type: 'warning',

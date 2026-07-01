@@ -652,6 +652,10 @@ function goPersonalAchievement() {
   router.push(`/teacher/${classId.value}/personal-achievements`)
 }
 
+function goScoreImport() {
+  router.push(`/teacher/${classId.value}/scores`)
+}
+
 async function downloadPdf() {
   if (pdfDownloading.value) return
   if (!ensureReportExportReady()) return

@@ -507,6 +507,13 @@ function escapeHtml(value) {
   font-size: 13px;
 }
 
+@media (max-width: 720px) {
+  .compute-entry-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .unlock-request-card {
   margin-bottom: var(--space-4);
   border-color: rgba(128, 107, 191, 0.18);

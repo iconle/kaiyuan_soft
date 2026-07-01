@@ -62,7 +62,7 @@
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑题目' : '新增题目'" width="500px">
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑题目' : '新增题目'" width="min(500px, 92vw)">
       <el-form :model="form" label-width="100px">
         <el-form-item label="题目名称" required><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="满分分值" required><el-input-number v-model="form.maxScore" :min="1" :step="5" style="width:100%" /></el-form-item>

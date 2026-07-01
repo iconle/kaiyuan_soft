@@ -641,6 +641,7 @@ async function downloadPdf() {
   try {
     const blob = await downloadCoursePdf(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.pdf`)
+    ElMessage.success('PDF 报告已开始下载')
   } catch {
     ElMessage.error('PDF 报告导出失败，请确认已完成课程级计算后重试')
   }
@@ -654,6 +655,7 @@ async function downloadExcel() {
   try {
     const blob = await downloadCourseExcel(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.xlsx`)
+    ElMessage.success('Excel 报告已开始下载')
   } catch {
     ElMessage.error('Excel 报告导出失败，请确认已完成课程级计算后重试')
   }
@@ -667,6 +669,7 @@ async function downloadPersonalAchievementExcel() {
   try {
     const blob = await downloadPersonalAchievements(classId.value)
     downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
+    ElMessage.success('学生个人达成度已开始下载')
   } catch {
     ElMessage.error('学生个人达成度导出失败，请确认已完成课程级计算后重试')
   }

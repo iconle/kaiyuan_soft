@@ -53,7 +53,7 @@
     </div>
 
     <!-- 添加支撑关系对话框 -->
-    <el-dialog v-model="addDialogVisible" title="添加课程支撑" width="480px">
+    <el-dialog v-model="addDialogVisible" title="添加课程支撑" width="min(480px, 92vw)">
       <el-form label-width="80px">
         <el-form-item label="课程">
           <el-select v-model="addForm.courseId" filterable placeholder="选择课程" style="width: 100%">
@@ -80,7 +80,7 @@
     </el-dialog>
 
     <!-- 导入课程支撑对话框 -->
-    <el-dialog v-model="importDialogVisible" title="导入课程支撑" width="520px">
+    <el-dialog v-model="importDialogVisible" title="导入课程支撑" width="min(520px, 92vw)">
       <div class="import-tip">
         请先点击「下载模板」获取标准模板，按格式填写后再上传。<br />
         首列为「课程名称」，其余各列为指标点编号，单元格填写支撑权重（0~1）。<b>表头不可修改</b>。

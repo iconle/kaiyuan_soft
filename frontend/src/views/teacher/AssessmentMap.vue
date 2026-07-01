@@ -2,9 +2,9 @@
   <div class="page-container">
     <div class="page-header">
       <h3>考核点细分与映射</h3>
-      <el-button @click="downloadTemplate" :loading="downloading">下载模板</el-button>
-      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
-        <el-button type="primary" plain class="import-action-btn" :loading="importing">导入考核点</el-button>
+      <el-button @click="downloadTemplate" :loading="downloading" :disabled="downloading">下载模板</el-button>
+      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx" :disabled="importing">
+        <el-button type="primary" plain class="import-action-btn" :loading="importing" :disabled="importing">导入考核点</el-button>
       </el-upload>
       <el-button type="primary" @click="showDialog()">新增考核点</el-button>
       <span v-if="weightSum !== null" :style="{color: weightSum === 100 ? 'var(--el-color-success)' : 'var(--el-color-danger)', fontSize: '14px', fontWeight:'bold'}">
@@ -80,7 +80,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitting" :disabled="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -108,6 +108,7 @@ const editing = ref(null)
 const form = reactive({ name: '', maxScore: 100, weightPercent: null, objectiveIds: [], sortOrder: 1 })
 const importing = ref(false)
 const downloading = ref(false)
+const submitting = ref(false)
 
 const weightSum = computed(() => {
   if (assessments.value.length === 0) return null
@@ -142,20 +143,26 @@ function showDialog(row) {
 }
 
 async function handleSubmit() {
+  if (submitting.value) return
   const data = {
     name: form.name, maxScore: form.maxScore,
     weightPercent: form.weightPercent != null ? Number(form.weightPercent) : null,
     objectiveIds: form.objectiveIds || [],
     sortOrder: form.sortOrder
   }
-  if (editing.value) {
-    await updateAssessment(editing.value.id, { ...data, outlineId: editing.value.outlineId })
-  } else {
-    await createAssessment(classId.value, data)
+  submitting.value = true
+  try {
+    if (editing.value) {
+      await updateAssessment(editing.value.id, { ...data, outlineId: editing.value.outlineId })
+    } else {
+      await createAssessment(classId.value, data)
+    }
+    ElMessage.success('操作成功')
+    dialogVisible.value = false
+    await loadData()
+  } finally {
+    submitting.value = false
   }
-  ElMessage.success('操作成功')
-  dialogVisible.value = false
-  loadData()
 }
 
 async function handleDelete(row) {
@@ -166,6 +173,7 @@ async function handleDelete(row) {
 }
 
 async function downloadTemplate() {
+  if (downloading.value) return
   downloading.value = true
   try {
     downloadBlob(await ensureDownloadBlob(await downloadAssessmentTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '考核点导入模板', 'xlsx'))
@@ -179,6 +187,7 @@ function beforeUpload(file) {
 }
 
 async function uploadFile({ file }) {
+  if (importing.value) return
   importing.value = true
   try {
     const res = await importAssessments(classId.value, file)

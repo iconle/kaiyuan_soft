@@ -48,7 +48,7 @@
         v-model="keyword"
         :prefix-icon="Search"
         clearable
-        placeholder="搜索学号或姓名"
+        placeholder="请输入学号或姓名进行搜索"
         class="search-input"
       />
     </div>
@@ -462,7 +462,27 @@ function statusText(value) {
 }
 
 .search-input {
-  width: 260px;
+  width: 320px;
+  transition: width 0.18s ease;
+}
+
+:deep(.search-input .el-input__wrapper) {
+  border-radius: 999px;
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+:deep(.search-input .el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px rgba(155, 135, 201, 0.24) inset;
+}
+
+:deep(.search-input .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #9b87c9 inset, 0 6px 14px rgba(126, 87, 194, 0.12);
+}
+
+@media (max-width: 800px) {
+  .search-input {
+    width: 100%;
+  }
 }
 
 .empty-guide-alert {

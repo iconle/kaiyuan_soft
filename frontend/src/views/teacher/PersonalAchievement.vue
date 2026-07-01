@@ -216,6 +216,7 @@ const loading = ref(false)
 const exporting = ref(false)
 const keyword = ref('')
 const rows = ref([])
+const loadError = ref('')
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detail = reactive({
@@ -250,9 +251,11 @@ const detailTitle = computed(() =>
   `${detail.studentName || '学生'}（${detail.studentNo || '-'}）`
 )
 const tableEmptyText = computed(() =>
-  keyword.value.trim()
+  loadError.value
+    ? loadError.value
+    : keyword.value.trim()
     ? '未找到匹配的学生，请调整搜索条件'
-    : '暂无个人达成度数据，请先完成课程级计算'
+    : '暂无个人达成度数据，请先完成成绩导入和课程级计算'
 )
 
 const objectiveRows = computed(() => toDetailRows(
@@ -272,9 +275,13 @@ watch(classId, loadRows)
 async function loadRows() {
   if (!classId.value) return
   loading.value = true
+  loadError.value = ''
   try {
     const response = await listPersonalAchievements(classId.value)
     rows.value = response.data || []
+  } catch {
+    rows.value = []
+    loadError.value = '个人达成度数据加载失败，请刷新页面后重试'
   } finally {
     loading.value = false
   }

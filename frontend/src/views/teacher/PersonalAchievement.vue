@@ -178,7 +178,7 @@
     <el-dialog
       v-model="detailVisible"
       :title="detailTitle"
-      width="720px"
+      width="min(720px, 96vw)"
       destroy-on-close
     >
       <div v-loading="detailLoading">

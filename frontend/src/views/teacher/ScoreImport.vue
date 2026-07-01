@@ -170,7 +170,14 @@
       </div>
 
       <div style="margin-top:12px" v-if="hasEdits && status !== 'LOCKED'">
-        <el-button type="warning" @click="saveAll">保存修改 ({{ editCount }})</el-button>
+        <el-button
+          type="warning"
+          :loading="saving"
+          :disabled="saving"
+          @click="saveAll"
+        >
+          保存修改 ({{ editCount }})
+        </el-button>
       </div>
     </div>
   </div>
@@ -203,6 +210,7 @@ const scoreRows = ref([])
 const edits = ref({})
 const importing = ref(false)
 const downloading = ref(false)
+const saving = ref(false)
 const requesting = ref(false)
 const requestDialogVisible = ref(false)
 const unlockReason = ref('')
@@ -306,30 +314,62 @@ const editCount = computed(() => Object.keys(edits.value).length)
 const hasEdits = computed(() => editCount.value > 0)
 
 async function saveAll() {
+  if (saving.value || editCount.value === 0) return
+  const pendingEdits = Object.entries(edits.value)
+  const confirmed = await confirmSaveEdits(pendingEdits.length)
+  if (!confirmed) return
+  saving.value = true
   let saved = 0
   let failed = 0
-  for (const [key, score] of Object.entries(edits.value)) {
-    if (key.startsWith('q_')) {
-      const [, studentId, questionId] = key.split('_')
-      try {
-        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
-        saved++
-      } catch { failed++ }
-    } else if (key.startsWith('a_')) {
-      const [, studentId, assessId] = key.split('_')
-      try {
-        await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
-        saved++
-      } catch { failed++ }
+  try {
+    for (const [key, score] of pendingEdits) {
+      if (key.startsWith('q_')) {
+        const [, studentId, questionId] = key.split('_')
+        try {
+          await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: selectedAssessmentId.value, questionId: Number(questionId), score })
+          saved++
+        } catch { failed++ }
+      } else if (key.startsWith('a_')) {
+        const [, studentId, assessId] = key.split('_')
+        try {
+          await request.put(`/api/classes/${classId.value}/scores`, { studentId: Number(studentId), assessmentId: Number(assessId), score })
+          saved++
+        } catch { failed++ }
+      }
     }
+    if (saved > 0) {
+      const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
+      if (failed > 0) {
+        ElMessage.warning(msg)
+      } else {
+        ElMessage.success(msg)
+        edits.value = {}
+        await loadQuestions().catch(() => {
+          ElMessage.warning('成绩已保存，但刷新数据失败，请手动刷新页面')
+        })
+      }
+    } else if (failed > 0) {
+      ElMessage.error('保存失败，请重试')
+    }
+  } finally {
+    saving.value = false
   }
-  if (saved > 0) {
-    const msg = failed > 0 ? `已保存 ${saved} 条，失败 ${failed} 条` : `已保存 ${saved} 条`
-    ElMessage.success(msg)
-    edits.value = {}
-    await loadQuestions()
-  } else if (failed > 0) {
-    ElMessage.error('保存失败，请重试')
+}
+
+async function confirmSaveEdits(count) {
+  try {
+    await ElMessageBox.confirm(
+      `本次将保存 ${count} 条成绩修改，确认提交吗？`,
+      '确认保存成绩修改',
+      {
+        type: 'warning',
+        confirmButtonText: '确认保存',
+        cancelButtonText: '取消'
+      }
+    )
+    return true
+  } catch {
+    return false
   }
 }
 

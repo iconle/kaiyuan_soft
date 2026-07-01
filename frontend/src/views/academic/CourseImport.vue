@@ -62,7 +62,7 @@
     </div>
 
     <!-- Course edit dialog -->
-    <el-dialog v-model="courseDialogVisible" :title="editingCourse ? '编辑课程' : '新增课程'" width="480px">
+    <el-dialog v-model="courseDialogVisible" :title="editingCourse ? '编辑课程' : '新增课程'" width="min(480px, 92vw)">
       <el-form :model="courseForm" label-width="90px">
         <el-form-item label="课程代码"><el-input v-model="courseForm.code" /></el-form-item>
         <el-form-item label="课程名称" required><el-input v-model="courseForm.name" /></el-form-item>
@@ -79,7 +79,7 @@
       v-model="classDialogVisible"
       class="teaching-class-dialog"
       :title="`教学班级 - ${currentCourse?.name || ''}`"
-      width="620px"
+      width="min(620px, 92vw)"
     >
       <div class="class-dialog-tip">
         当前课程已关联的教学班级如下，可点击“查看学生”查看班级学生名单。
@@ -108,7 +108,7 @@
       </el-table>
     </el-dialog>
 
-    <el-dialog v-model="studentDialogVisible" :title="`学生名单 - ${currentClass?.className || ''}`" width="500px" append-to-body>
+    <el-dialog v-model="studentDialogVisible" :title="`学生名单 - ${currentClass?.className || ''}`" width="min(500px, 92vw)" append-to-body>
       <el-table :data="students" border size="small" max-height="360">
         <el-table-column prop="studentNo" label="学号" width="130" />
         <el-table-column prop="name" label="姓名" />

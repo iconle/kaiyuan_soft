@@ -118,7 +118,7 @@
       </template>
     </el-card>
 
-    <el-dialog v-model="detailVisible" :title="`达成度详情 - ${detailClass?.courseName || ''} ${detailClass?.className || ''}`" width="720px">
+    <el-dialog v-model="detailVisible" :title="`达成度详情 - ${detailClass?.courseName || ''} ${detailClass?.className || ''}`" width="min(720px, 96vw)">
       <div v-if="detailLoading" style="text-align:center;padding:20px">加载中...</div>
       <div v-else-if="!detailHasData" style="text-align:center;padding:20px;color:var(--text-secondary)">该课程尚未执行课程级计算，无达成度数据</div>
       <div v-else style="display:flex;gap:20px;flex-wrap:wrap">

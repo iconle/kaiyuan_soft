@@ -115,6 +115,15 @@
         <el-button type="primary" @click="handleRequestUnlock" :loading="requesting">提交申请</el-button>
       </template>
     </el-dialog>
+
+    <div v-if="hasResults" class="result-action-bar">
+      <div>
+        <strong>课程级计算结果已生成</strong>
+        <span>可继续查看每位学生的个人达成度明细。</span>
+      </div>
+      <el-button type="primary" @click="goPersonalAchievement">查看个人达成度</el-button>
+    </div>
+
     <div v-if="hasResults" class="achievement-overview">
       <!-- Objective achievements -->
       <el-card class="achievement-panel" shadow="hover">
@@ -1108,6 +1117,28 @@ const indicatorStats = computed(() => {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.result-action-bar {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(128, 107, 191, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.result-action-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.result-action-bar span {
+  color: var(--text-secondary);
   font-size: 13px;
 }
 

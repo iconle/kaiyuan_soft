@@ -185,7 +185,7 @@
 
 <script setup>
 import { ref, computed, inject, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getScores, getScoreStatus, downloadScoreTemplate, listAssessments, uploadScores,
@@ -197,6 +197,7 @@ import { validateExcelFile, showExcelImportError } from '../../utils/excelImport
 import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const classId = ref(route.params.classId)
 const resolveClassName = inject('resolveClassName', () => '')
 const resolveClassInfo = inject('resolveClassInfo', () => null)
@@ -395,6 +396,10 @@ function getScoreTemplateClassName() {
 
 function beforeUpload(file) {
   return validateExcelFile(file)
+}
+
+function goCourseCompute() {
+  router.push(`/teacher/${classId.value}/compute`)
 }
 
 function showRequestDialog() {

@@ -366,6 +366,7 @@ async function handleExport() {
 }
 
 function goCourseCompute() {
+  ElMessage.info('正在返回课程级计算页面')
   router.push(`/teacher/${classId.value}/compute`)
 }
 

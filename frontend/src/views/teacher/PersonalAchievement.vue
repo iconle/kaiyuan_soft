@@ -430,6 +430,7 @@ function statusText(value) {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .summary-band {

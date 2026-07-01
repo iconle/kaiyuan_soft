@@ -26,8 +26,8 @@
 
       <el-table :data="classes" border stripe v-loading="loading">
         <el-table-column type="index" label="ID" width="60" :index="indexMethod" />
-        <el-table-column prop="className" label="班级名称" min-width="180" />
-        <el-table-column prop="majorName" label="所属专业" min-width="160" />
+        <el-table-column prop="className" label="班级名称" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="majorName" label="所属专业" min-width="160" show-overflow-tooltip />
         <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
         <el-table-column prop="studentCount" label="学生人数" width="100" />
         <el-table-column

@@ -32,6 +32,14 @@
       </el-button>
     </el-alert>
 
+    <div v-if="showScoreEntryBar" class="score-entry-bar">
+      <div>
+        <strong>{{ scoreEntryTitle }}</strong>
+        <span>{{ scoreEntryDescription }}</span>
+      </div>
+      <el-button type="primary" @click="goScoreImport">{{ scoreEntryButtonText }}</el-button>
+    </div>
+
     <!-- My unlock requests status -->
     <el-card
       v-if="myRequests.length > 0"
@@ -545,6 +553,14 @@ const hasResults = computed(() =>
 )
 
 const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
+const showScoreEntryBar = computed(() => status.value !== 'LOCKED')
+const scoreEntryTitle = computed(() => status.value === 'IMPORTED' ? '成绩已导入' : '尚未导入成绩')
+const scoreEntryDescription = computed(() =>
+  status.value === 'IMPORTED'
+    ? '如需核对或修正成绩，可先返回成绩导入页面。'
+    : '请先完成成绩导入，再执行课程级达成度计算。'
+)
+const scoreEntryButtonText = computed(() => status.value === 'IMPORTED' ? '查看或修改成绩' : '去成绩导入')
 const reportExportReady = computed(() => canViewPersonalAchievement.value)
 const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {
@@ -1133,6 +1149,28 @@ const indicatorStats = computed(() => {
 
 .alert-action-button {
   margin-left: 8px;
+}
+
+.score-entry-bar {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(230, 162, 60, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.score-entry-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.score-entry-bar span {
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .result-action-bar {

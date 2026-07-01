@@ -2,8 +2,18 @@
   <div class="page-container">
     <div class="page-header">
       <h3>成绩导入与管理</h3>
-      <el-select v-model="selectedAssessmentId" placeholder="选择考核点" style="width:260px" @change="loadAll">
-        <el-option v-for="ap in assessments" :key="ap.id" :label="`${ap.name} → ${assessmentObjLabel(ap)}`" :value="ap.id" />
+      <el-select
+        v-model="selectedAssessmentId"
+        placeholder="请选择考核点"
+        class="assessment-select"
+        @change="loadAll"
+      >
+        <el-option
+          v-for="ap in assessments"
+          :key="ap.id"
+          :label="`${ap.name} → ${assessmentObjLabel(ap)}`"
+          :value="ap.id"
+        />
       </el-select>
       <el-button
         type="primary"
@@ -503,8 +513,52 @@ function escapeHtml(value) {
 
 <style scoped>
 .page-container { padding: var(--space-5); }
-.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
-.page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.page-header h3 {
+  margin: 0;
+  margin-right: var(--space-1);
+  font-size: var(--text-lg);
+}
+
+.assessment-select {
+  width: 280px;
+}
+
+:deep(.assessment-select .el-select__wrapper) {
+  min-height: 36px;
+  border-radius: 10px;
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+:deep(.assessment-select .el-select__wrapper:hover) {
+  box-shadow: 0 0 0 1px rgba(128, 107, 191, 0.18) inset;
+}
+
+:deep(.assessment-select .el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 1px #806bbf inset, 0 6px 14px rgba(128, 107, 191, 0.12);
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .assessment-select,
+  .page-header :deep(.el-button),
+  .page-header :deep(.el-upload),
+  .page-header :deep(.el-upload .el-button) {
+    width: 100%;
+  }
+}
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
 .score-alert {
   margin-bottom: 16px;

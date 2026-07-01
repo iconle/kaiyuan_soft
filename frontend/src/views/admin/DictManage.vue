@@ -47,7 +47,7 @@
           </el-table>
         </div>
 
-        <el-dialog v-model="collegeDialogVisible" :title="collegeEditId ? '编辑学院' : '新增学院'" width="400px">
+        <el-dialog v-model="collegeDialogVisible" :title="collegeEditId ? '编辑学院' : '新增学院'" width="min(400px, 92vw)">
           <el-form label-width="80px">
             <el-form-item label="学院名称">
               <el-input v-model="collegeForm.name" />
@@ -106,7 +106,7 @@
           </el-table>
         </div>
 
-        <el-dialog v-model="majorDialogVisible" :title="majorEditId ? '编辑专业' : '新增专业'" width="480px">
+        <el-dialog v-model="majorDialogVisible" :title="majorEditId ? '编辑专业' : '新增专业'" width="min(480px, 92vw)">
           <el-form label-width="80px">
             <el-form-item label="专业代码">
               <el-input v-model="majorForm.code" />
@@ -175,7 +175,7 @@
 
         </div>
 
-        <el-dialog v-model="semesterDialogVisible" title="新增学期" width="400px">
+        <el-dialog v-model="semesterDialogVisible" title="新增学期" width="min(400px, 92vw)">
           <el-form label-width="80px">
             <el-form-item label="学年">
               <el-input v-model="semesterForm.academicYear" placeholder="如 2025-2026" />

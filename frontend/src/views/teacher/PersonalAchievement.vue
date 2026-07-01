@@ -5,23 +5,26 @@
         <h3>个人达成度</h3>
         <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
       </div>
-      <el-tooltip
-        :disabled="exportReady"
-        :content="exportDisabledReason"
-        placement="bottom"
-      >
-        <span>
-          <el-button
-            type="primary"
-            :icon="Download"
-            :loading="exporting"
-            :disabled="!exportReady"
-            @click="handleExport"
-          >
-            导出 Excel
-          </el-button>
-        </span>
-      </el-tooltip>
+      <div class="page-header-actions">
+        <el-button @click="goCourseCompute">返回课程级计算</el-button>
+        <el-tooltip
+          :disabled="exportReady"
+          :content="exportDisabledReason"
+          placement="bottom"
+        >
+          <span>
+            <el-button
+              type="primary"
+              :icon="Download"
+              :loading="exporting"
+              :disabled="!exportReady"
+              @click="handleExport"
+            >
+              导出 Excel
+            </el-button>
+          </span>
+        </el-tooltip>
+      </div>
     </div>
 
     <div class="summary-band">
@@ -412,6 +415,12 @@ function statusText(value) {
   margin: 6px 0 0;
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .summary-band {

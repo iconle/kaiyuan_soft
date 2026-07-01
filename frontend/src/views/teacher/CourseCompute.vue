@@ -1394,4 +1394,11 @@ const indicatorStats = computed(() => {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 720px) {
+  .result-action-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>

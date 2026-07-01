@@ -337,7 +337,9 @@ async function downloadTemplate() {
   if (!selectedAssessmentId.value || downloading.value) return
   downloading.value = true
   try {
-    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(getScoreTemplateClassName(), '成绩录入模板', 'xlsx'))
+    const filename = buildClassFilename(getScoreTemplateClassName(), '成绩录入模板', 'xlsx')
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), filename)
+    ElMessage.success(`模板已开始下载：${filename}`)
   } catch (error) {
     showDownloadError(error)
   } finally {

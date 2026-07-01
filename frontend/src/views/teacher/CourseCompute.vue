@@ -11,11 +11,11 @@
 
     <el-alert v-if="status === 'LOCKED'" type="success" show-icon :closable="false" style="margin-bottom:16px">
       课程级计算已完成，成绩单已锁定。计算时间：{{ results.calcTime || '-' }}
-      <div style="margin-top:8px;font-size:13px">
+      <div class="locked-alert-actions">
         如需勘误成绩，请点击下方按钮提交勘误申请，由教务管理员或系统管理员审批解锁。
-        <el-button v-if="hasResults" size="small" type="primary" style="margin-left:8px"
+        <el-button v-if="hasResults" size="small" type="primary"
           @click="goPersonalAchievement">查看个人达成度</el-button>
-        <el-button v-if="!hasPendingRequest" size="small" type="warning" style="margin-left:8px"
+        <el-button v-if="!hasPendingRequest" size="small" type="warning"
           @click="showRequestDialog"> 提交勘误申请</el-button>
       </div>
     </el-alert>
@@ -1101,6 +1101,16 @@ const indicatorStats = computed(() => {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.locked-alert-actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
 /* 我的勘误申请表格优化 */
 :deep(.my-unlock-table .el-table__header th) {
   height: 42px;

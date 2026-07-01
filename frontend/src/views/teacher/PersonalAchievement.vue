@@ -31,7 +31,7 @@
       </div>
       <div class="summary-item">
         <span>平均达成度</span>
-        <strong>{{ averageAchievement.toFixed(4) }}</strong>
+        <strong>{{ formatAchievement(averageAchievement) }}</strong>
       </div>
       <div class="summary-item">
         <span>达标人数</span>

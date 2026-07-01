@@ -67,7 +67,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑学生' : '新增学生'" width="480px">
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑学生' : '新增学生'" width="min(480px, 92vw)">
       <el-form :model="form" label-width="100px">
         <el-form-item label="学号" required>
           <el-input v-model="form.studentNo" />
@@ -101,7 +101,7 @@
     </el-dialog>
 
     <!-- 导入 Excel 对话框 -->
-    <el-dialog v-model="importDialogVisible" title="导入学生名单" width="480px">
+    <el-dialog v-model="importDialogVisible" title="导入学生名单" width="min(480px, 92vw)">
       <div class="import-tip">
         请先下载模板，按模板格式填写学生信息后上传。
       </div>

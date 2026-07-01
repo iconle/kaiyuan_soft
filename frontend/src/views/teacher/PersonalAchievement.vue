@@ -15,7 +15,7 @@
             type="primary"
             :icon="Download"
             :loading="exporting"
-            :disabled="!exportReady"
+            :disabled="!exportReady || exporting"
             @click="handleExport"
           >
             导出 Excel

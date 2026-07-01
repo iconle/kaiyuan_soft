@@ -383,6 +383,15 @@
         导出学生个人达成度
       </el-button>
     </div>
+    <el-alert
+      v-if="exportDisabled"
+      type="info"
+      show-icon
+      :closable="false"
+      class="report-export-tip"
+    >
+      {{ exportDisabledReason }}
+    </el-alert>
 
     <el-dialog
       v-model="personalDialogVisible"
@@ -518,6 +527,11 @@ const hasResults = computed(() =>
 )
 
 const exportDisabled = computed(() => status.value !== 'LOCKED' || !hasResults.value)
+const exportDisabledReason = computed(() => {
+  if (status.value === 'IMPORTED') return '成绩已导入但尚未完成课程级计算，请先点击「一键计算」生成达成度结果后再导出报告。'
+  if (status.value === 'LOCKED' && !hasResults.value) return '成绩单已锁定，但暂未读取到课程级计算结果，请刷新页面或重新进入后再导出。'
+  return '暂未导入成绩数据，请先在「成绩导入」页面完成成绩导入，再进行课程级计算和报告导出。'
+})
 
 const objectiveData = computed(() => {
   const labels = results.objectiveLabels || {}
@@ -1151,6 +1165,10 @@ const indicatorStats = computed(() => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.report-export-tip {
+  margin-top: 12px;
 }
 
 /* 课程达成度结果展示优化 */

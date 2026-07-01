@@ -344,7 +344,9 @@ async function saveAll() {
       } else {
         ElMessage.success(msg)
         edits.value = {}
-        await loadQuestions()
+        await loadQuestions().catch(() => {
+          ElMessage.warning('成绩已保存，但刷新数据失败，请手动刷新页面')
+        })
       }
     } else if (failed > 0) {
       ElMessage.error('保存失败，请重试')

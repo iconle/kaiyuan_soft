@@ -165,6 +165,10 @@ function switchTeacherClass(classId) {
   activeClassId.value = classId
   localStorage.setItem('activeClassId', String(classId))
   router.push(`/teacher/${classId}/objectives`)
+
+  const currentClass = teacherClasses.value.find(c => String(c.id) === String(classId))
+  const className = currentClass?.className || '教学班级'
+  ElMessage.success(`已切换至${className}`)
 }
 
 function handleLogout() {

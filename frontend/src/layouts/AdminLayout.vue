@@ -275,6 +275,14 @@ function handleLogout() {
   background: rgba(158, 137, 205, 0.10);
   border: 1px solid rgba(158, 137, 205, 0.18);
   color: #5f4a9c;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-1px);
+  background: rgba(158, 137, 205, 0.16);
+  border-color: rgba(158, 137, 205, 0.34);
+  box-shadow: 0 8px 18px rgba(126, 87, 194, 0.12);
 }
 
 .user-avatar {
@@ -288,12 +296,15 @@ function handleLogout() {
   font-weight: 700;
   color: #ffffff;
   background: linear-gradient(135deg, #9e89cd, #806bbf);
+  transition: transform 0.18s ease;
 }
-
 .user-info {
   font-size: 14px;
   font-weight: 600;
   color: #5f4a9c;
+}
+.user-card:hover .user-avatar {
+  transform: scale(1.06);
 }
 
 .logout-btn {

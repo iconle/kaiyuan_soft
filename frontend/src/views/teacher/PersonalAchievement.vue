@@ -10,7 +10,7 @@
           content="返回查看课程目标、指标点达成度和计算结果"
           placement="bottom"
         >
-          <el-button @click="goCourseCompute">返回课程级计算</el-button>
+          <el-button @click="goCourseCompute">{{ courseComputeButtonText }}</el-button>
         </el-tooltip>
         <el-tooltip
           :disabled="exportReady"
@@ -70,7 +70,7 @@
     >
       当前暂无个人达成度数据。请先完成成绩导入，并在「课程级计算」页面执行一键计算，系统将自动生成每位学生的个人达成度结果。
       <el-button size="small" type="primary" class="empty-guide-action" @click="goCourseCompute">
-        返回课程级计算
+        {{ courseComputeButtonText }}
       </el-button>
     </el-alert>
 
@@ -269,6 +269,7 @@ const detailVisible = ref(false)
 const detailLoading = ref(false)
 const ACHIEVEMENT_PASS_LINE = 0.7
 const ACHIEVEMENT_WARNING_LINE = 0.65
+const courseComputeButtonText = '返回课程级计算'
 const detail = reactive({
   studentNo: '',
   studentName: '',

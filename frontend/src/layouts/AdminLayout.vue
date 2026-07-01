@@ -365,18 +365,36 @@ function handleLogout() {
 }
 
 .teacher-sidebar-selects {
-  padding: var(--space-1) var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-3);
 }
 
 .teacher-select-label {
   font-size: var(--text-xs);
+  font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .teacher-select {
   width: 100%;
   margin-bottom: var(--space-2);
+}
+
+:deep(.teacher-select .el-select__wrapper) {
+  min-height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+:deep(.teacher-select .el-select__wrapper:hover) {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(126, 87, 194, 0.16) inset;
+}
+
+:deep(.teacher-select .el-select__wrapper.is-focused) {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #9b87c9 inset, 0 6px 14px rgba(126, 87, 194, 0.12);
 }
 /* Issue #93：侧边栏菜单项高度和选中区域优化 */
 :deep(.layout-aside .el-menu) {

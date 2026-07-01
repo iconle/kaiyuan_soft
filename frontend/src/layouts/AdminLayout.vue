@@ -37,7 +37,27 @@
           <template #title><el-icon><EditPen /></el-icon><span>课程大纲</span></template>
           <div class="teacher-sidebar-selects" @click.stop>
             <div class="teacher-select-label">教学学期</div>
-           
+
+            <el-select
+              v-model="activeClassId"
+              placeholder="请选择教学班级"
+              size="default"
+              class="teacher-select"
+              @change="switchTeacherClass"
+              @click.stop
+            >
+              <el-option
+                v-for="c in filteredTeacherClasses"
+                :key="c.id"
+                :label="`${c.courseName || '课程'} - ${c.className || '班级'+c.id}`"
+                :value="String(c.id)"
+              />
+              <template #empty>
+                <div class="teacher-select-empty">{{ teacherClassEmptyText }}</div>
+              </template>
+            </el-select>
+
+
             <el-select
               v-model="teacherFilterSemester"
               placeholder="全部学期"
@@ -46,21 +66,14 @@
               class="teacher-select"
               @click.stop
             >
-              <el-option v-for="s in teacherSemesters" :key="s.id" :label="s.label" :value="s.id" />
+              <el-option
+                v-for="s in teacherSemesters"
+                :key="s.id"
+                :label="s.label"
+                :value="s.id"
+              />
             </el-select>
-            <div class="teacher-select-label">教学班级</div>
-            <el-select
-            v-model="activeClassId"
-            placeholder="选择教学班级"
-            size="default"
-            class="teacher-select"
-            @change="switchTeacherClass"
-            @click.stop
-          >
-              <el-option v-for="c in filteredTeacherClasses" :key="c.id"
-                :label="`${c.courseName || '课程'} - ${c.className || '班级'+c.id}`" :value="String(c.id)" />
-            </el-select>
-          </div>
+            </div>
           <el-menu-item :index="`/teacher/${activeClassId}/objectives`"><el-icon><Aim /></el-icon>课程目标</el-menu-item>
           <el-menu-item :index="`/teacher/${activeClassId}/weights`"><el-icon><Histogram /></el-icon>权重分配</el-menu-item>
           <el-menu-item :index="`/teacher/${activeClassId}/assessments`"><el-icon><List /></el-icon>考核点映射</el-menu-item>
@@ -137,7 +150,9 @@ const filteredTeacherClasses = computed(() => {
   if (!teacherFilterSemester.value) return teacherClasses.value
   return teacherClasses.value.filter(c => c.semesterId === teacherFilterSemester.value)
 })
-
+const teacherClassEmptyText = computed(() =>
+  teacherFilterSemester.value ? '当前学期暂无教学班级' : '暂无可选教学班级'
+)
 onMounted(async () => {
   const denied = sessionStorage.getItem('permDenied')
   if (denied) {
@@ -379,7 +394,12 @@ function handleLogout() {
   width: 100%;
   margin-bottom: var(--space-2);
 }
-
+.teacher-select-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}
 :deep(.teacher-select .el-select__wrapper) {
   min-height: 36px;
   border-radius: 10px;

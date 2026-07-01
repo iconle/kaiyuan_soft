@@ -6,7 +6,7 @@
         <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
       </div>
       <el-tooltip
-        :disabled="exportReady"
+        :disabled="exportReady || exporting"
         :content="exportDisabledReason"
         placement="bottom"
       >

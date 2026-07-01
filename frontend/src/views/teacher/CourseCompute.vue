@@ -360,29 +360,38 @@
       </el-card>
     </template>
 
-    <div v-if="hasResults" style="margin-top: 16px; display: flex; gap: 8px;">
+    <div class="report-export-actions">
       <el-button
         :loading="pdfDownloading"
-        :disabled="pdfDownloading"
+        :disabled="exportDisabled || pdfDownloading"
         @click="downloadPdf"
       >
         导出 PDF 报告
       </el-button>
       <el-button
         :loading="excelDownloading"
-        :disabled="excelDownloading"
+        :disabled="exportDisabled || excelDownloading"
         @click="downloadExcel"
       >
         导出 Excel 报告
       </el-button>
       <el-button
         :loading="personalDownloading"
-        :disabled="personalDownloading"
+        :disabled="exportDisabled || personalDownloading"
         @click="downloadPersonalAchievementExcel"
       >
         导出学生个人达成度
       </el-button>
     </div>
+    <el-alert
+      v-if="exportDisabled"
+      type="info"
+      show-icon
+      :closable="false"
+      class="report-export-tip"
+    >
+      {{ exportDisabledReason }}
+    </el-alert>
 
     <el-dialog
       v-model="personalDialogVisible"
@@ -517,6 +526,14 @@ const hasResults = computed(() =>
   Object.keys(results.courseAchievements || {}).length > 0
 )
 
+const reportExportReady = computed(() => status.value === 'LOCKED' && hasResults.value)
+const exportDisabled = computed(() => !reportExportReady.value)
+const exportDisabledReason = computed(() => {
+  if (status.value === 'IMPORTED') return '成绩已导入但尚未完成课程级计算，请先点击「一键计算」生成达成度结果后再导出报告。'
+  if (status.value === 'LOCKED' && !hasResults.value) return '成绩单已锁定，但暂未读取到课程级计算结果，请刷新页面或重新进入后再导出。'
+  return '暂未导入成绩数据，请先在「成绩导入」页面完成成绩导入，再进行课程级计算和报告导出。'
+})
+
 const objectiveData = computed(() => {
   const labels = results.objectiveLabels || {}
   const contents = results.objectiveContents || {}
@@ -620,32 +637,50 @@ async function openPersonalDialog(type, item) {
 
 async function downloadPdf() {
   if (pdfDownloading.value) return
+  if (!ensureReportExportReady()) return
   pdfDownloading.value = true
   try {
     const blob = await downloadCoursePdf(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.pdf`)
-  } catch { /* 拦截器已提示错误 */ }
+    ElMessage.success('PDF 报告已开始下载')
+  } catch {
+    ElMessage.error('PDF 报告导出失败，请确认已完成课程级计算后重试')
+  }
   finally { pdfDownloading.value = false }
 }
 
 async function downloadExcel() {
   if (excelDownloading.value) return
+  if (!ensureReportExportReady()) return
   excelDownloading.value = true
   try {
     const blob = await downloadCourseExcel(classId.value)
     downloadBlob(blob, `课程达成度报告_${resolveClassName(classId.value)}.xlsx`)
-  } catch { /* 拦截器已提示错误 */ }
+    ElMessage.success('Excel 报告已开始下载')
+  } catch {
+    ElMessage.error('Excel 报告导出失败，请确认已完成课程级计算后重试')
+  }
   finally { excelDownloading.value = false }
 }
 
 async function downloadPersonalAchievementExcel() {
   if (personalDownloading.value) return
+  if (!ensureReportExportReady()) return
   personalDownloading.value = true
   try {
     const blob = await downloadPersonalAchievements(classId.value)
     downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
-  } catch { /* 拦截器已提示错误 */ }
+    ElMessage.success('学生个人达成度已开始下载')
+  } catch {
+    ElMessage.error('学生个人达成度导出失败，请确认已完成课程级计算后重试')
+  }
   finally { personalDownloading.value = false }
+}
+
+function ensureReportExportReady() {
+  if (!exportDisabled.value) return true
+  ElMessage.warning(exportDisabledReason.value)
+  return false
 }
 
 // Chart rendering functions
@@ -1143,6 +1178,18 @@ const indicatorStats = computed(() => {
   width: 100%;
   margin-bottom: 20px;
 }
+
+.report-export-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.report-export-tip {
+  margin-top: 12px;
+}
+
 /* 课程达成度结果展示优化 */
 .achievement-overview {
   display: grid;

@@ -526,7 +526,8 @@ const hasResults = computed(() =>
   Object.keys(results.courseAchievements || {}).length > 0
 )
 
-const exportDisabled = computed(() => status.value !== 'LOCKED' || !hasResults.value)
+const reportExportReady = computed(() => status.value === 'LOCKED' && hasResults.value)
+const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {
   if (status.value === 'IMPORTED') return '成绩已导入但尚未完成课程级计算，请先点击「一键计算」生成达成度结果后再导出报告。'
   if (status.value === 'LOCKED' && !hasResults.value) return '成绩单已锁定，但暂未读取到课程级计算结果，请刷新页面或重新进入后再导出。'

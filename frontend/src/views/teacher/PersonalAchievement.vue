@@ -602,12 +602,25 @@ function statusText(value) {
   border-color: #9b87c9;
   background-color: #9b87c9;
   box-shadow: 0 6px 14px rgba(126, 87, 194, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .detail-action-btn:hover {
   color: #fff;
   border-color: #8c76c2;
   background-color: #8c76c2;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(126, 87, 194, 0.26);
+}
+
+.detail-action-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 10px rgba(126, 87, 194, 0.2);
+}
+
+.detail-action-btn:focus-visible {
+  outline: 2px solid rgba(155, 135, 201, 0.35);
+  outline-offset: 2px;
 }
 
 :deep(.detail-action-btn.el-button) {

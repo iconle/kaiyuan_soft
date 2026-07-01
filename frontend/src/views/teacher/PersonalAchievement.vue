@@ -5,23 +5,31 @@
         <h3>个人达成度</h3>
         <p>按当前课程成绩与课程目标权重，查看每位学生的达成情况。</p>
       </div>
-      <el-tooltip
-        :disabled="exportReady"
-        :content="exportDisabledReason"
-        placement="bottom"
-      >
-        <span>
-          <el-button
-            type="primary"
-            :icon="Download"
-            :loading="exporting"
-            :disabled="!exportReady"
-            @click="handleExport"
-          >
-            导出 Excel
-          </el-button>
-        </span>
-      </el-tooltip>
+      <div class="page-header-actions">
+        <el-tooltip
+          content="返回查看课程目标、指标点达成度和计算结果"
+          placement="bottom"
+        >
+          <el-button @click="goCourseCompute">{{ courseComputeButtonText }}</el-button>
+        </el-tooltip>
+        <el-tooltip
+          :disabled="exportReady"
+          :content="exportDisabledReason"
+          placement="bottom"
+        >
+          <span>
+            <el-button
+              type="primary"
+              :icon="Download"
+              :loading="exporting"
+              :disabled="!exportReady"
+              @click="handleExport"
+            >
+              导出 Excel
+            </el-button>
+          </span>
+        </el-tooltip>
+      </div>
     </div>
 
     <div class="summary-band">
@@ -61,6 +69,9 @@
       class="empty-guide-alert"
     >
       当前暂无个人达成度数据。请先完成成绩导入，并在「课程级计算」页面执行一键计算，系统将自动生成每位学生的个人达成度结果。
+      <el-button size="small" type="primary" class="empty-guide-action" @click="goCourseCompute">
+        {{ courseComputeButtonText }}
+      </el-button>
     </el-alert>
 
     <el-table
@@ -258,6 +269,7 @@ const detailVisible = ref(false)
 const detailLoading = ref(false)
 const ACHIEVEMENT_PASS_LINE = 0.7
 const ACHIEVEMENT_WARNING_LINE = 0.65
+const courseComputeButtonText = '返回课程级计算'
 const detail = reactive({
   studentNo: '',
   studentName: '',
@@ -355,6 +367,7 @@ async function handleExport() {
 }
 
 function goCourseCompute() {
+  ElMessage.info('正在返回课程级计算页面')
   router.push(`/teacher/${classId.value}/compute`)
 }
 
@@ -412,6 +425,13 @@ function statusText(value) {
   margin: 6px 0 0;
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .summary-band {
@@ -492,6 +512,10 @@ function statusText(value) {
   border: 1px solid rgba(155, 135, 201, 0.22);
 }
 
+.empty-guide-action {
+  margin-left: 8px;
+}
+
 .achievement-value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -518,6 +542,15 @@ function statusText(value) {
 }
 
 @media (max-width: 800px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .page-header-actions {
+    justify-content: flex-start;
+  }
+
   .summary-band {
     grid-template-columns: repeat(2, 1fr);
   }

@@ -554,13 +554,14 @@ const hasResults = computed(() =>
 
 const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
 const showScoreEntryBar = computed(() => status.value !== 'LOCKED')
-const scoreEntryTitle = computed(() => status.value === 'IMPORTED' ? '成绩已导入' : '尚未导入成绩')
+const hasImportedScores = computed(() => status.value === 'IMPORTED')
+const scoreEntryTitle = computed(() => hasImportedScores.value ? '成绩已导入' : '尚未导入成绩')
 const scoreEntryDescription = computed(() =>
-  status.value === 'IMPORTED'
+  hasImportedScores.value
     ? '如需核对或修正成绩，可先返回成绩导入页面。'
     : '请先完成成绩导入，再执行课程级达成度计算。'
 )
-const scoreEntryButtonText = computed(() => status.value === 'IMPORTED' ? '查看或修改成绩' : '去成绩导入')
+const scoreEntryButtonText = computed(() => hasImportedScores.value ? '查看或修改成绩' : '去成绩导入')
 const reportExportReady = computed(() => canViewPersonalAchievement.value)
 const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {

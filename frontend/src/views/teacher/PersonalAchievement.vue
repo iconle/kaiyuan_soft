@@ -346,6 +346,7 @@ async function handleExport() {
   }
   exporting.value = true
   try {
+    ElMessage.info('正在生成个人达成度 Excel，请稍候')
     downloadBlob(await downloadPersonalAchievements(classId.value), buildClassFilename(resolveClassName(classId.value), '个人达成度', 'xlsx'))
     ElMessage.success('个人达成度 Excel 已导出')
   } finally {

@@ -2,15 +2,16 @@
   <div class="page-container">
     <div class="page-header">
       <h3>宏观支撑矩阵配置</h3>
-      <el-select v-model="currentMajorId" placeholder="选择专业" style="width:220px" @change="loadData">
-        <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
-      </el-select>
-      <div style="flex:1" />
-      <span class="hint" v-if="indicators.length > 0">所有指标点列合计必须为 1.00</span>
-      <el-button v-if="indicators.length > 0" @click="handleDownloadTemplate" :loading="downloading">下载模板</el-button>
-      <el-button v-if="indicators.length > 0" @click="openImportDialog">导入课程支撑</el-button>
-      <!-- <el-button v-if="indicators.length > 0" @click="handleAddRow">添加课程支撑</el-button> -->
-      <el-button v-if="indicators.length > 0" type="primary" @click="handleSubmit" :disabled="!allColumnsValid">提交生效</el-button>
+      <div class="header-actions">
+        <el-select v-model="currentMajorId" placeholder="选择专业" class="major-select" @change="loadData">
+          <el-option v-for="m in majors" :key="m.id" :label="m.name" :value="m.id" />
+        </el-select>
+        <span class="hint" v-if="indicators.length > 0">所有指标点列合计必须为 1.00</span>
+        <el-button v-if="indicators.length > 0" @click="handleDownloadTemplate" :loading="downloading">下载模板</el-button>
+        <el-button v-if="indicators.length > 0" @click="openImportDialog">导入课程支撑</el-button>
+        <!-- <el-button v-if="indicators.length > 0" @click="handleAddRow">添加课程支撑</el-button> -->
+        <el-button v-if="indicators.length > 0" type="primary" @click="handleSubmit" :disabled="!allColumnsValid">提交生效</el-button>
+      </div>
     </div>
 
     <el-empty v-if="!currentMajorId" description="请先选择专业" />
@@ -332,8 +333,23 @@ function clearHighlight() {
 
 <style scoped>
 .page-container { padding: var(--space-5); }
-.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.major-select { width: 220px; }
 .matrix-wrapper { overflow-x: auto; max-width: 100%; }
 .matrix-table { width: 100%; }
 /* 已勾选（存在支撑关系）的单元格：浅紫底色，便于一眼看出支撑分布 */

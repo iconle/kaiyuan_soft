@@ -1,9 +1,8 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <div class="header-left">
-        <h3>毕业要求管理</h3>
-
+      <h3>毕业要求管理</h3>
+      <div class="header-actions">
         <el-select
           v-model="currentMajorId"
           placeholder="选择专业"
@@ -365,9 +364,10 @@ async function customUpload(opt) {
   flex-wrap: wrap;
 }
 
-.header-left {
+.header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-4);
   flex-wrap: wrap;
 }

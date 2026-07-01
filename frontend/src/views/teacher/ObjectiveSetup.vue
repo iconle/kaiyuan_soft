@@ -2,9 +2,9 @@
   <div class="page-container">
     <div class="page-header">
       <h3>课程目标设定</h3>
-      <el-button @click="downloadTemplate" :loading="downloading">下载模板</el-button>
-      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
-        <el-button type="primary" plain class="objective-import-btn" :loading="importing">导入课程目标</el-button>
+      <el-button @click="downloadTemplate" :loading="downloading" :disabled="downloading">下载模板</el-button>
+      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx" :disabled="importing">
+        <el-button type="primary" plain class="objective-import-btn" :loading="importing" :disabled="importing">导入课程目标</el-button>
       </el-upload>
       <el-button type="primary" @click="showDialog()">新增目标</el-button>
     </div>
@@ -66,7 +66,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitting" :disabled="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -93,6 +93,7 @@ const editing = ref(null)
 const form = reactive({ dimension: '', description: '' })
 const importing = ref(false)
 const downloading = ref(false)
+const submitting = ref(false)
 
 onMounted(() => { if (classId.value) loadObjectives() })
 
@@ -113,16 +114,22 @@ function showDialog(row) {
 }
 
 async function handleSubmit() {
+  if (submitting.value) return
   if (!form.dimension) { ElMessage.warning('请选择维度'); return }
   if (!form.description.trim()) { ElMessage.warning('请填写目标描述'); return }
-  if (editing.value) {
-    await updateObjective(editing.value.id, { dimension: form.dimension, description: form.description, outlineId: editing.value.outlineId })
-  } else {
-    await createObjective(classId.value, { dimension: form.dimension, description: form.description })
+  submitting.value = true
+  try {
+    if (editing.value) {
+      await updateObjective(editing.value.id, { dimension: form.dimension, description: form.description, outlineId: editing.value.outlineId })
+    } else {
+      await createObjective(classId.value, { dimension: form.dimension, description: form.description })
+    }
+    ElMessage.success('操作成功')
+    dialogVisible.value = false
+    await loadObjectives()
+  } finally {
+    submitting.value = false
   }
-  ElMessage.success('操作成功')
-  dialogVisible.value = false
-  loadObjectives()
 }
 
 async function handleDelete(row) {
@@ -133,6 +140,7 @@ async function handleDelete(row) {
 }
 
 async function downloadTemplate() {
+  if (downloading.value) return
   downloading.value = true
   try {
     downloadBlob(await ensureDownloadBlob(await downloadObjectiveTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '课程目标导入模板', 'xlsx'))
@@ -146,6 +154,7 @@ function beforeUpload(file) {
 }
 
 async function uploadFile({ file }) {
+  if (importing.value) return
   importing.value = true
   try {
     const res = await importObjectives(classId.value, file)

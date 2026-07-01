@@ -5,9 +5,9 @@
       <el-select v-model="selectedAssessmentId" placeholder="选择考核点" @change="loadQuestions" style="width:260px">
         <el-option v-for="ap in assessments" :key="ap.id" :label="`${ap.name} (绑定目标: ${(ap.objectiveIds||[]).map(id=>getObjNo(id)).join(',')})`" :value="ap.id" />
       </el-select>
-      <el-button @click="downloadTemplate" :loading="downloading" :disabled="!selectedAssessmentId">下载模板</el-button>
-      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx">
-        <el-button type="primary" plain class="import-action-btn" :loading="importing" :disabled="!selectedAssessmentId">导入题目</el-button>
+      <el-button @click="downloadTemplate" :loading="downloading" :disabled="!selectedAssessmentId || downloading">下载模板</el-button>
+      <el-upload :show-file-list="false" :before-upload="beforeUpload" :http-request="uploadFile" accept=".xlsx" :disabled="!selectedAssessmentId || importing">
+        <el-button type="primary" plain class="import-action-btn" :loading="importing" :disabled="!selectedAssessmentId || importing">导入题目</el-button>
       </el-upload>
       <el-button type="primary" @click="showDialog()" :disabled="!selectedAssessmentId">新增题目</el-button>
       <span v-if="selectedAssessmentId" :style="{color: questionSum === 100 ? 'var(--el-color-success)' : 'var(--el-color-danger)', fontSize:'14px', fontWeight:'bold'}">
@@ -73,7 +73,7 @@
         </el-form-item>
         <el-form-item label="排序号"><el-input-number v-model="form.sortOrder" :min="1" style="width:100%" /></el-form-item>
       </el-form>
-      <template #footer><el-button @click="dialogVisible = false">取消</el-button><el-button type="primary" @click="handleSubmit">确定</el-button></template>
+      <template #footer><el-button @click="dialogVisible = false">取消</el-button><el-button type="primary" :loading="submitting" :disabled="submitting" @click="handleSubmit">确定</el-button></template>
     </el-dialog>
   </div>
 </template>
@@ -102,6 +102,7 @@ const editing = ref(null)
 const form = reactive({ name: '', maxScore: 100, objectiveIds: [], sortOrder: 1 })
 const importing = ref(false)
 const downloading = ref(false)
+const submitting = ref(false)
 
 onMounted(async () => {
   const [aRes, oRes] = await Promise.all([listAssessments(classId.value), listObjectives(classId.value)])
@@ -144,9 +145,11 @@ function showDialog(row) {
 }
 
 async function handleSubmit() {
+  if (submitting.value) return
   const existingSum = questions.value.filter(q => q.id !== editing.value?.id).reduce((s, q) => s + Number(q.maxScore || 0), 0)
   const newSum = existingSum + Number(form.maxScore || 0)
   if (newSum > 100) { ElMessage.error(`题目总分(${newSum})超过100，请调整满分值`); return }
+  submitting.value = true
   try {
     if (editing.value) {
       await request.put(`/api/assessments/${selectedAssessmentId.value}/questions/${editing.value.id}`, { ...form })
@@ -155,8 +158,9 @@ async function handleSubmit() {
     }
     ElMessage.success('操作成功')
     dialogVisible.value = false
-    loadQuestions()
+    await loadQuestions()
   } catch { /* handled */ }
+  finally { submitting.value = false }
 }
 
 async function handleDelete(row) {
@@ -167,6 +171,7 @@ async function handleDelete(row) {
 }
 
 async function downloadTemplate() {
+  if (!selectedAssessmentId.value || downloading.value) return
   downloading.value = true
   try {
     const assessmentName = assessments.value.find(item => item.id === selectedAssessmentId.value)?.name
@@ -181,6 +186,7 @@ function beforeUpload(file) {
 }
 
 async function uploadFile({ file }) {
+  if (!selectedAssessmentId.value || importing.value) return
   importing.value = true
   try {
     const res = await importQuestions(selectedAssessmentId.value, file)

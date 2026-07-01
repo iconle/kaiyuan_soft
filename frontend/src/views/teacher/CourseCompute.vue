@@ -103,7 +103,7 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="requestDialogVisible" title="提交勘误申请" width="500px">
+    <el-dialog v-model="requestDialogVisible" title="提交勘误申请" width="min(500px, 92vw)">
       <el-form label-width="80px">
         <el-form-item label="勘误原因">
           <el-input v-model="unlockReason" type="textarea" :rows="3"
@@ -406,7 +406,7 @@
 
     <el-dialog
       v-model="personalDialogVisible"
-      width="760px"
+      width="min(760px, 96vw)"
     >
       <template #header>
         <div>

@@ -116,7 +116,7 @@
     </div>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'" width="480px">
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'" width="min(480px, 92vw)">
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="80px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" :disabled="isEdit" />

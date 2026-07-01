@@ -360,24 +360,24 @@
       </el-card>
     </template>
 
-    <div v-if="hasResults" style="margin-top: 16px; display: flex; gap: 8px;">
+    <div class="report-export-actions">
       <el-button
         :loading="pdfDownloading"
-        :disabled="pdfDownloading"
+        :disabled="exportDisabled || pdfDownloading"
         @click="downloadPdf"
       >
         导出 PDF 报告
       </el-button>
       <el-button
         :loading="excelDownloading"
-        :disabled="excelDownloading"
+        :disabled="exportDisabled || excelDownloading"
         @click="downloadExcel"
       >
         导出 Excel 报告
       </el-button>
       <el-button
         :loading="personalDownloading"
-        :disabled="personalDownloading"
+        :disabled="exportDisabled || personalDownloading"
         @click="downloadPersonalAchievementExcel"
       >
         导出学生个人达成度
@@ -516,6 +516,8 @@ const hasResults = computed(() =>
   Object.keys(results.objectiveAchievements || {}).length > 0 ||
   Object.keys(results.courseAchievements || {}).length > 0
 )
+
+const exportDisabled = computed(() => status.value !== 'LOCKED' || !hasResults.value)
 
 const objectiveData = computed(() => {
   const labels = results.objectiveLabels || {}
@@ -1143,6 +1145,14 @@ const indicatorStats = computed(() => {
   width: 100%;
   margin-bottom: 20px;
 }
+
+.report-export-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* 课程达成度结果展示优化 */
 .achievement-overview {
   display: grid;

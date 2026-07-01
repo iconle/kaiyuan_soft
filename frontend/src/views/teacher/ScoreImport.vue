@@ -462,6 +462,7 @@ async function uploadFile({ file }) {
   try {
     await uploadScores(classId.value, form)
     ElMessage.success('成绩导入成功')
+    showComputeEntry.value = true
     // Wait a bit before reloading to ensure backend has processed
     await new Promise(resolve => setTimeout(resolve, 300))
     await loadAll().catch(() => {

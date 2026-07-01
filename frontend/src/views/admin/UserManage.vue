@@ -25,12 +25,13 @@
         class="user-table"
       >
         <el-table-column type="index" label="ID" width="70" :index="indexMethod" />
-        <el-table-column prop="username" label="用户名" width="140" />
+        <el-table-column prop="username" label="用户名" width="140" show-overflow-tooltip />
         <el-table-column
           prop="realName"
           label="姓名"
           min-width="120"
           class-name="name-column"
+          show-overflow-tooltip
         />
         <el-table-column
           label="角色"

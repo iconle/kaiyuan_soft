@@ -353,7 +353,7 @@ async function saveAll() {
       if (failed > 0) {
         ElMessage.warning(msg)
       } else {
-        ElMessage.success(msg)
+        ElMessage.success(`${msg}，可继续进行课程级计算`)
         edits.value = {}
         await loadQuestions().catch(() => {
           ElMessage.warning('成绩已保存，但刷新数据失败，请手动刷新页面')
@@ -462,7 +462,7 @@ async function uploadFile({ file }) {
   form.append('file', file)
   try {
     await uploadScores(classId.value, form)
-    ElMessage.success('成绩导入成功')
+    ElMessage.success('成绩导入成功，可继续进行课程级计算')
     showComputeEntry.value = true
     // Wait a bit before reloading to ensure backend has processed
     await new Promise(resolve => setTimeout(resolve, 300))

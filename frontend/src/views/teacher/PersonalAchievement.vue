@@ -18,7 +18,7 @@
             :disabled="!exportReady || exporting"
             @click="handleExport"
           >
-            导出 Excel
+            {{ exporting ? '生成中...' : '导出 Excel' }}
           </el-button>
         </span>
       </el-tooltip>

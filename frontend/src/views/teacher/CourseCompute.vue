@@ -124,6 +124,22 @@
       <el-button type="primary" @click="goPersonalAchievement">查看个人达成度</el-button>
     </div>
 
+    <div v-if="hasResults" class="status-legend">
+      <span class="legend-title">状态说明</span>
+      <span class="legend-item">
+        <i class="legend-dot is-success"></i>
+        达标：≥ 0.70
+      </span>
+      <span class="legend-item">
+        <i class="legend-dot is-warning"></i>
+        预警：0.65 - &lt; 0.70
+      </span>
+      <span class="legend-item">
+        <i class="legend-dot is-danger"></i>
+        不达标：&lt; 0.65
+      </span>
+    </div>
+
     <div v-if="hasResults" class="achievement-overview">
       <!-- Objective achievements -->
       <el-card class="achievement-panel" shadow="hover">
@@ -590,13 +606,17 @@ function achievementPercent(value) {
 function achievementTagType(value) {
   const num = Number(value)
   if (Number.isNaN(num)) return 'info'
-  return num >= 0.7 ? 'success' : 'warning'
+  if (num >= 0.7) return 'success'
+  if (num >= 0.65) return 'warning'
+  return 'danger'
 }
 
 function achievementTagText(value) {
   const num = Number(value)
   if (Number.isNaN(num)) return '暂无数据'
-  return num >= 0.7 ? '达标' : '需关注'
+  if (num >= 0.7) return '达标'
+  if (num >= 0.65) return '预警'
+  return '不达标'
 }
 function showRequestDialog() {
   unlockReason.value = ''
@@ -1142,6 +1162,43 @@ const indicatorStats = computed(() => {
   color: var(--text-secondary);
   font-size: 13px;
 }
+
+.status-legend {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border: 1px solid #eef1f6;
+  border-radius: 8px;
+  background: #fff;
+  color: #606266;
+  font-size: 13px;
+}
+
+.legend-title {
+  font-weight: 700;
+  color: #303133;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.is-success { background: #67c23a; }
+.legend-dot.is-warning { background: #e6a23c; }
+.legend-dot.is-danger { background: #f56c6c; }
 
 /* 我的勘误申请表格优化 */
 :deep(.my-unlock-table .el-table__header th) {

@@ -42,6 +42,20 @@
             <div class="result-title">专业级达成度结果（第三级）</div>
             <div class="result-subtitle">毕业要求指标点达成度计算结果</div>
           </div>
+          <div class="status-legend">
+            <span class="legend-item">
+              <i class="legend-dot is-success"></i>
+              达标 ≥ 0.70
+            </span>
+            <span class="legend-item">
+              <i class="legend-dot is-warning"></i>
+              预警 0.65 - &lt; 0.70
+            </span>
+            <span class="legend-item">
+              <i class="legend-dot is-danger"></i>
+              不达标 &lt; 0.65
+            </span>
+          </div>
         </div>
       </template>
 
@@ -672,6 +686,8 @@ async function downloadExcel() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .result-title {
@@ -685,6 +701,34 @@ async function downloadExcel() {
   font-size: 13px;
   color: #909399;
 }
+
+.status-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #606266;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.is-success { background: #67c23a; }
+.legend-dot.is-warning { background: #e6a23c; }
+.legend-dot.is-danger { background: #f56c6c; }
 
 .professional-result-table {
   width: 100%;

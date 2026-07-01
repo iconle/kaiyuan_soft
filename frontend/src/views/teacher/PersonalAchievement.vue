@@ -63,6 +63,15 @@
           >
             清空搜索条件
           </el-button>
+          <el-button
+            v-else-if="!loadError"
+            type="primary"
+            link
+            class="personal-empty-action"
+            @click="goCourseCompute"
+          >
+            去课程级计算
+          </el-button>
         </el-empty>
       </template>
 
@@ -199,7 +208,7 @@
 
 <script setup>
 import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Download, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import {
@@ -210,6 +219,7 @@ import {
 import { buildClassFilename, downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const classId = computed(() => route.params.classId)
 const resolveClassName = inject('resolveClassName', () => '')
 const loading = ref(false)
@@ -306,6 +316,10 @@ async function handleExport() {
   } finally {
     exporting.value = false
   }
+}
+
+function goCourseCompute() {
+  router.push(`/teacher/${classId.value}/compute`)
 }
 
 function toDetailRows(values = {}, labels = {}, fallback) {

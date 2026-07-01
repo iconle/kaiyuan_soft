@@ -256,6 +256,8 @@ const rows = ref([])
 const loadError = ref('')
 const detailVisible = ref(false)
 const detailLoading = ref(false)
+const ACHIEVEMENT_PASS_LINE = 0.7
+const ACHIEVEMENT_WARNING_LINE = 0.65
 const detail = reactive({
   studentNo: '',
   studentName: '',
@@ -284,7 +286,7 @@ const exportDisabledReason = computed(() => loadError.value || '暂无个人达�
 const showEmptyGuide = computed(() => !loading.value && !loadError.value && rows.value.length === 0 && !keyword.value.trim())
 
 const achievedCount = computed(() =>
-  rows.value.filter(row => Number(row.overallAchievement) >= 0.7).length
+  rows.value.filter(row => Number(row.overallAchievement) >= ACHIEVEMENT_PASS_LINE).length
 )
 const unachievedCount = computed(() => rows.value.length - achievedCount.value)
 const detailTitle = computed(() =>
@@ -374,15 +376,15 @@ function achievementPercent(value) {
 }
 function statusType(value) {
   const achievement = Number(value || 0)
-  if (achievement >= 0.7) return 'success'
-  if (achievement >= 0.65) return 'warning'
+  if (achievement >= ACHIEVEMENT_PASS_LINE) return 'success'
+  if (achievement >= ACHIEVEMENT_WARNING_LINE) return 'warning'
   return 'danger'
 }
 
 function statusText(value) {
   const achievement = Number(value || 0)
-  if (achievement >= 0.7) return '达标'
-  if (achievement >= 0.65) return '预警'
+  if (achievement >= ACHIEVEMENT_PASS_LINE) return '达标'
+  if (achievement >= ACHIEVEMENT_WARNING_LINE) return '预警'
   return '未达标'
 }
 </script>

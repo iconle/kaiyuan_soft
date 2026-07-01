@@ -11,7 +11,7 @@
           </div>
           <el-table :data="colleges" border stripe v-loading="collegeLoading">
             <el-table-column type="index" label="ID" width="80" />
-            <el-table-column prop="name" label="学院名称" />
+            <el-table-column prop="name" label="学院名称" show-overflow-tooltip />
 
 
 
@@ -69,7 +69,7 @@
           <el-table :data="majors" border stripe v-loading="majorLoading">
             <el-table-column type="index" label="ID" width="80" />
             <el-table-column prop="code" label="专业代码" width="140" />
-            <el-table-column prop="name" label="专业名称" min-width="160" />
+            <el-table-column prop="name" label="专业名称" min-width="160" show-overflow-tooltip />
 
             <el-table-column
               label="所属学院"
@@ -149,7 +149,7 @@
                 第{{ row.semester }}学期
               </template>
             </el-table-column>
-            <el-table-column prop="label" label="显示名" min-width="260" />
+            <el-table-column prop="label" label="显示名" min-width="260" show-overflow-tooltip />
             <el-table-column
               label="操作"
               width="120"

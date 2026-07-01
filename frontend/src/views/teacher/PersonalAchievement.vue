@@ -7,7 +7,7 @@
       </div>
       <el-tooltip
         :disabled="exportReady"
-        content="暂无个人达成度数据，请先完成课程级计算后再导出"
+        :content="exportDisabledReason"
         placement="bottom"
       >
         <span>
@@ -280,6 +280,7 @@ const averageAchievement = computed(() => {
   return rows.value.reduce((sum, row) => sum + Number(row.overallAchievement || 0), 0) / rows.value.length
 })
 const exportReady = computed(() => rows.value.length > 0 && !loadError.value)
+const exportDisabledReason = computed(() => loadError.value || '暂无个人达成度数据，请先完成课程级计算后再导出')
 const showEmptyGuide = computed(() => !loading.value && !loadError.value && rows.value.length === 0 && !keyword.value.trim())
 
 const achievedCount = computed(() =>
@@ -339,7 +340,7 @@ async function openDetail(row) {
 
 async function handleExport() {
   if (!exportReady.value) {
-    ElMessage.warning('暂无个人达成度数据，请先完成课程级计算后再导出')
+    ElMessage.warning(exportDisabledReason.value)
     return
   }
   exporting.value = true

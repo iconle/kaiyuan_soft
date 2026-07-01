@@ -636,6 +636,7 @@ async function openPersonalDialog(type, item) {
 
 async function downloadPdf() {
   if (pdfDownloading.value) return
+  if (!ensureReportExportReady()) return
   pdfDownloading.value = true
   try {
     const blob = await downloadCoursePdf(classId.value)
@@ -646,6 +647,7 @@ async function downloadPdf() {
 
 async function downloadExcel() {
   if (excelDownloading.value) return
+  if (!ensureReportExportReady()) return
   excelDownloading.value = true
   try {
     const blob = await downloadCourseExcel(classId.value)
@@ -656,12 +658,19 @@ async function downloadExcel() {
 
 async function downloadPersonalAchievementExcel() {
   if (personalDownloading.value) return
+  if (!ensureReportExportReady()) return
   personalDownloading.value = true
   try {
     const blob = await downloadPersonalAchievements(classId.value)
     downloadBlob(blob, `学生个人达成度_${resolveClassName(classId.value)}.xlsx`)
   } catch { /* 拦截器已提示错误 */ }
   finally { personalDownloading.value = false }
+}
+
+function ensureReportExportReady() {
+  if (!exportDisabled.value) return true
+  ElMessage.warning(exportDisabledReason.value)
+  return false
 }
 
 // Chart rendering functions

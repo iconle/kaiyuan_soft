@@ -186,7 +186,7 @@
 
     <el-dialog
       v-model="personalDialogVisible"
-      width="760px"
+      width="min(760px, 96vw)"
     >
       <template #header>
         <div>

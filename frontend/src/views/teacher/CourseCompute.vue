@@ -1449,6 +1449,7 @@ const indicatorStats = computed(() => {
 }
 
 @media (max-width: 720px) {
+  .score-entry-bar,
   .result-action-bar {
     align-items: flex-start;
     flex-direction: column;

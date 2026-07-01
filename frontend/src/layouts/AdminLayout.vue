@@ -128,6 +128,11 @@ provide('resolveClassName', (classId) => {
   return found?.className || ''
 })
 
+provide('resolveClassInfo', (classId) => {
+  if (!classId) return null
+  return teacherClasses.value.find(c => String(c.id) === String(classId)) || null
+})
+
 const filteredTeacherClasses = computed(() => {
   if (!teacherFilterSemester.value) return teacherClasses.value
   return teacherClasses.value.filter(c => c.semesterId === teacherFilterSemester.value)

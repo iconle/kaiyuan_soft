@@ -162,7 +162,7 @@
     </div>
 
     <!-- 毕业要求对话框 -->
-    <el-dialog v-model="reqDialogVisible" :title="editingReq ? '编辑毕业要求' : '新增毕业要求'" width="560px">
+    <el-dialog v-model="reqDialogVisible" :title="editingReq ? '编辑毕业要求' : '新增毕业要求'" width="min(560px, 92vw)">
       <el-form :model="reqForm" label-width="100px">
         <el-form-item label="编号" required>
           <el-input-number v-model="reqForm.reqNo" :min="1" :max="8" />
@@ -181,7 +181,7 @@
     </el-dialog>
 
     <!-- 指标点对话框 -->
-    <el-dialog v-model="indicatorDialogVisible" :title="editingIndicator ? '编辑指标点' : '新增指标点'" width="480px">
+    <el-dialog v-model="indicatorDialogVisible" :title="editingIndicator ? '编辑指标点' : '新增指标点'" width="min(480px, 92vw)">
       <el-form :model="indicatorForm" label-width="80px">
         <el-form-item label="编号">
           <el-tag v-if="!editingIndicator" type="info">自动生成</el-tag>
@@ -198,7 +198,7 @@
     </el-dialog>
 
     <!-- 指标点导入对话框 -->
-    <el-dialog v-model="importDialogVisible" title="导入指标点" width="520px">
+    <el-dialog v-model="importDialogVisible" title="导入指标点" width="min(520px, 92vw)">
       <div class="import-tip">
         请先点击「下载模板」获取标准模板，按格式填写后再上传。<br />
         仅支持 .xlsx 文件，<b>表头不可修改</b>，否则将无法导入。

@@ -337,16 +337,18 @@ async function downloadTemplate() {
   if (!selectedAssessmentId.value || downloading.value) return
   downloading.value = true
   try {
-    const classInfo = resolveClassInfo(classId.value)
-    const displayName = classInfo
-      ? [classInfo.courseName, classInfo.className].filter(Boolean).join('-')
-      : resolveClassName(classId.value)
-    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(displayName, '成绩录入模板', 'xlsx'))
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(getScoreTemplateClassName(), '成绩录入模板', 'xlsx'))
   } catch (error) {
     showDownloadError(error)
   } finally {
     downloading.value = false
   }
+}
+
+function getScoreTemplateClassName() {
+  const classInfo = resolveClassInfo(classId.value)
+  if (!classInfo) return resolveClassName(classId.value)
+  return [classInfo.courseName, classInfo.className].filter(Boolean).join('-')
 }
 
 function beforeUpload(file) {

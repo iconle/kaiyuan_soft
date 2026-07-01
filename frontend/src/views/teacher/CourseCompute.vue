@@ -437,7 +437,7 @@
 
 <script setup>
 import { ref, reactive, computed, inject, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 import {
@@ -451,6 +451,7 @@ import * as echarts from 'echarts'
 import { downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 const classId = ref(route.params.classId)
 const resolveClassName = inject('resolveClassName', () => '')
@@ -633,6 +634,10 @@ async function openPersonalDialog(type, item) {
     personalRows.value = res.data || []
   } catch { /* handled */ }
   finally { personalLoading.value = false }
+}
+
+function goPersonalAchievement() {
+  router.push(`/teacher/${classId.value}/personal-achievements`)
 }
 
 async function downloadPdf() {

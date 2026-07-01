@@ -52,6 +52,14 @@
       该考核点尚未设置题目，成绩将按考核点整体录入。可在「题目设置」中细分为多个题目。
     </el-alert>
 
+    <div v-if="showComputeEntry && status !== 'LOCKED'" class="compute-entry-bar">
+      <div>
+        <strong>成绩已更新</strong>
+        <span>可继续执行课程级达成度计算。</span>
+      </div>
+      <el-button type="primary" @click="goCourseCompute">去课程级计算</el-button>
+    </div>
+
     <el-dialog v-model="requestDialogVisible" title="提交成绩勘误申请" width="500px">
       <el-form label-width="80px">
         <el-form-item label="勘误原因">
@@ -474,6 +482,28 @@ function escapeHtml(value) {
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); flex-wrap: wrap; }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
 .section-title { font-size: 15px; font-weight: var(--font-semibold); margin-bottom: 10px; color: var(--text-primary); }
+
+.compute-entry-bar {
+  margin-bottom: var(--space-4);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(128, 107, 191, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.compute-entry-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.compute-entry-bar span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
 
 .unlock-request-card {
   margin-bottom: var(--space-4);

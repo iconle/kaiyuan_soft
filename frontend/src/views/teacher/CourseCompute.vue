@@ -11,9 +11,11 @@
 
     <el-alert v-if="status === 'LOCKED'" type="success" show-icon :closable="false" style="margin-bottom:16px">
       课程级计算已完成，成绩单已锁定。计算时间：{{ results.calcTime || '-' }}
-      <div style="margin-top:8px;font-size:13px">
+      <div class="locked-alert-actions">
         如需勘误成绩，请点击下方按钮提交勘误申请，由教务管理员或系统管理员审批解锁。
-        <el-button v-if="!hasPendingRequest" size="small" type="warning" style="margin-left:8px"
+        <el-button v-if="canViewPersonalAchievement" size="small" type="primary"
+          @click="goPersonalAchievement">查看个人达成度</el-button>
+        <el-button v-if="!hasPendingRequest" size="small" type="warning"
           @click="showRequestDialog"> 提交勘误申请</el-button>
       </div>
     </el-alert>
@@ -113,6 +115,15 @@
         <el-button type="primary" @click="handleRequestUnlock" :loading="requesting">提交申请</el-button>
       </template>
     </el-dialog>
+
+    <div v-if="canViewPersonalAchievement" class="result-action-bar">
+      <div>
+        <strong>课程级计算结果已生成</strong>
+        <span>可继续查看每位学生的个人达成度明细。</span>
+      </div>
+      <el-button type="primary" @click="goPersonalAchievement">查看个人达成度</el-button>
+    </div>
+
     <div v-if="hasResults" class="achievement-overview">
       <!-- Objective achievements -->
       <el-card class="achievement-panel" shadow="hover">
@@ -437,7 +448,7 @@
 
 <script setup>
 import { ref, reactive, computed, inject, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '../../utils/request'
 import {
@@ -451,6 +462,7 @@ import * as echarts from 'echarts'
 import { downloadBlob } from '../../utils/downloadFile'
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 const classId = ref(route.params.classId)
 const resolveClassName = inject('resolveClassName', () => '')
@@ -526,7 +538,8 @@ const hasResults = computed(() =>
   Object.keys(results.courseAchievements || {}).length > 0
 )
 
-const reportExportReady = computed(() => status.value === 'LOCKED' && hasResults.value)
+const canViewPersonalAchievement = computed(() => status.value === 'LOCKED' && hasResults.value)
+const reportExportReady = computed(() => canViewPersonalAchievement.value)
 const exportDisabled = computed(() => !reportExportReady.value)
 const exportDisabledReason = computed(() => {
   if (status.value === 'IMPORTED') return '成绩已导入但尚未完成课程级计算，请先点击「一键计算」生成达成度结果后再导出报告。'
@@ -612,7 +625,7 @@ async function handleCompute() {
   try {
     const userId = userStore.userId || 1
     await triggerCourseCompute(classId.value, userId)
-    ElMessage.success('课程级计算完成，成绩单已锁定')
+    ElMessage.success('课程级计算完成，可继续查看个人达成度')
     loadData()
   } catch { /* handled */ }
   finally { computing.value = false }
@@ -633,6 +646,10 @@ async function openPersonalDialog(type, item) {
     personalRows.value = res.data || []
   } catch { /* handled */ }
   finally { personalLoading.value = false }
+}
+
+function goPersonalAchievement() {
+  router.push(`/teacher/${classId.value}/personal-achievements`)
 }
 
 async function downloadPdf() {
@@ -1094,6 +1111,38 @@ const indicatorStats = computed(() => {
 .page-container { padding: var(--space-5); }
 .page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .page-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.locked-alert-actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.result-action-bar {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(128, 107, 191, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.result-action-bar strong {
+  margin-right: 8px;
+  color: var(--text-primary);
+}
+
+.result-action-bar span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
 /* 我的勘误申请表格优化 */
 :deep(.my-unlock-table .el-table__header th) {
   height: 42px;
@@ -1343,6 +1392,13 @@ const indicatorStats = computed(() => {
 @media (max-width: 1200px) {
   .achievement-overview {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .result-action-bar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

@@ -192,6 +192,7 @@ import { buildClassFilename, downloadBlob, ensureDownloadBlob, showDownloadError
 const route = useRoute()
 const classId = ref(route.params.classId)
 const resolveClassName = inject('resolveClassName', () => '')
+const resolveClassInfo = inject('resolveClassInfo', () => null)
 const loading = ref(false)
 const status = ref('')
 const assessments = ref([])
@@ -336,12 +337,20 @@ async function downloadTemplate() {
   if (!selectedAssessmentId.value || downloading.value) return
   downloading.value = true
   try {
-    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), buildClassFilename(resolveClassName(classId.value), '成绩录入模板', 'xlsx'))
+    const filename = buildClassFilename(getScoreTemplateClassName(), '成绩录入模板', 'xlsx')
+    downloadBlob(await ensureDownloadBlob(await downloadScoreTemplate(classId.value)), filename)
+    ElMessage.success(`模板已开始下载：${filename}`)
   } catch (error) {
     showDownloadError(error)
   } finally {
     downloading.value = false
   }
+}
+
+function getScoreTemplateClassName() {
+  const classInfo = resolveClassInfo(classId.value)
+  if (!classInfo) return resolveClassName(classId.value) || `教学班级${classId.value}`
+  return [classInfo.courseName, classInfo.className].filter(Boolean).join('-') || `教学班级${classId.value}`
 }
 
 function beforeUpload(file) {

@@ -51,7 +51,7 @@
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑目标' : '新增目标'" width="520px">
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑目标' : '新增目标'" width="min(520px, 92vw)">
       <el-form :model="form" label-width="80px">
         <el-form-item label="维度" required>
           <el-select v-model="form.dimension" style="width: 100%" placeholder="选择维度，编号将自动生成">

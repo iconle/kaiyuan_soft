@@ -53,6 +53,16 @@
       />
     </div>
 
+    <el-alert
+      v-if="showEmptyGuide"
+      type="info"
+      show-icon
+      :closable="false"
+      class="empty-guide-alert"
+    >
+      暂无个人达成度数据。请先完成成绩导入，再到「课程级计算」页面执行一键计算，系统会生成每位学生的个人达成度结果。
+    </el-alert>
+
     <el-table
       v-loading="loading"
       :data="filteredRows"
@@ -270,6 +280,7 @@ const averageAchievement = computed(() => {
   return rows.value.reduce((sum, row) => sum + Number(row.overallAchievement || 0), 0) / rows.value.length
 })
 const exportReady = computed(() => rows.value.length > 0 && !loadError.value)
+const showEmptyGuide = computed(() => !loading.value && !loadError.value && rows.value.length === 0 && !keyword.value.trim())
 
 const achievedCount = computed(() =>
   rows.value.filter(row => Number(row.overallAchievement) >= 0.7).length
@@ -449,6 +460,10 @@ function statusText(value) {
 
 .search-input {
   width: 260px;
+}
+
+.empty-guide-alert {
+  margin-bottom: 12px;
 }
 
 .achievement-value {

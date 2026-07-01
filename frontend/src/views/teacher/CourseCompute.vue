@@ -21,6 +21,9 @@
     </el-alert>
     <el-alert v-else-if="status === 'IMPORTED'" type="warning" show-icon :closable="false" style="margin-bottom:16px">
       成绩已导入，点击「一键计算」执行课程级达成度计算（目标级 + 课程级）。计算完成后成绩单将锁定。
+      <el-button size="small" type="primary" class="alert-action-button" @click="goScoreImport">
+        查看或修改成绩
+      </el-button>
     </el-alert>
     <el-alert v-else type="info" show-icon :closable="false" style="margin-bottom:16px">
       请先在「成绩导入」中导入学生成绩数据。

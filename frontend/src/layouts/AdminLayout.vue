@@ -117,7 +117,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Setting, User, Collection, School, Notebook, UserFilled, Files, DataAnalysis, Document, Grid, EditPen, Aim, Histogram, List, DataBoard, TrendCharts, Upload, Finished, OfficeBuilding, Tickets, Unlock, Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
-
+import { getTeacherHomePath } from '../utils/roleHome'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
@@ -168,10 +168,20 @@ onMounted(async () => {
       ])
       teacherClasses.value = classRes.data || []
       teacherSemesters.value = semRes.data || []
+
       if (teacherClasses.value.length > 0 && !teacherClasses.value.find(c => String(c.id) === activeClassId.value)) {
         activeClassId.value = String(teacherClasses.value[0].id)
         localStorage.setItem('activeClassId', activeClassId.value)
+
+        const teacherHomePath = getTeacherHomePath(activeClassId.value)
+        const routeClassId = route.params.classId ? String(route.params.classId) : ''
+        const hasValidRouteClass = teacherClasses.value.some(c => String(c.id) === routeClassId)
+
+        if (teacherHomePath && !hasValidRouteClass) {
+          router.replace(teacherHomePath)
+        }
       }
+
     } catch { /* ignore */ }
   }
 })

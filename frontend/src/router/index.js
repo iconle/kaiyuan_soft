@@ -142,12 +142,14 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
 
+
   if (to.meta.public) {
     // 已登录用户访问 /login 时，直接跳到首页
     if (token && to.path === '/login') {
       const roleCode = localStorage.getItem('roleCode')
       const home = getHomePath(roleCode)
       if (home) return next(home)
+      if (roleCode === 'TEACHER') return next('/')
     }
     return next()
   }
@@ -159,9 +161,12 @@ router.beforeEach((to, from, next) => {
   const roleCode = localStorage.getItem('roleCode')
 
   // 访问根路径 / 时，按角色跳转
+
   if (to.path === '/') {
     const home = getHomePath(roleCode)
-    return next(home || '/login')
+    if (home) return next(home)
+    if (roleCode === 'TEACHER') return next()
+    return next('/login')
   }
 
   // 角色不匹配时，跳到该角色首页，并标记无权限提示
@@ -169,7 +174,9 @@ router.beforeEach((to, from, next) => {
     console.warn('权限检查失败:', { path: to.path, roleCode, requiredRoles: to.meta.roles })
     sessionStorage.setItem('permDenied', to.path)
     const home = getHomePath(roleCode)
-    return next(home || '/login')
+    if (home) return next(home)
+    if (roleCode === 'TEACHER') return next('/')
+    return next('/login')
   }
 
   next()

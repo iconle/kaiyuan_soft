@@ -541,6 +541,15 @@ function statusText(value) {
 }
 
 @media (max-width: 800px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .page-header-actions {
+    justify-content: flex-start;
+  }
+
   .summary-band {
     grid-template-columns: repeat(2, 1fr);
   }

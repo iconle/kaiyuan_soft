@@ -139,8 +139,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false" :disabled="submitting">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -155,6 +155,7 @@ import { useUserStore } from '../../stores/user'
 
 const userStore = useUserStore()
 const loading = ref(false)
+const submitting = ref(false)
 const users = ref([])
 const roles = ref([])
 const colleges = ref([])
@@ -245,16 +246,22 @@ function showEditDialog(row) {
 }
 
 async function handleSubmit() {
-  await formRef.value.validate()
-  if (isEdit.value) {
-    await updateUser(editingId.value, { realName: form.realName, roleId: form.roleId, collegeId: form.collegeId })
-    ElMessage.success('更新成功')
-  } else {
-    await createUser(form)
-    ElMessage.success('创建成功')
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    await formRef.value.validate()
+    if (isEdit.value) {
+      await updateUser(editingId.value, { realName: form.realName, roleId: form.roleId, collegeId: form.collegeId })
+      ElMessage.success('更新成功')
+    } else {
+      await createUser(form)
+      ElMessage.success('创建成功')
+    }
+    dialogVisible.value = false
+    loadUsers()
+  } finally {
+    submitting.value = false
   }
-  dialogVisible.value = false
-  loadUsers()
 }
 
 async function handleToggleStatus(row) {

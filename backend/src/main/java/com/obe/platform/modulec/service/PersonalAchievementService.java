@@ -33,6 +33,7 @@ import com.obe.platform.modulec.mapper.ScoreSheetMapper;
 import com.obe.platform.modulec.mapper.StudentScoreMapper;
 import com.obe.platform.moduled.exporter.PersonalAchievementExcelExporter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PersonalAchievementService {
 
     public static final String SCOPE_OBJECTIVE = "OBJECTIVE";
@@ -237,6 +239,8 @@ public class PersonalAchievementService {
                 BigDecimal sum = indicatorSums.get(w.indicatorId());
                 if (sum != null && sum.compareTo(BigDecimal.ZERO) > 0
                         && sum.subtract(BigDecimal.ONE).abs().compareTo(new BigDecimal("0.01")) > 0) {
+                    log.warn("学生 {} 的指标点 {} 宏观支撑权重子集和为 {}，偏离 1.0 超过容差 0.01，已自动重新归一化；请检查专业 {} 学期 {} 的宏观支撑矩阵配置是否覆盖该学生全部修读课程",
+                            studentId, w.indicatorId(), sum, majorId, semesterId);
                     BigDecimal factor = BigDecimal.ONE.divide(sum, 10, java.math.RoundingMode.HALF_UP);
                     normalizedWeights.add(new Level3Calculator.MacroWeightRecord(
                             w.courseId(), w.indicatorId(), w.weight().multiply(factor)));

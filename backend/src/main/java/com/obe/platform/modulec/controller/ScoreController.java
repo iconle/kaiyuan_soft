@@ -1,11 +1,13 @@
 package com.obe.platform.modulec.controller;
 
 import com.obe.platform.common.Result;
+import com.obe.platform.modulec.dto.ScoreUpdateRequest;
 import com.obe.platform.modulec.entity.StudentScore;
 import com.obe.platform.modulec.service.ExcelParseService;
 import com.obe.platform.modulec.service.ExcelTemplateService;
 import com.obe.platform.modulec.service.ScoreService;
 import com.obe.platform.modulec.service.UnlockRequestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -65,13 +66,9 @@ public class ScoreController {
     @PutMapping("/scores")
     @PreAuthorize("hasRole('TEACHER')")
     public Result<Void> updateScore(@PathVariable Long classId,
-                                     @RequestBody Map<String, Object> body) {
-        Long studentId = Long.valueOf(body.get("studentId").toString());
-        Long assessmentId = Long.valueOf(body.get("assessmentId").toString());
-        Long questionId = body.containsKey("questionId") && body.get("questionId") != null
-                ? Long.valueOf(body.get("questionId").toString()) : null;
-        BigDecimal score = new BigDecimal(body.get("score").toString());
-        scoreService.updateScore(classId, studentId, assessmentId, questionId, score);
+                                     @Valid @RequestBody ScoreUpdateRequest request) {
+        scoreService.updateScore(classId, request.getStudentId(), request.getAssessmentId(),
+                request.getQuestionId(), request.getScore());
         return Result.ok();
     }
 

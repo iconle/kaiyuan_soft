@@ -30,6 +30,7 @@ public class ScoreService {
     private final StudentScoreMapper studentScoreMapper;
     private final CourseOutlineMapper outlineMapper;
     private final AssessmentPointMapper assessmentPointMapper;
+    private final com.obe.platform.moduleb.mapper.AssessmentQuestionMapper assessmentQuestionMapper;
     private final ClassStudentMapper classStudentMapper;
     private final StudentMapper studentMapper;
     private final com.obe.platform.moduleb.mapper.AssessmentObjectiveMapper assessmentObjectiveMapper;
@@ -180,6 +181,11 @@ public class ScoreService {
             throw new BizException("成绩单已锁定，无法修改。请联系教务管理员解锁");
         }
 
+        BigDecimal maxScore = resolveMaxScore(assessmentId, questionId);
+        if (maxScore != null && score != null && score.compareTo(maxScore) > 0) {
+            throw new BizException("分数 " + score + " 超过该考核点满分 " + maxScore);
+        }
+
         var wrapper = new LambdaQueryWrapper<StudentScore>()
                 .eq(StudentScore::getSheetId, sheet.getId())
                 .eq(StudentScore::getStudentId, studentId)
@@ -208,6 +214,20 @@ public class ScoreService {
             sheet.setStatus("IMPORTED");
             scoreSheetMapper.updateById(sheet);
         }
+    }
+
+    /**
+     * Resolve the upper-bound max score for input validation.
+     * If questionId is provided, use the question's maxScore; otherwise use the assessment's maxScore.
+     * Returns null if the corresponding record cannot be found (legacy behavior preserved).
+     */
+    private BigDecimal resolveMaxScore(Long assessmentId, Long questionId) {
+        if (questionId != null) {
+            var question = assessmentQuestionMapper.selectById(questionId);
+            return question == null ? null : question.getMaxScore();
+        }
+        var assessment = assessmentPointMapper.selectById(assessmentId);
+        return assessment == null ? null : assessment.getMaxScore();
     }
 
     // ---- DTOs ----

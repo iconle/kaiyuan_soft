@@ -241,7 +241,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getDashboard, triggerGlobalCompute, getGlobalResults,
@@ -292,6 +292,13 @@ onMounted(async () => {
       loadIndicatorLabels()
     }
   } catch { /* handled */ }
+})
+
+onUnmounted(() => {
+  if (chartInstance.value) {
+    chartInstance.value.dispose()
+    chartInstance.value = null
+  }
 })
 
 async function loadIndicatorLabels() {
